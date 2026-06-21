@@ -2956,6 +2956,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "while.*v.*!=.*DOM_ROOT.*v.*=.*idom.*v|dominator.*depth.*walk.*up",
             "d\\+\\+.*idom|dominator.*count.*steps.*root|dom_depth.*return.*d"
         ),
+        // ── treap_implicit ──────────────────────────────────────────────────────
+        new PatternDef("treap_split_implicit", "treap_implicit_split_by_rank", "high",
+            "treap.*split|split.*implicit|split.*rank.*left.*right",
+            "lsz.*=.*left.*sz|implicit.*key.*subtree.*size|left_size.*>=.*k",
+            "treap_split.*pool.*rev|lazy.*rev.*push_down.*split|push_down.*before.*split"
+        ),
+        new PatternDef("treap_merge_prio", "treap_implicit_merge_heap_priority", "high",
+            "treap.*merge|merge.*prio.*heap|treap.*left.*right.*priority",
+            "prio.*>.*prio|heap.*property.*merge.*treap|if.*prio.*greater.*merge",
+            "pool.*left.*=.*treap_merge|pool.*right.*=.*treap_merge|merge.*push_up"
+        ),
+        new PatternDef("treap_lazy_rev", "treap_implicit_lazy_reverse", "medium",
+            "lazy.*rev|rev.*flag.*treap|push_down.*rev.*swap",
+            "rev.*\\^=.*1|flip.*rev.*children|swap.*left.*right.*rev",
+            "push_down.*in_stk.*rev|treap.*reverse.*range|rev.*propagate.*children"
+        ),
+        // ── matrix_exponentiation ───────────────────────────────────────────────
+        new PatternDef("matexp_multiply", "matrix_exponentiation_2x2_multiply", "high",
+            "mat.*mul|matrix.*multiply|mat_mul.*result.*mod",
+            "for.*i.*2.*j.*2.*k.*2|2x2.*matrix.*dot.*product|mat.*a.*i.*k.*b.*k.*j",
+            "s.*+=.*A.*i.*k.*B.*k.*j|matrix.*accumulate.*product|C.*a.*i.*j.*=.*s.*mod"
+        ),
+        new PatternDef("matexp_fast_pow", "matrix_exponentiation_repeated_squaring", "high",
+            "mat_pow|matrix.*fast.*pow|mat.*exp.*repeated.*squaring",
+            "exp.*>>=.*1|while.*exp.*>.*0.*exp.*>>=|if.*exp.*&.*1.*result.*=.*mat_mul",
+            "base.*=.*mat_mul.*base.*base|matrix.*square.*each.*step|repeated.*squaring.*matrix"
+        ),
+        new PatternDef("matexp_identity", "matrix_exponentiation_identity_init", "medium",
+            "identity.*matrix|mat.*identity.*init|result.*diagonal.*one",
+            "a.*0.*0.*=.*1.*a.*1.*1.*=.*1.*a.*0.*1.*=.*0|init.*result.*identity",
+            "mat.*eye|matexp.*identity.*before.*loop|result.*start.*identity.*matrix"
+        ),
+        // ── lyndon_factorization ────────────────────────────────────────────────
+        new PatternDef("lyndon_duval_scan", "lyndon_factorization_duval_scan", "high",
+            "duval|lyndon.*factor|lyndon.*word.*decompose",
+            "j.*=.*i.*k.*=.*i.*\\+.*1.*while.*k.*<.*n|duval.*j.*k.*advance",
+            "s.*j.*<=.*s.*k.*j.*=.*i.*j\\+\\+.*k\\+\\+|lyndon.*scan.*j.*reset.*i"
+        ),
+        new PatternDef("lyndon_emit_words", "lyndon_factorization_emit_words", "high",
+            "emit.*lyndon|lyndon.*word.*len.*=.*k.*-.*j|while.*i.*<=.*j.*i.*\\+=.*word_len",
+            "word_len.*k.*-.*j|lyndon.*stride.*i.*+=.*word_len|factor.*length.*emit.*loop",
+            "lyn_starts|lyn_lens|lyndon.*record.*start.*length"
+        ),
+        new PatternDef("lyndon_compare", "lyndon_factorization_char_compare", "medium",
+            "s.*j.*<.*s.*k|lyndon.*char.*compare|lyn_s.*j.*<=.*lyn_s.*k",
+            "if.*s.*j.*<.*s.*k.*j.*=.*i|lyndon.*reset.*j.*on.*less|duval.*strict.*less.*reset",
+            "lyndon.*string.*suffix.*rotation|lyn_s.*compare.*duval.*progress"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
