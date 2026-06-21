@@ -5094,6 +5094,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*xor_acc.*\\^.*xor_acc.*>>.*16.*&.*0xFF|bell_metric_xor",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|bell_pack"
         ),
+        new PatternDef("burnside_polya_gcd_pow", "burnside_polya_gcd_pow", "high",
+            "pow32.*k.*gcd32.*r.*n|burnside_fix_count",
+            "total.*\\+=.*pow32.*k.*gcd32.*r.*n|burnside_orbit_sum",
+            "total.*\\/.*n|burnside_necklace_divide"
+        ),
+        new PatternDef("burnside_polya_cases", "burnside_polya_verify", "high",
+            "ns.*\\[5\\].*=.*4.*6.*5.*3.*8|burnside_n_table",
+            "ks.*\\[5\\].*=.*3.*2.*3.*4.*2|burnside_k_table",
+            "expected.*\\[5\\].*=.*24.*14.*51.*24.*36|burnside_expected_table"
+        ),
+        new PatternDef("burnside_polya_result", "burnside_polya_result_encode", "medium",
+            "got.*==.*expected.*i.*match_count\\+\\+|burnside_match_check",
+            "xor_acc.*\\^=.*got|burnside_xor_accum",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|burnside_pack"
+        ),
+        new PatternDef("padovan_recurrence", "padovan_recurrence_build", "high",
+            "pad_table.*i.*=.*pad_table.*i.*-.*2.*\\+.*pad_table.*i.*-.*3|padovan_step",
+            "pad_table.*0.*=.*1.*pad_table.*1.*=.*1.*pad_table.*2.*=.*1|padovan_seed",
+            "compute_padovan|padovan_compute_call"
+        ),
+        new PatternDef("padovan_verify", "padovan_verify_known", "high",
+            "known.*PAD_N.*=.*1.*1.*1.*2.*2.*3.*4.*5.*7.*9|padovan_known_table",
+            "pad_table.*i.*==.*known.*i.*match_count\\+\\+|padovan_match_check",
+            "xor_acc.*\\^=.*pad_table.*i|padovan_xor_accum"
+        ),
+        new PatternDef("padovan_result", "padovan_result_encode", "medium",
+            "metric_a.*match_count.*&.*0xFF|padovan_metric_match",
+            "metric_b.*xor_acc.*\\^.*xor_acc.*>>.*16.*&.*0xFF|padovan_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|padovan_pack"
+        ),
+        new PatternDef("colatz_iteration", "colatz_iteration_step", "high",
+            "n.*&.*1.*n.*=.*3.*\\*.*n.*\\+.*1|colatz_odd_step",
+            "n.*>>=.*1|colatz_even_step",
+            "while.*n.*!=.*1.*steps\\+\\+|colatz_loop_count"
+        ),
+        new PatternDef("colatz_verify", "colatz_verify_known", "high",
+            "known.*COLATZ_COUNT.*=.*0.*1.*7.*2.*5.*8.*16.*3.*19.*6|colatz_known_table",
+            "s.*==.*known.*i.*match_count\\+\\+|colatz_match_check",
+            "xor_acc.*\\^=.*s|colatz_xor_accum"
+        ),
+        new PatternDef("colatz_result", "colatz_result_encode", "medium",
+            "metric_a.*match_count.*&.*0xFF|colatz_metric_match",
+            "metric_b.*xor_acc.*\\^.*xor_acc.*>>.*16.*&.*0xFF|colatz_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|colatz_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
