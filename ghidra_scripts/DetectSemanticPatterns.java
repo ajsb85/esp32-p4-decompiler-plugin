@@ -1930,6 +1930,61 @@ public class DetectSemanticPatterns extends GhidraScript {
             "lcs.*base.*case.*empty.*string.*zero|dp.*0.*j.*=.*dp.*i.*0.*=.*0",
             "lcs_base|lcs_init|dp_base_zero"
         ),
+        new PatternDef("burst_balloons_last", "burst_balloons_interval_last_dp", "high",
+            "dp.*i.*j.*=.*max.*k.*dp.*i.*k.*\\+.*dp.*k.*j.*\\+.*b.*i.*\\*.*b.*k.*\\*.*b.*j",
+            "sentinel.*1.*both.*ends.*k.*is.*last.*balloon.*burst.*interval",
+            "burst_balloons|balloon_last|burst_interval"
+        ),
+        new PatternDef("burst_sentinel_ends", "balloon_sentinel_boundary", "medium",
+            "b.*0.*=.*1.*b.*n.*\\+.*1.*=.*1|sentinel.*1.*at.*both.*ends.*balloon",
+            "interval.*dp.*k.*last.*burst.*coins.*b.*i.*b.*k.*b.*j",
+            "balloon_sentinel|burst_boundary|sentinel_ends"
+        ),
+        new PatternDef("stone_game_minimax", "stone_game_interval_minimax", "high",
+            "dp.*i.*j.*=.*max.*a.*i.*-.*dp.*i.*1.*j.*a.*j.*-.*dp.*i.*j.*-.*1",
+            "dp.*i.*i.*=.*a.*i.*stone.*game.*take.*from.*either.*end",
+            "stone_game|minimax_ends|stone_dp"
+        ),
+        new PatternDef("distinct_subseq_dp", "distinct_subsequences_count_dp", "high",
+            "if.*s.*i.*-.*1.*==.*t.*j.*-.*1.*dp.*i.*j.*=.*dp.*i.*-.*1.*j.*-.*1.*\\+.*dp.*i.*-.*1.*j",
+            "else.*dp.*i.*j.*=.*dp.*i.*-.*1.*j.*count.*subsequences",
+            "distinct_subseq|subseq_count|subseq_dp"
+        ),
+        new PatternDef("russian_doll_sort", "russian_doll_sort_then_lis", "high",
+            "sort.*by.*width.*asc.*height.*desc.*same.*width|cmp.*w.*!=.*w.*return.*w.*-.*w.*h.*-.*h",
+            "lis.*on.*heights.*after.*sort.*russian.*doll.*envelopes",
+            "russian_doll|envelope_lis|doll_sort"
+        ),
+        new PatternDef("patience_sort_lis", "patience_sort_lis_nlogn", "medium",
+            "tails.*lo.*=.*e.*h.*if.*lo.*==.*sz.*sz\\+\\+.*patience.*sort",
+            "binary.*search.*tails.*array.*lis.*patience.*sort.*O.*n.*log.*n",
+            "patience_sort|lis_nlogn|lis_binary"
+        ),
+        new PatternDef("palindrome_min_cuts", "min_cuts_palindrome_partition", "high",
+            "cuts.*i.*=.*i.*for.*j.*=.*1.*i.*if.*pal.*j.*i.*cuts.*j.*-.*1.*\\+.*1.*<.*cuts.*i",
+            "pal.*0.*i.*cuts.*i.*=.*0.*whole.*prefix.*palindrome.*no.*cut",
+            "palindrome_cuts|min_partition|pal_partition"
+        ),
+        new PatternDef("interval_stick_cut", "stick_cutting_interval_dp", "high",
+            "dp.*i.*j.*=.*INF.*for.*k.*=.*i.*1.*j.*-.*1.*cost.*=.*dp.*i.*k.*\\+.*dp.*k.*j.*\\+.*arr.*j.*-.*arr.*i",
+            "insert.*endpoints.*0.*and.*len.*sort.*interval.*dp.*cut.*cost",
+            "stick_cut|cut_interval|min_cut_dp"
+        ),
+        new PatternDef("bfs_word_transform", "word_ladder_bfs_transform", "high",
+            "for.*i.*=.*0.*nd.*if.*visited.*i.*||.*one_diff.*cur.*dict.*i.*continue",
+            "bfs.*word.*transform.*one.*letter.*at.*a.*time.*shortest.*path",
+            "word_ladder|bfs_transform|word_bfs"
+        ),
+        new PatternDef("one_letter_diff", "one_character_difference_check", "medium",
+            "while.*a.*i.*&&.*b.*i.*if.*a.*i.*!=.*b.*i.*diff\\+\\+.*return.*diff.*==.*1",
+            "one_diff.*single.*char.*different.*same.*length.*word.*transform",
+            "one_diff|char_diff|letter_diff"
+        ),
+        new PatternDef("uncrossed_lcs_int", "uncrossed_lines_lcs_int_array", "high",
+            "dp.*i.*j.*=.*a.*i.*-.*1.*==.*b.*j.*-.*1.*dp.*i.*-.*1.*j.*-.*1.*\\+.*1.*imax.*dp.*i.*-.*1.*j.*dp.*i.*j.*-.*1",
+            "lcs.*integer.*arrays.*uncrossed.*lines.*dp",
+            "uncrossed_lines|lcs_int|int_lcs"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

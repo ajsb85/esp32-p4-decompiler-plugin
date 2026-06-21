@@ -1375,6 +1375,65 @@ int main(void){
   {int _marr[]={1,3,-1,-3,5,3,6,7},_dq[8],_mh=0,_mt=0,_ms=0,_mx=0;
    for(int i=0;i<8;i++){while(_mh<_mt&&_dq[_mh]<=i-3)_mh++;while(_mh<_mt&&_marr[_dq[_mt-1]]<=_marr[i])_mt--;_dq[_mt++]=i;if(i>=2){_ms+=_marr[_dq[_mh]];_mx^=_marr[_dq[_mh]];}}
    CHECK("test_monotonic_queue",(8u<<16)|((uint32_t)_ms<<8)|(uint32_t)_mx,0x00081D01u);}
+  /* Sprint 106: test_burst_balloons — {3,1,5,8} sentinels {1,3,1,5,8,1}; max=167 dp[0][2]=3 */
+  {int _b[]={1,3,1,5,8,1},_dp[6][6]={};
+   for(int _l=2;_l<6;_l++)for(int _i=0;_i<6-_l;_i++){int _j=_i+_l;for(int _k=_i+1;_k<_j;_k++){int _c=_dp[_i][_k]+_dp[_k][_j]+_b[_i]*_b[_k]*_b[_j];if(_c>_dp[_i][_j])_dp[_i][_j]=_c;}}
+   CHECK("test_burst_balloons",(4u<<16)|(((uint32_t)_dp[0][5]&0xFFu)<<8)|((uint32_t)_dp[0][2]&0xFFu),0x0004A703u);}
+  /* Sprint 106: test_stone_game — {5,3,4,5}->1 {3,4,2,1}->0 {1,5,233,7}->222; sum=xor=223 */
+  {int _sg(const int*a,int n){int dp[4][4]={};for(int i=0;i<n;i++)dp[i][i]=a[i];
+     for(int l=2;l<=n;l++)for(int i=0;i+l-1<n;i++){int j=i+l-1;int x=a[i]-dp[i+1][j],y=a[j]-dp[i][j-1];dp[i][j]=x>y?x:y;}return dp[0][n-1];}
+   int _a1[]={5,3,4,5},_a2[]={3,4,2,1},_a3[]={1,5,233,7};
+   int _r1=_sg(_a1,4),_r2=_sg(_a2,4),_r3=_sg(_a3,4);
+   CHECK("test_stone_game",(3u<<16)|((uint32_t)(_r1+_r2+_r3)<<8)|(uint32_t)(_r1^_r2^_r3),0x0003DFDFu);}
+  /* Sprint 107: test_distinct_subseq — "rabbbit"/"rabbit"->3 "babgbag"/"bag"->5 "aaa"/"a"->3 sum=11 xor=5 */
+  {int _cs(const char*s,const char*t){int m=0,n=0;while(s[m])m++;while(t[n])n++;int dp[8][7]={};
+     for(int i=0;i<=m;i++)dp[i][0]=1;
+     for(int i=1;i<=m;i++)for(int j=1;j<=n;j++)dp[i][j]=(s[i-1]==t[j-1])?dp[i-1][j-1]+dp[i-1][j]:dp[i-1][j];return dp[m][n];}
+   int _r1=_cs("rabbbit","rabbit"),_r2=_cs("babgbag","bag"),_r3=_cs("aaa","a");
+   CHECK("test_distinct_subseq",(3u<<16)|((uint32_t)(_r1+_r2+_r3)<<8)|(uint32_t)(_r1^_r2^_r3),0x00030B05u);}
+  /* Sprint 107: test_russian_doll — e1={2,3}{5,4}{6,4}{6,7}{1,1}->4 e2=all{1,1}->1 e3=asc->4; s=9 x=1 */
+  {typedef struct{int w,h;}Env;
+   void _se(Env*e,int n){for(int i=1;i<n;i++){Env k=e[i];int j=i-1;while(j>=0&&(e[j].w>k.w||(e[j].w==k.w&&e[j].h<k.h))){e[j+1]=e[j];j--;}e[j+1]=k;}}
+   int _lis(Env*e,int n){int t[8],sz=0;for(int i=0;i<n;i++){int lo=0,hi=sz;while(lo<hi){int m=(lo+hi)/2;if(t[m]<e[i].h)lo=m+1;else hi=m;}t[lo]=e[i].h;if(lo==sz)sz++;}return sz;}
+   Env e1[]={{2,3},{5,4},{6,4},{6,7},{1,1}},e2[]={{1,1},{1,1},{1,1}},e3[]={{4,6},{3,5},{2,4},{1,3}};
+   _se(e1,5);_se(e2,3);_se(e3,4);
+   int _r1=_lis(e1,5),_r2=_lis(e2,3),_r3=_lis(e3,4);
+   CHECK("test_russian_doll",(3u<<16)|((uint32_t)(_r1+_r2+_r3)<<8)|(uint32_t)(_r1^_r2^_r3),0x00030901u);}
+  /* Sprint 108: test_palindrome_partition2 — "aab"->1 "aaaa"->0 "abc"->2; total_len=10 sum=3 */
+  {int _mpc(const char*s){int n=0;while(s[n])n++;int pal[8][8]={},cuts[8],i,j,len;
+     for(i=0;i<n;i++)pal[i][i]=1;for(i=0;i+1<n;i++)pal[i][i+1]=(s[i]==s[i+1]);
+     for(len=3;len<=n;len++)for(i=0;i+len-1<n;i++){j=i+len-1;pal[i][j]=(s[i]==s[j])&&pal[i+1][j-1];}
+     for(i=0;i<n;i++){if(pal[0][i]){cuts[i]=0;continue;}cuts[i]=i;for(j=1;j<=i;j++)if(pal[j][i]&&cuts[j-1]+1<cuts[i])cuts[i]=cuts[j-1]+1;}return cuts[n-1];}
+   int _r1=_mpc("aab"),_r2=_mpc("aaaa"),_r3=_mpc("abc");
+   CHECK("test_palindrome_partition2",(3u<<16)|((uint32_t)(3+4+3)<<8)|(uint32_t)(_r1+_r2+_r3),0x00030A03u);}
+  /* Sprint 108: test_min_cost_cut — len=7 cuts={1,3,4,5}; min_cost=16 */
+  {int _arr[]={0,1,3,4,5,7},_m=6,_dp[8][8]={};
+   for(int g=2;g<_m;g++)for(int i=0;i+g<_m;i++){int j=i+g;_dp[i][j]=0x7fffffff;
+     for(int k=i+1;k<j;k++){int c=_dp[i][k]+_dp[k][j]+_arr[j]-_arr[i];if(c<_dp[i][j])_dp[i][j]=c;}}
+   CHECK("test_min_cost_cut",(4u<<16)|(7u<<8)|((uint32_t)_dp[0][_m-1]&0xFFu),0x00040710u);}
+  /* Sprint 109: test_word_ladder — "hit"->"cog" dict6->5 dict5->0 "a"->"c"->2; enc=(5<<8)|2 */
+  {int _od(const char*a,const char*b){int d=0,i=0;while(a[i]&&b[i]){if(a[i]!=b[i])d++;i++;}return d==1&&!a[i]&&!b[i];}
+   int _wl(const char*bg,const char*en,const char(*d)[16],int nd){
+     char q[32][16];int dt[32],vis[8]={},qh=0,qt=0,ei=-1;
+     for(int i=0;i<nd;i++){int j=0;while(d[i][j]&&en[j]&&d[i][j]==en[j])j++;if(!d[i][j]&&!en[j])ei=i;}
+     if(ei<0)return 0;for(int i=0;(q[qt][i]=bg[i]);i++);dt[qt++]=1;
+     while(qh<qt){char c[16];int dv=dt[qh];for(int i=0;(c[i]=q[qh][i]);i++);qh++;
+       for(int i=0;i<nd;i++){if(vis[i]||!_od(c,d[i]))continue;if(i==ei)return dv+1;
+         vis[i]=1;for(int j=0;(q[qt][j]=d[i][j]);j++);dt[qt++]=dv+1;}}return 0;}
+   const char _d1[][16]={"hot","dot","dog","lot","log","cog"};
+   const char _d2[][16]={"hot","dot","dog","lot","log"};
+   const char _d3[][16]={"a","b","c"};
+   int _r1=_wl("hit","cog",_d1,6),_r2=_wl("hit","cog",_d2,5),_r3=_wl("a","c",_d3,3);
+   CHECK("test_word_ladder",(3u<<16)|((uint32_t)_r1<<8)|(uint32_t)(_r3+_r2),0x00030502u);}
+  /* Sprint 109: test_uncrossed_lines — LCS on int arrays; maxLCS=3 n_nonzero=2 */
+  {int _uc(const int*a,int m,const int*b,int n){int dp[6][7]={};
+     for(int i=1;i<=m;i++)for(int j=1;j<=n;j++)dp[i][j]=(a[i-1]==b[j-1])?dp[i-1][j-1]+1:(dp[i-1][j]>dp[i][j-1]?dp[i-1][j]:dp[i][j-1]);return dp[m][n];}
+   const int _a1[]={1,4,2},_b1[]={1,2,4};
+   const int _a2[]={2,5,1,2,5},_b2[]={10,5,2,1,5,2};
+   const int _a3[]={1,2,3},_b3[]={4,5,6};
+   int _r1=_uc(_a1,3,_b1,3),_r2=_uc(_a2,5,_b2,6),_r3=_uc(_a3,3,_b3,3);
+   int _mx=_r1>_r2?_r1:_r2,_nz=(_r1>0)+(_r2>0)+(_r3>0);
+   CHECK("test_uncrossed_lines",(3u<<16)|((uint32_t)_mx<<8)|(uint32_t)_nz,0x00030302u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
