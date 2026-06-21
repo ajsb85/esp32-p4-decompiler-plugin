@@ -56,7 +56,9 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
     private static final String OPT_ANNOTATE_HWLP     = "Annotate Hardware Loops";
 
     public ESP32P4Analyzer() {
-        super(ANALYZER_NAME, ANALYZER_DESC, AnalyzerType.BYTE_ANALYZER);
+        // INSTRUCTION_ANALYZER runs after disassembly — required so esp.lp.setup
+        // instructions exist in the listing when annotateHardwareLoops() scans them.
+        super(ANALYZER_NAME, ANALYZER_DESC, AnalyzerType.INSTRUCTION_ANALYZER);
         setPriority(AnalysisPriority.FORMAT_ANALYSIS.after().after());
         setDefaultEnablement(true);
         setSupportsOneTimeAnalysis();
@@ -100,6 +102,8 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
             // Use defaults
         }
 
+        Msg.info(this, "ESP32-P4 Firmware Analyzer: started on " + program.getName()
+                + " [lang=" + program.getLanguageID().getIdAsString() + "]");
         int txId = program.startTransaction("ESP32-P4 Analysis");
         boolean success = false;
         try {
@@ -223,9 +227,11 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
                                        TaskMonitor monitor, MessageLog log)
             throws CancelledException {
         Listing listing = program.getListing();
-        AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 
-        InstructionIterator it = listing.getInstructions(set, true);
+        // Scan full program memory — the `set` passed to BYTE_ANALYZER may not cover
+        // all disassembled instruction ranges (depends on analysis order).
+        InstructionIterator it = listing.getInstructions(program.getMemory(), true);
+        int found = 0;
         while (it.hasNext()) {
             monitor.checkCancelled();
             Instruction instr = it.next();
@@ -233,9 +239,17 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
 
             String mnem = instr.getMnemonicString();
             if (mnem != null && (mnem.startsWith("esp.lp.setup") || mnem.startsWith("esp.lp.setupi"))) {
+                Msg.info(this, "ESP32-P4 HWLP: found " + mnem + " at " + instr.getAddress()
+                        + " numOps=" + instr.getNumOperands()
+                        + " op0=" + instr.getDefaultOperandRepresentation(0)
+                        + " op1=" + instr.getDefaultOperandRepresentation(1)
+                        + " op2=" + instr.getDefaultOperandRepresentation(2));
                 annotateLoopSetup(program, instr, log);
+                found++;
             }
         }
+        Msg.info(this, "ESP32-P4 HWLP: scanned " + set.getNumAddressRanges()
+                + " ranges, found " + found + " hardware loop setup instructions");
     }
 
     private void annotateLoopSetup(Program program, Instruction instr, MessageLog log) {
@@ -254,6 +268,8 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
 
             // Extract lp_end address from pcode: find COPY to HWLP_END virtual register
             Address loopEnd = extractLoopEndFromPcode(program, instr, loopId);
+            Msg.info(this, "ESP32-P4 HWLP: loopStart=" + loopStart
+                    + " loopEnd=" + loopEnd + " loopId=" + loopId);
 
             // Annotate setup instruction
             String setupComment = (loopEnd != null)
