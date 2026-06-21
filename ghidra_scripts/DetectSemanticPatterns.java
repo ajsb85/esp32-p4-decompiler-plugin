@@ -710,6 +710,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "i.*>=.*coins\\[j\\]|i.*>=.*c",                  // feasibility check
             "dp\\[i\\].*=.*dp\\[i.*-|min.*dp.*coins"        // recurrence body
         ),
+
+        // ── Kadane's max-subarray (107, 108) ─────────────────────────────────
+        new PatternDef("kadane_extend", "kadane_restart", "high",
+            "cur_sum.*\\+.*arr|if.*cur_sum.*\\+.*arr.*>.*arr",  // extend-or-restart
+            "cur_sum.*=.*arr|tmp_start.*=.*i",                 // restart branch
+            "kadane|max_sum|cur_sum"                          // naming
+        ),
+        new PatternDef("kadane_global_max", "kadane_maxupdate", "high",
+            "if.*cur_sum.*>.*max_sum|if.*kc.*>.*ks",          // global max test
+            "max_sum.*=.*cur_sum|ms.*=.*tmp_start|me.*=.*i",  // update max
+            "kadane|max_subarray|max_sum"                    // naming
+        ),
+
+        // ── Extended Euclidean GCD (109, 110) ─────────────────────────────────
+        new PatternDef("ext_gcd_unwind", "extgcd_bezout", "high",
+            "if.*b.*==.*0.*\\*x.*=.*1.*\\*y.*=.*0|if.*b.*==.*0",  // base case
+            "\\*x.*=.*y1|\\*y.*=.*x1.*-.*a.*b.*\\*.*y1",    // Bezout unwind
+            "ext_gcd|egcd|gcd.*x.*y"                        // naming
+        ),
+        new PatternDef("ext_gcd_recurse", "extgcd_recurse", "high",
+            "ext_gcd.*b.*a.*%.*b|egcd.*b.*a.*%.*b",           // recursive call
+            "a.*%.*b.*&.*x1.*&.*y1|a.*%.*b.*x1.*y1",         // a%b passed
+            "g.*=.*ext_gcd|g.*=.*egcd"                      // result capture
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

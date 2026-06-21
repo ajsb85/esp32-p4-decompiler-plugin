@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 46 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 48 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -58,6 +58,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_radix_sort.c` | LSD radix sort base-16 2-pass; {45,12,78,23,56,89,34,67}→sorted; last=89, xor=120 | `0x00085978` | |
 | `test_manacher.c` | Manacher palindrome on "ABACABA"; P max=7 (full string), sum=17 | `0x00070711` | |
 | `test_coin_change.c` | Coin change min-coins DP {1,5,12,25}; dp[11]=3,dp[14]=3,dp[30]=2 | `0x00040802` | |
+| `test_kadane.c` | Kadane max subarray {-2,1,-3,4,-1,2,1,-5,4}; max=6 at [3..6] | `0x00090636` | |
+| `test_ext_gcd.c` | Extended GCD Bezout coefficients on 3 pairs; gcd={5,6,25} sum=36 xor=26 | `0x0003241A` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -140,7 +142,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-105 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+109 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -193,6 +195,8 @@ Pattern families currently covered (51 patterns):
 | LSD radix sort | Low/high nibble key (arr&0xF, arr>>4) + stable right-to-left --cnt[key] output |
 | Manacher's palindrome | mirror=2*c-i + if(i<r)min(r-i,p[mirror]) init + T[i±p±1] expand |
 | Coin change DP | dp[0]=0; dp[i]=inf; for each coin: dp[i]=min(dp[i], dp[i-c]+1) |
+| Kadane max-subarray | if(cur+a[i]>a[i])extend else restart + global-max update idiom |
+| Extended Euclidean GCD | if(b==0)*x=1,*y=0; recursive: *x=y1, *y=x1-(a/b)*y1 |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

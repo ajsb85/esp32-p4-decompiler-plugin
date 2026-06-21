@@ -137,6 +137,7 @@ static const int dadj2[6][6]={{0,1,1,0,0,0},{0,0,0,1,0,0},{0,0,0,1,0,0},{0,0,0,0
 static int dvis2[6],dfin2[6],dtim2;
 static void dfsr2(int v){dvis2[v]=1;for(int u=0;u<6;u++)if(dadj2[v][u]&&!dvis2[u])dfsr2(u);dfin2[v]=++dtim2;}
 static const int dijk_w[5][5]={{0,2,6,0,0},{0,0,3,8,0},{0,0,0,2,5},{0,0,0,0,1},{0,0,0,0,0}};
+static int egcd2(int a,int b,int *x,int *y){if(b==0){*x=1;*y=0;return a;}int x1,y1;int g=egcd2(b,a%b,&x1,&y1);*x=y1;*y=x1-(a/b)*y1;return g;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -362,6 +363,15 @@ int main(void){
    static const int ctgts[]={11,14,30};uint32_t cs2=0,cx2=0;
    for(int k=0;k<3;k++){cs2+=(uint32_t)cdp[ctgts[k]];cx2^=(uint32_t)cdp[ctgts[k]];}
    CHECK("test_coin_change",(4u<<16)|(cs2<<8)|(cx2&0xFFu),0x00040802u);}
+  /* test_kadane: {-2,1,-3,4,-1,2,1,-5,4} n=9, max_sum=6, start=3, end=6 */
+  {static const int ka2[]={-2,1,-3,4,-1,2,1,-5,4};int ks2=ka2[0],kc2=ka2[0],kts2=0,kms2=0,kme2=0;
+   for(int i=1;i<9;i++){if(kc2+ka2[i]>ka2[i])kc2+=ka2[i];else{kc2=ka2[i];kts2=i;}
+     if(kc2>ks2){ks2=kc2;kms2=kts2;kme2=i;}}
+   CHECK("test_kadane",(9u<<16)|((uint32_t)ks2<<8)|(((uint32_t)kms2<<4)|(uint32_t)kme2),0x00090636u);}
+  /* test_ext_gcd: gcd(35,15)=5, gcd(48,18)=6, gcd(100,75)=25; sum=36, xor=26 */
+  {static const int epa[]={35,48,100},epb[]={15,18,75};uint32_t egs=0,egx=0;
+   for(int k=0;k<3;k++){int ex,ey;uint32_t eg=(uint32_t)egcd2(epa[k],epb[k],&ex,&ey);egs+=eg;egx^=eg;}
+   CHECK("test_ext_gcd",(3u<<16)|(egs<<8)|(egx&0xFFu),0x0003241Au);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
