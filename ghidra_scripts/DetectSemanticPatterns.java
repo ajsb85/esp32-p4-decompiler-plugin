@@ -4959,6 +4959,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "assign_nib.*=.*assign_nib.*<<.*1.*|.*val|tsi_nibble_build",
             "n_vars.*assign_nib.*checksum|tsi_result_encode"
         ),
+        new PatternDef("phi_inverse_sieve", "phi_inv_sieve_init", "high",
+            "phi_sieve.*\\[i\\].*=.*i|.*for.*i.*<=.*PHI_LIMIT|phi_inv_init_range",
+            "phi_sieve.*\\[j\\].*-=.*phi_sieve.*\\[j\\].*\\/.*i|phi_inv_prime_reduce",
+            "phi_sieve.*\\[i\\].*==.*i.*phi_sieve.*\\[j\\]|phi_inv_prime_detect"
+        ),
+        new PatternDef("phi_inverse_collect", "phi_inv_collect_roots", "high",
+            "phi_sieve.*\\[n\\].*==.*TARGET_M|phi_inv_match_target",
+            "inv_count.*xor_vals.*\\^=.*n|phi_inv_accumulate_xor",
+            "inv_count.*<<.*16.*xor_vals.*<<.*8.*checksum|phi_inv_result_encode"
+        ),
+        new PatternDef("phi_inverse_result", "phi_inv_encode", "medium",
+            "phi_sieve.*\\[j\\].*-=.*phi_sieve.*\\[j\\].*\\/|phi_inv_euler_step",
+            "for.*n.*1.*PHI_LIMIT.*phi_sieve.*n.*==|phi_inv_scan_range",
+            "xor_vals.*n.*inv_count.*xor_vals.*checksum|phi_inv_pack_result"
+        ),
+        new PatternDef("happy_number_digit_sq", "hn_digit_sum_sq", "high",
+            "d.*=.*n.*%.*10.*n.*\\/=.*10.*s.*\\+=.*d.*\\*.*d|hn_extract_digit_sq",
+            "while.*n.*>.*0.*d.*=.*n.*%.*10|hn_digit_loop_body",
+            "digit_sum_sq.*n.*while.*n.*!=.*1.*n.*!=.*4|hn_cycle_anchor"
+        ),
+        new PatternDef("happy_number_classify", "hn_is_happy_check", "high",
+            "while.*n.*!=.*1.*&&.*n.*!=.*4.*n.*=.*digit_sum_sq|hn_happy_termination",
+            "hn_count.*xor_happy.*\\^=.*i|hn_happy_accumulate",
+            "is_happy.*i.*hn_count.*xor_happy|hn_range_classify"
+        ),
+        new PatternDef("happy_number_result", "hn_result_encode", "medium",
+            "n.*!=.*1.*n.*!=.*4.*return.*n.*==.*1|hn_happy_return",
+            "hn_count.*<<.*16.*xor_happy.*<<.*8.*checksum|hn_pack_result",
+            "for.*i.*HN_LO.*HN_HI.*is_happy.*i|hn_iterate_range"
+        ),
+        new PatternDef("armstrong_digit_count", "arm_count_digits", "high",
+            "do.*d\\+\\+.*tmp.*\\/=.*10.*while.*tmp.*>.*0|arm_digit_count_loop",
+            "digits.*=.*count_digits.*n.*sum.*0.*tmp.*=.*n|arm_init_power_sum",
+            "uint_pow.*d.*digits.*sum.*\\+=|arm_accumulate_power"
+        ),
+        new PatternDef("armstrong_classify", "arm_is_armstrong_check", "high",
+            "sum.*==.*n.*is_armstrong|arm_self_match_test",
+            "arm_count.*xor_arm.*\\^=.*i|arm_collect_xor",
+            "for.*i.*ARM_LO.*ARM_HI.*is_armstrong.*i|arm_range_scan"
+        ),
+        new PatternDef("armstrong_result", "arm_result_encode", "medium",
+            "result.*\\*=.*base.*for.*i.*0.*i.*<.*exp|arm_int_pow_loop",
+            "xor_low.*=.*xor_arm.*&.*0xFF|arm_xor_low_byte",
+            "arm_count.*<<.*16.*xor_low.*<<.*8.*checksum|arm_pack_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
