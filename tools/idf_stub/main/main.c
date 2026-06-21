@@ -12,7 +12,6 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "nvs_flash.h"
-#include "heap_memory_layout.h"
 #include "esp_heap_caps.h"
 #include "driver/gpio.h"
 #include "driver/uart.h"

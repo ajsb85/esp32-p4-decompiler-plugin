@@ -116,38 +116,50 @@ if [[ "$ARCHIVE_COUNT" -eq 0 ]]; then
 fi
 echo "  Found $ARCHIVE_COUNT component archives"
 
-# ── Phase 2: Import archives into Ghidra project ─────────────────────────────
+# ── Phase 2: Extract .o files and import into Ghidra project ─────────────────
 echo
-echo "── Phase 2: Importing $ARCHIVE_COUNT archives into Ghidra ──"
-echo "(~2–5 min; Ghidra analyses each object file for function boundaries)"
+echo "── Phase 2: Extracting object files and importing into Ghidra ──"
+echo "(Ghidra's ELF loader requires individual .o files, not .a archives)"
+
+OBJ_DIR="/tmp/fidb-objs-$$"
+rm -rf "$OBJ_DIR"
+mkdir -p "$OBJ_DIR"
+
+# Extract all .o from every archive into per-component subdirectories.
+# Disambiguate name collisions (e.g. multiple init.c.obj) with component prefix.
+OBJ_COUNT=0
+while IFS= read -r arc; do
+    [[ -z "$arc" ]] && continue
+    # Component name = directory name (e.g. …/esp-idf/heap/libheap.a → heap)
+    comp=$(basename "$(dirname "$arc")")
+    dest="$OBJ_DIR/$comp"
+    mkdir -p "$dest"
+    (cd "$dest" && ar x "$arc" 2>/dev/null) || true
+    n=$(ls "$dest"/*.obj "$dest"/*.o 2>/dev/null | wc -l)
+    OBJ_COUNT=$((OBJ_COUNT + n))
+done <<< "$ARCHIVE_LIST"
+echo "  Extracted $OBJ_COUNT object files from $ARCHIVE_COUNT archives"
+
+# Build import-args list
+IMPORT_ARGS=()
+while IFS= read -r obj; do
+    [[ -n "$obj" ]] && IMPORT_ARGS+=(-import "$obj")
+done < <(find "$OBJ_DIR" -name "*.obj" -o -name "*.o" | sort)
 
 rm -rf "$GHIDRA_PROJ_DIR"
 mkdir -p "$GHIDRA_PROJ_DIR"
 
-# Build the -import arguments (one per archive; spaces in paths handled by array)
-IMPORT_ARGS=()
-while IFS= read -r arc; do
-    [[ -n "$arc" ]] && IMPORT_ARGS+=(-import "$arc")
-done <<< "$ARCHIVE_LIST"
-
+echo "  Running analyzeHeadless -import ($OBJ_COUNT files)…"
 "$ANALYZE_HEADLESS" \
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
     "${IMPORT_ARGS[@]}" \
     -processor "RISCV:LE:32:ESP32-P4" \
     -analysisTimeoutPerFile 60 \
-    -deleteProject \
-    2>&1 | grep -E '(INFO|WARN|ERROR|Importing|Analyzing|^$)' | tail -30
-
-# Re-import without -deleteProject so the project persists for Phase 3
-echo "  Re-opening project for fingerprinting…"
-"$ANALYZE_HEADLESS" \
-    "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
-    "${IMPORT_ARGS[@]}" \
-    -processor "RISCV:LE:32:ESP32-P4" \
-    -analysisTimeoutPerFile 60 \
-    2>&1 | grep -E '(INFO|WARN|ERROR|Importing|functions found)' | tail -30
+    2>&1 | grep -E '(ERROR|WARN|Import succeeded|functions identified)' | tail -20
 
 echo "  Import complete: project at $GHIDRA_PROJ_DIR/$GHIDRA_PROJ_NAME"
+echo "  Removing extracted objects…"
+rm -rf "$OBJ_DIR"
 
 # ── Phase 3: Run GenerateESP32P4FIDB.java ────────────────────────────────────
 echo
@@ -158,10 +170,11 @@ mkdir -p "$(dirname "$FIDB_OUT")"
 
 "$ANALYZE_HEADLESS" \
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
-    -process '*.a' \
+    -process '*.obj' \
+    -noanalysis \
     -scriptPath "$SCRIPTS_DIR" \
     -postScript GenerateESP32P4FIDB.java "$FIDB_OUT" \
-    2>&1 | grep -E '(INFO|WARN|ERROR|FIDB|Populate|fingerprint|saved|pattern)' | tail -40
+    2>&1 | grep -E '(INFO|WARN|ERROR|FIDB|Populate|fingerprint|saved|pattern|result)' | tail -60
 
 # ── Verify ────────────────────────────────────────────────────────────────────
 if [[ -f "$FIDB_OUT" ]]; then

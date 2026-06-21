@@ -8,12 +8,14 @@ idf_component_register(
         heap
         log
         nvs_flash
-        driver
-        console
         vfs
         esp_partition
         efuse
         spi_flash
         esp_rom
         mbedtls
+        esp_driver_gpio
+        esp_driver_uart
+        esp_driver_i2c
+        esp_driver_spi
 )
