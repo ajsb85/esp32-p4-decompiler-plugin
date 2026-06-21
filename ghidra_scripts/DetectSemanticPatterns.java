@@ -2358,6 +2358,52 @@ public class DetectSemanticPatterns extends GhidraScript {
             "lo.*=.*wt_cnt0.*lv.*lo.*hi.*=.*wt_cnt0.*lv.*hi|wavelet.*freq.*go.*left",
             "wt_freq|wavelet_navigate|wavelet_range_query"
         ),
+
+        // ── Gaussian elimination ────────────────────────────────────────────
+        new PatternDef("gauss_pivot_swap", "gauss_elimination_partial_pivot_swap", "high",
+            "for.*k.*=.*i.*\\+.*1.*k.*<.*GE_N.*gabs.*ga.*k.*i.*>.*gabs.*ga.*max_row.*i|pivot_find",
+            "for.*c.*=.*0.*c.*<=.*GE_N.*t.*=.*ga.*i.*c.*ga.*i.*c.*=.*ga.*max_row.*c|row_swap",
+            "gauss_pivot|partial_pivot|row_swap_augmented"
+        ),
+        new PatternDef("gauss_elim_cross_mul", "gauss_cross_multiply_integer_elim", "high",
+            "ga.*j.*c.*=.*ga.*j.*c.*\\*.*pivot.*-.*factor.*\\*.*ga.*i.*c|cross_multiply_elim",
+            "ga.*j.*c.*=.*ga.*j.*c.*\\*.*p.*-.*f.*\\*.*ga.*i.*c|integer_gauss",
+            "gauss_cross_mul|elimination_integer|augmented_row_elim"
+        ),
+        new PatternDef("gauss_back_sub", "gauss_back_substitution", "high",
+            "val.*-=.*ga.*i.*c.*\\*.*sol.*c|v.*-=.*ga.*i.*c.*sol.*c.*back.sub",
+            "sol.*i.*=.*val.*\\/.*ga.*i.*i|back_substitution.*augmented",
+            "gauss_back|back_substitution|sol_divide_pivot"
+        ),
+
+        // ── Top-k min-heap ─────────────────────────────────────────────────
+        new PatternDef("topk_evict_min", "topk_heap_evict_minimum_element", "high",
+            "if.*x.*>.*tk_heap.*0.*tk_heap.*0.*=.*x.*sift_down|if.*x.*>.*heap_min.*replace",
+            "x.*>.*tk_heap.*\\[0\\].*\\{.*tk_heap.*\\[0\\].*=.*x.*tk_sift_down|top_k_evict",
+            "topk_evict|heap_min_replace|topk_sift"
+        ),
+        new PatternDef("topk_fill_phase", "topk_heap_fill_phase_k_elements", "medium",
+            "if.*tk_hsz.*<.*K.*tk_heap.*tk_hsz\\+\\+.*=.*x.*tk_sift_up|fill.*heap.*k.*elements",
+            "if.*tk_hsz.*<.*TK_K.*tk_heap.*\\[tk_hsz\\+\\+\\]|topk_fill_phase",
+            "topk_fill|heap_fill_k|tk_hsz_check"
+        ),
+
+        // ── Stoer-Wagner minimum cut ────────────────────────────────────────
+        new PatternDef("stoer_wagner_tight", "stoer_wagner_most_tightly_connected", "high",
+            "if.*!swmrg.*v.*&&.*!inA.*v.*&&.*w.*v.*>.*max_w|most.tightly.connected.vertex",
+            "z.*=.*v.*mx.*=.*w.*v.*tightest.*connection.*A|sw_tight_vertex",
+            "stoer_wagner|sw_tightest|min_cut_tight"
+        ),
+        new PatternDef("stoer_wagner_merge", "stoer_wagner_merge_s_t_into_super", "high",
+            "swadj.*s.*v.*\\+=.*swadj.*t.*v.*swadj.*v.*s.*\\+=.*swadj.*v.*t|merge.*s.*t.*edge",
+            "sw_merged.*t.*=.*1.*merge.*last.*phase.*vertex|sw_merge_vertex",
+            "sw_merge|merge_vertex|supernode_edges"
+        ),
+        new PatternDef("stoer_wagner_phase_cut", "stoer_wagner_phase_minimum_cut", "medium",
+            "if.*cut.*<.*min_cut.*min_cut.*=.*cut|cut.*=.*w.*t.*sw_phase.*min.*cut.*record",
+            "cut.*<.*mc.*mc.*=.*cut.*sw_phase.*global.min.cut",
+            "sw_min_cut|phase_cut_record|global_min_cut"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
