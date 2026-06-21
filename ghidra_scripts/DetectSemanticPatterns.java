@@ -2716,6 +2716,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "lo.*-.*lb|upper_bound.*-.*lower_bound.*count.*occurrences",
             "mitm_count|lb_ub_count|binary_range_count"
         ),
+
+        // ── Centroid decomposition ────────────────────────────────────────────
+        new PatternDef("centroid_find", "centroid_decomp_find_centroid_heavy_child", "high",
+            "subtree_size.*>.*tree_sz.*\\/.*2|sz.*>.*n.*\\/.*2|heavy_child.*centroid",
+            "find_centroid.*v.*u.*tree_sz|recurse.*centroid.*subtree",
+            "return.*find_centroid|return.*u.*centroid"
+        ),
+        new PatternDef("centroid_removed", "centroid_decomp_removed_flag_skip", "high",
+            "removed.*\\[.*\\]|cent_removed|decomp_removed",
+            "if.*removed.*v.*continue|if.*removed.*skip",
+            "removed.*c1.*=.*1|removed.*centroid.*=.*1|mark.*removed"
+        ),
+        new PatternDef("centroid_subtree_sz", "centroid_decomp_subtree_size_dfs", "medium",
+            "int32_t.*subtree_size|int.*sz.*=.*1.*subtree",
+            "sz.*\\+=.*subtree_size.*v|sz.*\\+=.*dfs.*sz",
+            "return.*sz.*subtree|subtree.*size.*return"
+        ),
+
+        // ── K-D tree ──────────────────────────────────────────────────────────
+        new PatternDef("kd_tree_build", "kd_tree_recursive_median_split_build", "high",
+            "partition_median|sort.*axis|median.*split.*dim",
+            "split_dim.*=.*depth.*%.*DIM|split_dim.*%.*dim|cycling.*dimension",
+            "nodes.*idx.*\\.pt|left.*=.*build.*lo.*mid|right.*=.*build.*mid"
+        ),
+        new PatternDef("kd_tree_nn_search", "kd_tree_nearest_neighbour_backtrack_search", "high",
+            "best_dist2|best_dist.*=|nn.*dist.*<.*best",
+            "first.*=.*diff.*<=.*0.*\\?.*left.*:.*right|first.*second.*backtrack",
+            "diff.*\\*.*diff.*<.*best_dist2|if.*diff.*\\*.*diff.*<.*best"
+        ),
+        new PatternDef("kd_tree_dist2", "kd_tree_squared_euclidean_distance", "medium",
+            "dx.*=.*a.*x.*0.*-.*b.*x.*0|dx.*=.*a.*re.*-.*b.*re|dist.*sq.*eucl",
+            "dx.*\\*.*dx.*\\+.*dy.*\\*.*dy|squared.*euclidean|dist2.*return",
+            "dist2.*Point|dist2.*KDNode|squared.*dist.*2D"
+        ),
+
+        // ── Hungarian algorithm (Kuhn-Munkres) ───────────────────────────────
+        new PatternDef("hungarian_potential", "hungarian_row_col_potential_initialise", "high",
+            "u.*\\[.*\\].*=.*0|row.*potential.*init|u.*i.*=.*0.*v.*j.*=.*0",
+            "p.*\\[.*j.*\\].*=.*0|col.*assignment.*init|way.*\\[.*\\]",
+            "for.*i.*=.*1.*i.*<=.*n|hungarian.*init.*potential"
+        ),
+        new PatternDef("hungarian_augment", "hungarian_shortest_path_augmentation_loop", "high",
+            "minv.*\\[.*j.*\\].*=.*0x7FFFFFFF|minv.*INT_MAX|hungarian.*relax",
+            "cur.*=.*cost.*i0.*j.*-.*u.*i0.*-.*v.*j|reduced.*cost.*hungarian",
+            "do.*\\{.*used.*j1.*=.*1|hungarian.*augment.*do.*while|p.*j1.*!=.*0"
+        ),
+        new PatternDef("hungarian_path_update", "hungarian_path_reversal_and_potential_update", "medium",
+            "u.*p.*j.*\\+=.*delta|v.*j.*-=.*delta|potential.*update.*delta",
+            "j1.*=.*way.*j1|path.*reversal.*way|p.*j1.*=.*p.*j2",
+            "do.*\\{.*j2.*=.*way.*j1.*p.*j1.*=.*p.*j2|hungarian.*path.*reverse"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
