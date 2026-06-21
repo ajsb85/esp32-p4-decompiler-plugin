@@ -138,6 +138,8 @@ static int dvis2[6],dfin2[6],dtim2;
 static void dfsr2(int v){dvis2[v]=1;for(int u=0;u<6;u++)if(dadj2[v][u]&&!dvis2[u])dfsr2(u);dfin2[v]=++dtim2;}
 static const int dijk_w[5][5]={{0,2,6,0,0},{0,0,3,8,0},{0,0,0,2,5},{0,0,0,0,1},{0,0,0,0,0}};
 static int egcd2(int a,int b,int *x,int *y){if(b==0){*x=1;*y=0;return a;}int x1,y1;int g=egcd2(b,a%b,&x1,&y1);*x=y1;*y=x1-(a/b)*y1;return g;}
+static int ci_tmp2[8];
+static int merge_inv2(int *a,int lo,int hi){if(hi-lo<=1)return 0;int mid=(lo+hi)/2,cnt=merge_inv2(a,lo,mid)+merge_inv2(a,mid,hi);int i=lo,j=mid,k=lo;while(i<mid&&j<hi){if(a[i]<=a[j])ci_tmp2[k++]=a[i++];else{cnt+=mid-i;ci_tmp2[k++]=a[j++];}}while(i<mid)ci_tmp2[k++]=a[i++];while(j<hi)ci_tmp2[k++]=a[j++];for(int x=lo;x<hi;x++)a[x]=ci_tmp2[x];return cnt;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -478,6 +480,15 @@ int main(void){
    mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();MSPOP();
    mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();
    CHECK("test_min_stack",(4u<<16)|(mssum<<8)|(msxorv&0xFFu),0x00040D07u);}
+  /* test_boyer_moore_vote: {3,2,3,1,3,3,2} n=7; candidate=3, freq=4 */
+  {static const int bmva[]={3,2,3,1,3,3,2};int bmcand=bmva[0],bmcnt=1;
+   for(int i=1;i<7;i++){if(bmcnt==0){bmcand=bmva[i];bmcnt=1;}else if(bmva[i]==bmcand)bmcnt++;else bmcnt--;}
+   int bmfq=0;for(int i=0;i<7;i++)if(bmva[i]==bmcand)bmfq++;
+   CHECK("test_boyer_moore_vote",(7u<<16)|((uint32_t)bmcand<<8)|(uint32_t)bmfq,0x00070304u);}
+  /* test_count_inversions: {6,5,4,3,2,1} n=6; inv=15, xor=7 */
+  {int cia[]={6,5,4,3,2,1};uint32_t cixor=0;for(int i=0;i<6;i++)cixor^=(uint32_t)cia[i];
+   int ciinv=merge_inv2(cia,0,6);
+   CHECK("test_count_inversions",(6u<<16)|((uint32_t)ciinv<<8)|(cixor&0xFFu),0x00060F07u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

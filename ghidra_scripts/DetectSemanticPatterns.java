@@ -911,6 +911,20 @@ public class DetectSemanticPatterns extends GhidraScript {
             "ms_top--|--.*ms_top",                             // single decrement for both
             "ms_get_min|getMin|ms_min"                        // naming
         ),
+
+        // ── Sprint 47: Boyer-Moore Majority Vote ─────────────────────────────
+        new PatternDef("boyer_moore_vote", "majority_vote", "high",
+            "count.*==.*0.*candidate.*=.*arr|bmcnt.*==.*0.*bmcand", // reset branch
+            "arr.*==.*candidate.*count\\+\\+|else.*count--",        // vote up/down
+            "boyer_moore|bmcand|candidate|majority"          // naming
+        ),
+
+        // ── Sprint 47: Count Inversions (merge sort) ─────────────────────────
+        new PatternDef("merge_inversion_count", "count_inversions", "high",
+            "cnt.*\\+=.*mid.*-.*i|count.*\\+=.*mid.*-.*left", // key: cnt+=mid-i
+            "merge_count|merge_inv|if.*arr.*i.*>.*arr.*j",    // merge idiom
+            "inv_count|merge_count|count_inversions"         // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 64 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 66 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -76,6 +76,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_bitmask_enum.c` | Bitmask enumeration 2^n subsets; {2,3,7,5} div-by-3; count=6 max=15 | `0x0004060F` | |
 | `test_two_pointer.c` | Two-pointer pair sum {1..10} target=11; 5 pairs; xor of lo-values=1 | `0x000A0501` | |
 | `test_min_stack.c` | Min-stack dual array; push{5,3,7,2}; getMin seq={2,3,3,5}; sum=13 xor=7 | `0x00040D07` | |
+| `test_boyer_moore_vote.c` | Boyer-Moore majority vote {3,2,3,1,3,3,2}; candidate=3, freq=4 | `0x00070304` | |
+| `test_count_inversions.c` | Count inversions merge sort {6,5,4,3,2,1}; inv=15 xor=7 | `0x00060F07` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -158,7 +160,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-138 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+140 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -229,6 +231,8 @@ Pattern families currently covered (51 patterns):
 | Bitmask enumeration | for mask=0..1<<n: for b=0..n: if(mask&(1<<b)) sum+=items[b] |
 | Two-pointer pair sum | lo/hi converge; s==target: lo++,hi--; s<target: lo++; else hi-- |
 | Minimum stack | push: min_stk[top]=min(x,min_stk[top-1]); getMin: min_stk[top-1] |
+| Boyer-Moore majority vote | if(count==0) reset; else ==candidate count++; else count-- |
+| Count inversions (merge sort) | cnt+=mid-i when arr[right]<arr[left] in merge step |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
