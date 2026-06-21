@@ -4518,6 +4518,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "run_coin_change_tests.*cc_count_ways.*w1.*w2|coin_change_test_driver",
             "cc_unbounded_pack|coin_change_result|unbounded_ways_pack"
         ),
+
+        // ── Sprint 150: fractional_knapsack_heap ──────────────────────────────
+        new PatternDef("fkh_heap_push", "fractional_knapsack_heap_push", "high",
+            "fkh_heap.*ratio.*>=.*fkh_heap.*ratio.*break|heap_push_ratio_cmp",
+            "fkh_heap.*fkh_size.*=.*it.*fkh_size.*\\+\\+.*i.*=.*fkh_size|fkh_push_insert",
+            "fkh_push|fractional_knapsack_push|heap_push_item_ratio"
+        ),
+        new PatternDef("fkh_heap_pop", "fractional_knapsack_heap_pop", "high",
+            "fkh_heap.*0.*=.*fkh_heap.*--fkh_size|heap_pop_replace_last",
+            "largest.*=.*l.*fkh_heap.*l.*ratio.*>.*fkh_heap.*largest.*ratio|heap_sift_down_ratio",
+            "fkh_pop|fractional_knapsack_pop|heap_extract_max_ratio"
+        ),
+        new PatternDef("fkh_solve_greedy", "fractional_knapsack_greedy_fill", "high",
+            "best.*weight.*<=.*remaining.*total_value.*\\+=.*best.*value|fkh_full_item_take",
+            "total_value.*\\+=.*best.*value.*\\*.*remaining.*\\/.*best.*weight|fkh_partial_item_fraction",
+            "fkh_solve|fractional_knapsack_solve|greedy_ratio_fill"
+        ),
+
+        // ── Sprint 150: segment_add_chmin ─────────────────────────────────────
+        new PatternDef("sac_push_lazy", "segment_beats_push_lazy_add_chmin", "high",
+            "sac_push_add.*lazy_add.*\\+=.*v|sac_push_chmin.*lazy_chmin.*=.*v|segtree_beats_lazy",
+            "lazy_chmin.*!=.*SAC_INF.*lazy_chmin.*\\+=.*v|segtree_beats_chmin_adjust_add",
+            "sac_push_add|sac_push_chmin|segment_beats_lazy_propagation"
+        ),
+        new PatternDef("sac_pullup_max2", "segment_beats_pullup_second_max", "high",
+            "cnt_max.*=.*cnt_max.*\\+.*cnt_max|sac_pullup_equal_max_count",
+            "max2.*>.*max1.*max2.*max1|sac_pullup_second_max_candidate",
+            "sac_pullup|segment_beats_merge|second_max_cnt_max"
+        ),
+        new PatternDef("sac_range_chmin", "segment_beats_range_chmin_break", "high",
+            "v.*>=.*st.*nd.*max1.*return|segtree_beats_chmin_prune",
+            "v.*>.*st.*nd.*max2.*sac_push_chmin|segtree_beats_chmin_apply_leaf",
+            "sac_range_chmin|segment_beats_chmin|ji_driver_segtree_chmin"
+        ),
+
+        // ── Sprint 150: moebius_function_sieve ───────────────────────────────
+        new PatternDef("mfs_linear_sieve", "moebius_linear_sieve_build", "high",
+            "mfs_mu.*i.*=.*-1.*is_prime|moebius_prime_assignment_neg1",
+            "i.*%.*p.*==.*0.*mfs_mu.*i.*\\*.*p.*=.*0.*break|moebius_squared_factor_zero",
+            "mfs_sieve|moebius_sieve|linear_sieve_mu"
+        ),
+        new PatternDef("mfs_mu_multiplicative", "moebius_multiplicative_propagation", "high",
+            "mfs_mu.*i.*\\*.*p.*=.*-mfs_mu.*i|moebius_multiplicative_step",
+            "i.*%.*p.*!=.*0.*mfs_mu.*i.*\\*.*p.*=.*-mfs_mu|moebius_coprime_factor",
+            "mfs_mu|moebius_function|mu_multiplicative_sieve"
+        ),
+        new PatternDef("mfs_squarefree", "moebius_squarefree_count_sum", "medium",
+            "mfs_mu.*k.*\\*.*n.*\\/.*k.*\\*.*k|moebius_squarefree_formula",
+            "k.*\\*.*k.*<=.*n.*cnt.*\\+=.*mfs_mu.*k|moebius_squarefree_loop",
+            "mfs_squarefree_count|moebius_inclusion_exclusion|squarefree_count_mu"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
