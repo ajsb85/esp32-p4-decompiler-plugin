@@ -47,3 +47,19 @@ typedef unsigned long  ulong;
 
 /* Ghidra short alias for signed char */
 typedef signed char schar;
+
+/* Ghidra byte/word/dword aliases (emitted for data-type inferred values) */
+typedef uint8_t  byte;
+typedef uint16_t word;
+typedef uint32_t dword;
+typedef uint64_t qword;
+
+/* code type — used by Ghidra for function pointer targets */
+typedef void code;
+
+/* Ghidra register pseudo-variable (used for RISC-V gp if not stripped by Fix 1) */
+#if defined(__GNUC__)
+register unsigned int gp __asm__("gp");
+#else
+extern unsigned int gp;
+#endif
