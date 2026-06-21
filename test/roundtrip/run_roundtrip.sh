@@ -107,6 +107,8 @@ declare -A EXPECTED_RESULT=(
     [test_knapsack]=0x0004080A
     [test_dfs]=0x00061507
     [test_kmp]=0x00090504
+    [test_dijkstra]=0x00051608
+    [test_binary_search]=0x000A0104
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -118,7 +120,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_pie_simd test_hash test_string test_hwlp \
        test_bst test_heap test_rle test_base64 test_avl test_trie \
        test_quicksort test_dp test_mergesort test_union_find \
-       test_bfs test_knapsack test_dfs test_kmp)
+       test_bfs test_knapsack test_dfs test_kmp \
+       test_dijkstra test_binary_search)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

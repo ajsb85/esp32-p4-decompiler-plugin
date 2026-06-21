@@ -136,6 +136,7 @@ static void uf_union2(int *p,int *rk,int a,int b){a=uf_find2(p,a);b=uf_find2(p,b
 static const int dadj2[6][6]={{0,1,1,0,0,0},{0,0,0,1,0,0},{0,0,0,1,0,0},{0,0,0,0,1,0},{0,0,0,0,0,1},{0,0,0,0,0,0}};
 static int dvis2[6],dfin2[6],dtim2;
 static void dfsr2(int v){dvis2[v]=1;for(int u=0;u<6;u++)if(dadj2[v][u]&&!dvis2[u])dfsr2(u);dfin2[v]=++dtim2;}
+static const int dijk_w[5][5]={{0,2,6,0,0},{0,0,3,8,0},{0,0,0,2,5},{0,0,0,0,1},{0,0,0,0,0}};
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -239,6 +240,18 @@ int main(void){
    for(int i=0;i<7;i++)uf_union2(ufp,ufrk,uops[i][0],uops[i][1]);
    uint32_t sr=0,xr2=0;for(int i=0;i<8;i++){sr+=(uint32_t)ufrk[i];xr2^=(uint32_t)uf_find2(ufp,i);}
    CHECK("test_union_find",(8u<<16)|(sr<<8)|(xr2&0xFFu),0x00080700u);}
+  /* test_dijkstra: 5 nodes, dist={0,2,5,7,8}, sum=22=0x16, xor=8 */
+  {int dd[5]={0,9999,9999,9999,9999};int dv[5]={0,0,0,0,0};
+   for(int step=0;step<5;step++){int u=-1;for(int i=0;i<5;i++)if(!dv[i]&&(u<0||dd[i]<dd[u]))u=i;if(u<0)break;dv[u]=1;for(int v=0;v<5;v++)if(dijk_w[u][v]>0&&dd[u]+dijk_w[u][v]<dd[v])dd[v]=dd[u]+dijk_w[u][v];}
+   uint32_t ds=0,dx=0;for(int i=0;i<5;i++){ds+=(uint32_t)dd[i];dx^=(uint32_t)dd[i];}
+   CHECK("test_dijkstra",(5u<<16)|(ds<<8)|(dx&0xFFu),0x00051608u);}
+  /* test_binary_search: arr={2,4,4,4,4,8,12,16,20,24}, target=4, first=1, count=4 */
+  {static const int bsa[10]={2,4,4,4,4,8,12,16,20,24};
+   int lo=0,hi=9,fi=-1,li=-1;
+   while(lo<=hi){int m=(lo+hi)/2;if(bsa[m]<4)lo=m+1;else if(bsa[m]>4)hi=m-1;else{fi=m;hi=m-1;}}
+   lo=0;hi=9;while(lo<=hi){int m=(lo+hi)/2;if(bsa[m]<4)lo=m+1;else if(bsa[m]>4)hi=m-1;else{li=m;lo=m+1;}}
+   int cnt=(fi>=0&&li>=0)?li-fi+1:0;
+   CHECK("test_binary_search",(10u<<16)|((uint32_t)fi<<8)|(uint32_t)cnt,0x000A0104u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

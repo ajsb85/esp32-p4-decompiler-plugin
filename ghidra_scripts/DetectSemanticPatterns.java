@@ -494,6 +494,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*k\\s*==\\s*m|if.*kk\\s*==.*pat_len",         // full-match detection
             "kmp_search|kmp_find|pattern_search"              // search function name
         ),
+
+        // ── Dijkstra SSSP (71, 72) ────────────────────────────────────────────
+        new PatternDef("dijkstra_relax", "dijkstra_update", "high",
+            "dist\\[u\\].*\\+.*weight|nd.*=.*dist\\[u\\].*\\+",  // relaxation sum
+            "if.*nd.*<.*dist\\[v\\]|if.*dist.*<.*dist\\[",        // relax condition
+            "dijkstra_dist|dijkstra_vis|sssp"                    // SSSP state arrays
+        ),
+        new PatternDef("dijkstra_pick", "dijkstra_minscan", "medium",
+            "for.*!.*vis|for.*!dijkstra_vis",                    // unvisited loop
+            "dist.*<.*dijkstra_dist|dist.*<.*min",               // minimum test
+            "dijkstra|sssp_pick|pick.*unvisited"                 // function/variable name
+        ),
+
+        // ── Binary search range count (73, 74) ───────────────────────────────
+        new PatternDef("binary_search_lo_hi", "bsearch_frame", "high",
+            "int lo.*=.*0.*hi.*=.*n|lo\\s*=\\s*0.*hi\\s*=",    // lo/hi init
+            "mid.*=.*\\(lo.*\\+.*hi\\).*\\/.*2|mid=\\(lo\\+hi\\)/2",  // midpoint
+            "while.*lo.*<=.*hi|while.*lo.*hi"                   // search loop
+        ),
+        new PatternDef("binary_search_range", "bsearch_first_last", "high",
+            "result.*=.*mid.*hi.*=.*mid.*-.*1|hi.*=.*mid.*-.*1.*first", // leftmost
+            "result.*=.*mid.*lo.*=.*mid.*\\+.*1|lo.*=.*mid.*\\+.*1.*last", // rightmost
+            "bs_first|bs_last|first_occ|last_occ"               // function names
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
