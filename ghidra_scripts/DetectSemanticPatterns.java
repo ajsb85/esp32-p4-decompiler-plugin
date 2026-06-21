@@ -2908,6 +2908,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "stb_lazy\\[nd\\].*=.*0x7FFFFFFF|beats.*clear.*lazy.*sentinel|ji_driver.*reset.*lazy",
             "push_chmin.*nd.*2.*lazy|beats.*push.*children.*chmin.*lazy|stb.*lazy.*inherit"
         ),
+        // ── Sprint 124: extended_gcd ──────────────────────────────────────────
+        new PatternDef("egcd_recursive", "extended_gcd_recursive_bezout", "high",
+            "egcd|extended_gcd|extended_euclidean",
+            "px.*=.*y1|egcd.*back.*subst|bezout.*coefficient.*unwind",
+            "py.*=.*x1.*-.*a.*b.*\\*.*y1|egcd.*recursive.*coefficient|euclid.*extended.*return.*xy"
+        ),
+        new PatternDef("egcd_mod_inv", "extended_gcd_modular_inverse", "high",
+            "mod_inv|modular_inverse.*egcd|modinv.*extended",
+            "x.*%.*m.*\\+.*m.*%.*m|mod_inv.*normalise.*negative|inverse.*adjust.*mod.*positive",
+            "egcd.*a.*m.*&.*x|extended.*gcd.*inverse.*from.*bezout|mod_inv.*return.*x.*percent.*m"
+        ),
+        new PatternDef("egcd_base_case", "extended_gcd_base_case_identity", "medium",
+            "if.*b.*==.*0.*px.*=.*1|egcd.*base.*case.*identity|euclid.*stop.*b.*zero",
+            "px.*=.*1.*py.*=.*0|egcd.*base.*x.*one.*y.*zero|extended_euclidean.*trivial.*solution",
+            "return.*a.*if.*b.*zero|egcd.*terminal.*coefficient|euclid.*extended.*leaf.*xy"
+        ),
+        // ── Sprint 124: cuckoo_hashing ────────────────────────────────────────
+        new PatternDef("cuck_insert_evict", "cuckoo_hashing_eviction_loop", "high",
+            "cuck_insert|cuckoo.*insert.*evict|cuckoo.*hash.*kick",
+            "ev.*<.*MAX_EVICT|cuckoo.*eviction.*limit|cuckoo.*cycle.*sentinel.*return.*0",
+            "T1.*h1.*k.*=.*k|cuckoo.*place.*table1|cuckoo.*kick.*occupant.*alternate"
+        ),
+        new PatternDef("cuck_lookup_dual", "cuckoo_hashing_dual_table_lookup", "high",
+            "cuck_lookup|cuckoo.*lookup.*T1.*T2|cuckoo.*two.*table.*probe",
+            "T1\\[h1\\(k\\)\\].*==.*k.*\\|\\|.*T2\\[h2\\(k\\)\\].*==.*k|cuckoo.*check.*both.*tables",
+            "h1.*k.*%.*CAP|h2.*k.*CAP.*%.*CAP|cuckoo.*dual.*hash.*function"
+        ),
+        new PatternDef("cuck_init_tables", "cuckoo_hashing_table_initialisation", "medium",
+            "cuck_init|cuckoo.*init.*T1.*T2|cuckoo.*clear.*both.*tables",
+            "T1.*i.*=.*CUCK_EMPTY|T2.*i.*=.*CUCK_EMPTY|cuckoo.*sentinel.*zero.*fill",
+            "cuckoo.*capacity.*prime|cuckoo.*EMPTY.*sentinel.*zero|cuckoo.*reset.*sub_tables"
+        ),
+        // ── Sprint 124: dominator_tree ────────────────────────────────────────
+        new PatternDef("dom_intersect", "dominator_tree_intersect_rpo", "high",
+            "dom_intersect|dominator.*intersect.*rpo|idom.*finger.*walk",
+            "rpo_idx.*b1.*>.*rpo_idx.*b2.*b1.*=.*idom.*b1|dominator.*walk.*up.*rpo.*order",
+            "while.*b1.*!=.*b2|dominator.*converge.*fingers|idom.*intersection.*rpo.*indices"
+        ),
+        new PatternDef("dom_compute_iter", "dominator_tree_iterative_dataflow", "high",
+            "dom_compute|dominator.*iterative.*dataflow|cooper.*harvey.*kennedy.*idom",
+            "new_idom.*=.*dom_intersect|dominator.*new_idom.*predecessor|idom.*changed.*repeat",
+            "idom.*DOM_UNDEF|dominator.*undefined.*initialise|dom.*changed.*=.*1.*while"
+        ),
+        new PatternDef("dom_depth_walk", "dominator_tree_depth_computation", "medium",
+            "dom_depth|dominator.*tree.*depth|idom.*depth.*walk.*root",
+            "while.*v.*!=.*DOM_ROOT.*v.*=.*idom.*v|dominator.*depth.*walk.*up",
+            "d\\+\\+.*idom|dominator.*count.*steps.*root|dom_depth.*return.*d"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
