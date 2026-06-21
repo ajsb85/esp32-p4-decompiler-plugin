@@ -93,6 +93,8 @@ declare -A EXPECTED_RESULT=(
     [test_hash]=0x21708D55
     [test_string]=0x00001014
     [test_hwlp]=0x00000824
+    [test_bst]=0x0000320A
+    [test_heap]=0x00002707
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -101,7 +103,7 @@ HARDWARE_ONLY_TESTS=(test_pie_simd test_hwlp)
 
 TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops \
-       test_pie_simd test_hash test_string test_hwlp)
+       test_pie_simd test_hash test_string test_hwlp test_bst test_heap)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

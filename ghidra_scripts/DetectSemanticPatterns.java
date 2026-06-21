@@ -63,6 +63,10 @@
 //  pie_simd_loop   Q register + for loop + ld/st        pie_simd_loop
 //  hwlp_setup      HWLP0_COUNT= or esp_lp_setup() call  hwlp_loop
 //  hwlp_counted_loop HWLP COUNT+START+END writes present hwlp_counted
+//  bst_insert        .left/.right + recursive insert call bst_insert
+//  bst_inorder       .left/.right + inorder name in body  bst_traverse
+//  min_heap          2*i+1/2 child-index + sift idiom     heap_op
+//  heap_extract      extract_min + sift_down call          heap_extract
 //
 // ── Output format ────────────────────────────────────────────────────────────
 //
@@ -319,6 +323,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "HWLP[01]_COUNT\\s*=",                        // count register write
             "HWLP[01]_END\\s*=",                          // end address write (callotherfixup)
             "HWLP[01]_START\\s*="                         // start address write
+        ),
+
+        // ── Data-structure patterns ───────────────────────────────────────────
+        // Detected from decompiled C produced by Ghidra after analysing BST and
+        // heap fixtures.  Characteristic idioms survive decompilation faithfully.
+        new PatternDef("bst_insert", "bst_insert", "high",
+            "\\.left|->left",                             // left child field dereference
+            "\\.right|->right",                           // right child field dereference
+            "bst_insert|binsert|insert.*left.*right"      // recursive insert call or pattern
+        ),
+        new PatternDef("bst_inorder", "bst_traverse", "medium",
+            "\\.left|->left",                             // left child
+            "\\.right|->right",                           // right child
+            "inorder|traverse|in_order"                   // traversal function name
+        ),
+        new PatternDef("min_heap", "heap_op", "high",
+            "2\\s*\\*\\s*[ij]\\s*\\+\\s*[12]",           // 2*i+1 or 2*i+2 child index
+            "[ij]\\s*-\\s*1\\s*\\)\\s*/\\s*2|\\(i-1\\)/2",  // (i-1)/2 parent index
+            "sift_down|sift_up|heap_arr|heap_sz"          // heap maintenance idiom
+        ),
+        new PatternDef("heap_extract", "heap_extract", "high",
+            "extract_min|heap_extract|sift_down",         // extract operation
+            "2\\s*\\*\\s*[ij]\\s*\\+",                   // child index formula
+            "heap_arr|heap_sz|heap\\["                    // array-based heap
         ),
     };
 

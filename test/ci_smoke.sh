@@ -140,6 +140,31 @@ int main(void){
   {uint32_t vge=gray_encode(0x1234u);CHECK("test_bitops",gcd_e(1071,462)^swap32(0x12345678u)^nibble_swap(0xABCDu)^par32(0xDEADBEEFu)^vge^gray_decode(vge)^sat_add(0xFFFF0000u,0x00010000u)^pop_k(0xDEADBEEFu),0x87A97826u);}
   {static const uint8_t hm[8]={0x48,0x65,0x6C,0x6C,0x6F,0x21,0x42,0x00};CHECK("test_hash",djb2_h(hm,8)^fnv1a_h(hm,8)^poly_h(hm,8,31u),0x21708D55u);}
   {static const char hay[]="hello world hello";static const char ndl[]="hello";uint32_t sl=my_strlen2(hay);uint32_t mc=my_memcmp2((const uint8_t*)"hello",(const uint8_t*)"hello",5);uint32_t sc=my_strchr_cnt(hay,'l');uint32_t ns=needle_srch(hay,17u,ndl,5u);CHECK("test_string",sl^(mc==0u?0x1000u:0u)^sc^ns,0x00001014u);}
+  /* test_bst: BST insert {7,3,10,1,5,8,12,4}, in-order XOR and sum */
+  {typedef struct{int key,left,right;}BN;static BN bp[16];static int bn=0;static uint32_t gx=0,gs=0;
+   bn=0;gx=0;gs=0;
+   /* inline bst_alloc */
+#define BALLOC(k) ({int _i=bn++;bp[_i].key=(k);bp[_i].left=-1;bp[_i].right=-1;_i;})
+   /* iterative insert to avoid recursive macro issues */
+   int root=-1;
+   static const int bkeys[8]={7,3,10,1,5,8,12,4};
+   for(int _k=0;_k<8;_k++){int v=bkeys[_k];if(root<0){root=BALLOC(v);}else{int c=root;while(1){if(v<bp[c].key){if(bp[c].left<0){bp[c].left=BALLOC(v);break;}else c=bp[c].left;}else if(v>bp[c].key){if(bp[c].right<0){bp[c].right=BALLOC(v);break;}else c=bp[c].right;}else break;}}}
+   /* iterative in-order using explicit stack */
+   int stk[16],top=0;int cur=root;
+   while(cur>=0||top>0){while(cur>=0){stk[top++]=cur;cur=bp[cur].left;}cur=stk[--top];gx^=(uint32_t)bp[cur].key;gs+=(uint32_t)bp[cur].key;cur=bp[cur].right;}
+#undef BALLOC
+   CHECK("test_bst",(gs<<8)|(gx&0xFFu),0x0000320Au);}
+  /* test_heap: min-heap insert {5,3,8,1,7,2,9,4}, extract-min all */
+  {static int ha[16];int hsz=0;
+#define HSWAP(a,b) do{int _t=ha[a];ha[a]=ha[b];ha[b]=_t;}while(0)
+   static const int hv[8]={5,3,8,1,7,2,9,4};
+   /* insert */
+   for(int _i=0;_i<8;_i++){ha[hsz++]=hv[_i];int _j=hsz-1;while(_j>0){int _p=(_j-1)/2;if(ha[_p]>ha[_j]){HSWAP(_p,_j);_j=_p;}else break;}}
+   /* extract all */
+   uint32_t hx=0,hs=0;
+   while(hsz>0){int min=ha[0];ha[0]=ha[--hsz];int _i=0;while(1){int l=2*_i+1,r=2*_i+2,m=_i;if(l<hsz&&ha[l]<ha[m])m=l;if(r<hsz&&ha[r]<ha[m])m=r;if(m==_i)break;HSWAP(_i,m);_i=m;}hx^=(uint32_t)min;hs+=(uint32_t)min;}
+#undef HSWAP
+   CHECK("test_heap",(hs<<8)|(hx&0xFFu),0x00002707u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
