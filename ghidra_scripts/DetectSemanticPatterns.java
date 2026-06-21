@@ -5049,6 +5049,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "persist_sum.*\\+=.*additive_persistence|dr_persist_accum",
             "n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|dr_pack_result"
         ),
+        new PatternDef("schroeder_recurrence", "schroeder_recur_verify", "high",
+            "6.*\\*.*n.*-.*3.*\\*.*s.*n.*-.*1|sch_coeff_a",
+            "n.*-.*2.*\\*.*s.*n.*-.*2|sch_coeff_b",
+            "lhs.*==.*rhs.*verify_count|sch_verify_loop"
+        ),
+        new PatternDef("schroeder_xor_checksum", "schroeder_xor_accum", "medium",
+            "xor_acc.*\\^=.*s.*\\[.*n.*\\]|sch_xor_step",
+            "metric_a.*verify_count.*0xFF|sch_metric_a",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8|sch_pack"
+        ),
+        new PatternDef("schroeder_boundary", "schroeder_boundary_check", "medium",
+            "if.*metric_a.*==.*0.*metric_a.*=|sch_guard_a",
+            "if.*metric_b.*==.*0.*metric_b.*=|sch_guard_b",
+            "if.*metric_a.*==.*metric_b.*metric_b.*\\^=|sch_guard_neq"
+        ),
+        new PatternDef("narayana_pascal", "narayana_pascal_build", "high",
+            "C.*n.*0.*=.*1.*C.*n.*k.*=.*C.*n.*-.*1.*k.*-.*1.*\\+.*C.*n.*-.*1.*k|nar_pascal_row",
+            "for.*n.*0.*n.*<=.*10.*C.*n.*0.*=.*1|nar_pascal_outer",
+            "C.*n.*k.*C.*n.*k.*-.*1.*\\/.*n|nar_narayana_formula"
+        ),
+        new PatternDef("narayana_peak_verify", "narayana_peak_check", "high",
+            "if.*k.*==.*1.*v.*==.*1.*edge_ok|nar_left_edge",
+            "if.*k.*==.*n.*v.*==.*1.*edge_ok|nar_right_edge",
+            "row_sum.*==.*catalan.*n.*catalan_ok|nar_catalan_check"
+        ),
+        new PatternDef("narayana_result", "narayana_result_encode", "medium",
+            "metric_a.*edge_ok.*&.*0xFF|nar_metric_edge",
+            "metric_b.*catalan_ok.*&.*0xFF|nar_metric_catalan",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|nar_pack"
+        ),
+        new PatternDef("bell_triangle", "bell_triangle_build", "high",
+            "bell_prev.*0.*=.*bell_row.*r.*-.*1|bell_triangle_seed",
+            "bell_prev.*c.*=.*bell_prev.*c.*-.*1.*\\+.*bell_row.*c.*-.*1|bell_triangle_step",
+            "bell_row.*c.*=.*bell_prev.*c|bell_triangle_copy"
+        ),
+        new PatternDef("bell_verify", "bell_verify_known", "high",
+            "uint32_t.*known.*10.*=.*1.*1.*2.*5.*15.*52|bell_known_table",
+            "b.*==.*known.*i.*match_count\\+\\+|bell_match_check",
+            "xor_acc.*\\^=.*b|bell_xor_accum"
+        ),
+        new PatternDef("bell_result", "bell_result_encode", "medium",
+            "metric_a.*match_count.*&.*0xFF|bell_metric_match",
+            "metric_b.*xor_acc.*\\^.*xor_acc.*>>.*16.*&.*0xFF|bell_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|bell_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
