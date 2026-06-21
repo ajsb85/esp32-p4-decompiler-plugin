@@ -5274,6 +5274,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xor_acc.*\\^=.*a\\[i\\].*&.*0xFF|recaman_xor_acc",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|recaman_pack"
         ),
+
+        // ── automorphic_numbers ───────────────────────────────────────────────
+        new PatternDef("automorphic_check", "automorphic_squaremod", "high",
+            "sq.*=.*n.*\\*.*n|automorphic_square_compute",
+            "mod.*\\*=.*10|while.*tmp.*>.*0.*mod.*\\*=.*10|automorphic_power10",
+            "sq.*%.*mod.*==.*n|return.*sq.*%.*mod.*==.*n|automorphic_endswith_check"
+        ),
+        new PatternDef("automorphic_digit_count", "automorphic_digitlen", "medium",
+            "while.*tmp.*>.*0.*tmp.*\\/=.*10|automorphic_digit_loop",
+            "d\\+\\+|digit_sum.*\\+=.*d|automorphic_count_digits",
+            "is_automorphic.*i|for.*i.*<=.*limit.*is_automorphic|automorphic_scan_range"
+        ),
+        new PatternDef("automorphic_result", "automorphic_result_encode", "medium",
+            "count.*&.*0xFF|out_count.*out_digit_sum|automorphic_metric_pack",
+            "automorphic_compute.*limit|automorphic_compute.*10000|automorphic_driver",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|automorphic_pack"
+        ),
+
+        // ── catalan_ballot_problem ────────────────────────────────────────────
+        new PatternDef("ballot_comb", "ballot_comb_compute", "high",
+            "result.*=.*result.*\\*.*\\(n.*-.*i\\).*\\/.*\\(i.*\\+.*1\\)|ballot_comb_iter",
+            "if.*k.*>.*n.*-.*k.*k.*=.*n.*-.*k|ballot_comb_symmetry",
+            "comb.*n.*b.*-.*comb.*n.*b.*-.*1|ballot_reflection_formula"
+        ),
+        new PatternDef("ballot_number", "ballot_number_compute", "high",
+            "if.*a.*<=.*b.*return.*0|ballot_invalid_check",
+            "total.*=.*a.*\\+.*b|ballot_total_votes",
+            "comb.*total.*b.*-.*comb.*total.*b.*-.*1|ballot_path_count"
+        ),
+        new PatternDef("ballot_result", "ballot_result_encode", "medium",
+            "pairs\\[8\\]\\[2\\]|ballot_test_pairs",
+            "xor_acc.*\\^=.*bn|sum.*\\+=.*bn|ballot_accumulate",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|ballot_pack"
+        ),
+
+        // ── fuss_catalan ──────────────────────────────────────────────────────
+        new PatternDef("fuss_catalan_compute", "fuss_catalan_formula", "high",
+            "n.*=.*\\(p.*\\+.*1\\).*\\*.*m|fuss_catalan_nn_compute",
+            "denom.*=.*p.*\\*.*m.*\\+.*1|fuss_catalan_denominator",
+            "comb.*n.*m.*\\/.*denom|fuss_catalan_divide"
+        ),
+        new PatternDef("fuss_catalan_enum", "fuss_catalan_loop", "high",
+            "for.*p.*=.*1.*p.*<=.*3|fuss_catalan_p_range",
+            "for.*m.*=.*0.*m.*<=.*4|fuss_catalan_m_range",
+            "fc.*=.*fuss_catalan.*p.*m|fuss_catalan_call"
+        ),
+        new PatternDef("fuss_catalan_result", "fuss_catalan_result_encode", "medium",
+            "xor_acc.*\\^=.*fc|sum.*\\+=.*fc|fuss_catalan_accumulate",
+            "n_tests.*=.*15|fuss_catalan_test_count",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|fuss_catalan_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
