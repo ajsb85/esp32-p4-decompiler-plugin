@@ -2812,6 +2812,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "next.*c.*==.*-1.*return.*0|sam.*missing.*transition.*reject|sam.*contains.*walk",
             "cur.*=.*next.*c|sam.*follow.*transition|sam.*accept.*substring.*return.*1"
         ),
+        // ── Sprint 122: link_cut_tree ─────────────────────────────────────────
+        new PatternDef("lct_access", "link_cut_tree_access_preferred_path", "high",
+            "lct_access|lct.*preferred.*path|access.*splay.*path.*root",
+            "lct_is_root|lct.*path.*parent.*pointer|while.*par.*!=.*-1.*splay",
+            "lct.*ch.*1.*=.*last|lct.*cut.*preferred.*child|lct.*attach.*last.*node"
+        ),
+        new PatternDef("lct_splay_rotate", "link_cut_tree_splay_rotate_operation", "high",
+            "lct_splay|lct_rotate|lct.*zig.*zig.*zig.*zag",
+            "lct_push_all|lct.*push.*lazy.*flags.*root.*down|lct.*push_rev.*ancestor",
+            "lct.*ch.*k.*1.*=.*w|lct.*rotate.*y.*z|lct.*splay.*amortise"
+        ),
+        new PatternDef("lct_link_cut", "link_cut_tree_link_cut_connectivity", "high",
+            "lct_link|lct_cut|lct.*make_root.*link.*cut",
+            "lct_make_root|lct.*re.*root.*represented.*tree|lct.*rev.*=.*1",
+            "lct_connected|lct_find_root|lct.*find.*root.*same.*tree"
+        ),
+        // ── Sprint 122: palindrome_tree ───────────────────────────────────────
+        new PatternDef("pt_init_roots", "palindrome_tree_imaginary_root_init", "high",
+            "pt.*len.*=.*-1|eertree.*odd.*root|palindrome_tree.*root.*minus.*one",
+            "pt.*len.*=.*0|eertree.*even.*root|palindrome_tree.*even.*empty.*palindrome",
+            "pt.*link.*=.*0|eertree.*suffix.*link.*root.*self|pt.*imaginary.*root"
+        ),
+        new PatternDef("pt_get_link", "palindrome_tree_suffix_link_walk", "high",
+            "pt_get_link|eertree.*get.*link|palindrome.*walk.*suffix.*link",
+            "pt_str.*left.*==.*pt_str.*pos|eertree.*palindrome.*extend.*check|left.*=.*pos.*pt.*len.*-.*1",
+            "v.*=.*pt.*link|eertree.*suffix.*link.*follow|palindrome_tree.*walk.*to.*root"
+        ),
+        new PatternDef("pt_add_char", "palindrome_tree_add_character_extend", "medium",
+            "pt_add|eertree.*add.*character|palindrome_tree.*extend.*char",
+            "pt.*sz\\+\\+|eertree.*new.*node.*palindrome|pt.*nw.*=.*pt_sz",
+            "pt.*len.*=.*pt.*cur.*len.*\\+.*2|eertree.*new.*palindrome.*length|pt.*link.*=.*1.*single.*char"
+        ),
+        // ── Sprint 122: convex_hull_trick ─────────────────────────────────────
+        new PatternDef("cht_add_line", "convex_hull_trick_add_line_to_hull", "high",
+            "cht_add|cht.*add.*line.*hull|convex_hull_trick.*insert.*line",
+            "cht_bad|cht.*remove.*middle.*line|hull.*bad.*line.*prune",
+            "hull.*sz--|hull.*pop.*dominated.*line|cht.*maintain.*lower.*envelope"
+        ),
+        new PatternDef("cht_query_min", "convex_hull_trick_query_minimum", "high",
+            "cht_query|cht.*query.*minimum|convex_hull.*minimum.*at.*x",
+            "ptr_idx.*\\+.*1.*<.*hull_sz|cht.*monotone.*pointer.*walk|cht.*amortised.*query",
+            "hull.*ptr_idx.*m.*\\*.*x.*\\+.*hull.*ptr_idx.*q|cht.*evaluate.*line.*at.*x|cht.*return.*min.*y"
+        ),
+        new PatternDef("cht_dp_slope", "convex_hull_trick_dp_slope_optimisation", "medium",
+            "cht_add.*-2.*prefix|cht.*slope.*dp.*transition|convex_hull.*dp.*optimise",
+            "dp.*i.*=.*cht_query.*prefix.*i.*\\+.*prefix.*i.*prefix.*i|cht.*dp.*recurrence|slope_trick.*dp",
+            "prefix.*i.*\\*.*prefix.*i|cht.*intercept.*dp.*j.*prefix.*j.*squared|cht.*line.*per.*dp.*state"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
