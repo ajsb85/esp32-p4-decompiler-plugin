@@ -2526,44 +2526,149 @@ public class DetectSemanticPatterns extends GhidraScript {
 
         // ── Stern-Brocot tree ───────────────────────────────────────────────
         new PatternDef("sb_mediant_step", "stern_brocot_mediant_computation", "high",
-            new String[]{"mn.*=.*ln.*\\+.*rn", "md.*=.*ld.*\\+.*rd", "mediant"},
-            new String[]{"hash", "bloom"}
+            "mn.*=.*ln.*\\+.*rn",
+            "md.*=.*ld.*\\+.*rd",
+            "mediant"
         ),
         new PatternDef("sb_boundary_update", "stern_brocot_boundary_update_on_compare", "high",
-            new String[]{"mn.*\\*.*q.*<.*p.*\\*.*md", "ln.*=.*mn", "rn.*=.*mn"},
-            new String[]{"matrix", "segment"}
+            "mn.*\\*.*q.*<.*p.*\\*.*md",
+            "ln.*=.*mn",
+            "rn.*=.*mn"
         ),
         new PatternDef("sb_depth_count", "stern_brocot_depth_counter_increment", "medium",
-            new String[]{"depth\\+\\+", "mn.*==.*p", "md.*==.*q", "sb_depth"},
-            new String[]{"bfs", "dfs"}
+            "depth\\+\\+",
+            "mn.*==.*p",
+            "md.*==.*q"
         ),
 
         // ── Barrett modular reduction ────────────────────────────────────────
         new PatternDef("barrett_factor_precompute", "barrett_reciprocal_factor_precompute", "high",
-            new String[]{"factor.*=.*1ULL.*<<.*32.*\\/.*m", "barrett_init", "uint64"},
-            new String[]{"montgomery", "fermat"}
+            "factor.*1ULL.*<<.*32",
+            "barrett_init"
         ),
         new PatternDef("barrett_q_shift", "barrett_approximate_quotient_right_shift", "high",
-            new String[]{">>.*32", "\\(uint64\\).*x.*\\*.*factor", "barrett_reduce"},
-            new String[]{"gcd", "euler"}
+            ">>.*32",
+            "factor.*\\*.*x|x.*\\*.*factor",
+            "barrett_reduce"
         ),
         new PatternDef("barrett_correction", "barrett_single_subtraction_correction", "medium",
-            new String[]{"r.*=.*x.*-.*q.*\\*.*b\\.m", "if.*r.*>=.*b\\.m.*r.*-=.*b\\.m"},
-            new String[]{"miller", "ntt"}
+            "r.*=.*x.*-.*q.*m",
+            "if.*r.*>=.*m.*r.*-=.*m"
         ),
 
         // ── Cantor expansion ─────────────────────────────────────────────────
         new PatternDef("cantor_factoradic_digit", "cantor_count_smaller_right_factoradic", "high",
-            new String[]{"p\\[j\\].*<.*p\\[i\\]", "rank.*\\+=.*cnt.*\\*.*fact", "cantor_encode"},
-            new String[]{"hash", "trie"}
+            "p\\[j\\].*<.*p\\[i\\]",
+            "rank.*\\+=.*cnt.*\\*.*fact",
+            "cantor_encode"
         ),
         new PatternDef("cantor_decode_select", "cantor_decode_select_kth_unused_element", "high",
-            new String[]{"idx.*=.*rank.*\\/.*f", "rank.*=.*rank.*%.*f", "used\\[v\\]"},
-            new String[]{"segment", "fenwick"}
+            "idx.*=.*rank.*\\/.*f",
+            "rank.*=.*rank.*%.*f",
+            "used\\[v\\]"
         ),
         new PatternDef("cantor_factorial_weight", "cantor_expansion_factorial_position_weight", "medium",
-            new String[]{"fact.*n.*-.*1.*-.*i", "cantor_decode", "used.*=.*1"},
-            new String[]{"fib", "catalan"}
+            "fact.*n.*-.*1.*-.*i",
+            "cantor_decode",
+            "used.*=.*1"
+        ),
+
+        // ── Persistent segment tree ──────────────────────────────────────────
+        new PatternDef("pst_clone_node", "persistent_segtree_clone_node_on_update", "high",
+            "ps_l.*n.*=.*ps_l.*t.*ps_r.*n.*=.*ps_r.*t.*ps_s.*n.*=.*ps_s.*t.*\\+.*delta|clone.*old.*node",
+            "n.*=.*ps_new.*ps_l\\[n\\].*=.*ps_l\\[t\\].*ps_r\\[n\\].*=.*ps_r\\[t\\]|persistent_clone",
+            "pst_clone|persistent_node_copy|segtree_version"
+        ),
+        new PatternDef("pst_version_chain", "persistent_segtree_version_root_array", "high",
+            "ps_root.*ver.*\\+.*1.*=.*ps_update.*ps_root.*ver|root.*\\[.*\\+.*1.*\\].*=.*update.*root.*ver",
+            "root_array.*version.*chain|ps_root.*\\[.*\\].*ps_update|version_chain",
+            "pst_version|version_root|functional_segtree"
+        ),
+        new PatternDef("pst_old_query", "persistent_segtree_historical_query", "medium",
+            "ps_query.*ps_root.*old_ver|query.*version.*1.*vs.*version.*3|historical_range",
+            "ps_root\\[1\\].*query.*ps_root\\[3\\]|old_version.*query.*new_version",
+            "pst_query_old|historical_sum|immutable_version_query"
+        ),
+
+        // ── Mo's algorithm (offline range queries) ───────────────────────────
+        new PatternDef("mo_distinct_add", "mo_algorithm_add_increment_distinct", "high",
+            "if.*\\+\\+mo_freq.*x.*==.*1.*mo_distinct\\+\\+|if.*\\+\\+freq.*x.*==.*1.*n_distinct\\+\\+",
+            "freq\\[x\\].*==.*1.*\\{.*distinct\\+\\+|count_distinct_add.*freq_one",
+            "mo_add_distinct|distinct_inc|freq_new_element"
+        ),
+        new PatternDef("mo_distinct_remove", "mo_algorithm_remove_decrement_distinct", "high",
+            "if.*--mo_freq.*x.*==.*0.*mo_distinct--|if.*--freq.*x.*==.*0.*n_distinct--",
+            "freq\\[x\\].*==.*0.*\\{.*distinct--|remove.*count.*zero.*distinct_dec",
+            "mo_remove_distinct|distinct_dec|freq_zero_remove"
+        ),
+        new PatternDef("mo_block_sort", "mo_algorithm_block_sorted_query_order", "high",
+            "ba.*=.*a.*l.*\\/.*MO_B.*bb.*=.*b.*l.*\\/.*MO_B.*if.*ba.*!=.*bb|block_sort_queries",
+            "l.*\\/.*MO_B.*!=.*l.*\\/.*MO_B.*r.*sort|mo_block_cmp.*a.*r.*b.*r",
+            "mo_sort|block_query_sort|mo_offline_order"
+        ),
+        new PatternDef("mo_window_expand", "mo_algorithm_expand_shrink_window", "high",
+            "while.*cur_r.*<.*r.*mo_add.*\\+\\+cur_r|while.*cur_l.*>.*l.*mo_add.*--cur_l",
+            "cur_r.*<.*r.*\\).*mo_add.*mo_arr.*\\+\\+cur_r|expand_right.*expand_left",
+            "mo_expand|mo_window|sliding_window_mo"
+        ),
+
+        // ── Tarjan bridge finding ────────────────────────────────────────────
+        new PatternDef("bridge_low_disc", "tarjan_bridge_low_disc_assignment", "high",
+            "br_disc.*u.*=.*br_low.*u.*=.*\\+\\+br_timer|disc\\[u\\].*=.*low\\[u\\].*=.*\\+\\+timer",
+            "low\\[u\\].*=.*disc\\[u\\].*=.*\\+\\+t|bridge_timer_assign.*disc.*low",
+            "bridge_disc_low|tarjan_bridge_timer|low_disc_equal"
+        ),
+        new PatternDef("bridge_detection", "tarjan_bridge_strict_low_check", "high",
+            "if.*br_low.*v.*>.*br_disc.*u.*br_n_bridges\\+\\+|if.*low.*v.*>.*disc.*u.*n_bridges",
+            "low\\[v\\].*>.*disc\\[u\\].*\\{.*n_bridges\\+\\+|strict_low_greater_disc.*bridge",
+            "bridge_check|tarjan_bridge|low_gt_disc"
+        ),
+        new PatternDef("bridge_parent_skip", "tarjan_bridge_skip_parent_edge", "medium",
+            "if.*v.*==.*parent.*continue|if.*v.*==.*par.*continue.*bridge",
+            "v.*!=.*parent.*\\{.*br_low.*update|skip_tree_parent.*bridge",
+            "bridge_parent_skip|parent_edge_skip|bridge_undirected"
+        ),
+
+        // ── Berlekamp-Massey GF(2) LFSR synthesis ────────────────────────
+        new PatternDef("bm_discrepancy", "berlekamp_massey_discrepancy_xor_accumulate", "high",
+            new String[]{"d.*\\^=.*seq.*i.*-.*j", "C.*>>.*j.*&.*1", "discrepancy"},
+            new String[]{"crc", "hash"}
+        ),
+        new PatternDef("bm_poly_xor_shift", "berlekamp_massey_connection_poly_xor_shift_update", "high",
+            new String[]{"C.*\\^=.*B.*<<.*m", "T.*=.*C", "B.*=.*T"},
+            new String[]{"reed_solomon", "ntt"}
+        ),
+        new PatternDef("bm_length_change", "berlekamp_massey_lfsr_length_increase_on_nonzero", "medium",
+            new String[]{"L.*=.*i.*\\+.*1.*-.*L", "2.*\\*.*L.*<=.*i", "m.*=.*1"},
+            new String[]{"galois", "crc32"}
+        ),
+
+        // ── Tarjan offline LCA ────────────────────────────────────────────
+        new PatternDef("tarjan_lca_ancestor_set", "tarjan_offline_lca_ancestor_assign_after_dsu_union", "high",
+            new String[]{"ancestor.*dsu_find.*u.*=.*u", "dsu_union.*u.*v", "ancestor\\["},
+            new String[]{"rmq", "binary_lifting"}
+        ),
+        new PatternDef("tarjan_lca_visited_check", "tarjan_offline_lca_answer_when_peer_visited", "high",
+            new String[]{"visited.*other", "qa.*qi.*=.*ancestor", "dsu_find.*other"},
+            new String[]{"euler_tour", "sparse_table"}
+        ),
+        new PatternDef("tarjan_lca_query_adj", "tarjan_offline_lca_query_adjacency_list_per_node", "medium",
+            new String[]{"qlist.*u.*qlist_cnt.*u", "qu.*idx.*=.*u", "qv.*idx.*=.*v"},
+            new String[]{"centroid", "heavy_light"}
+        ),
+
+        // ── Divide-and-Conquer DP optimisation ───────────────────────────
+        new PatternDef("dc_dp_midpoint", "divide_conquer_dp_midpoint_column_bisection", "high",
+            new String[]{"mid.*=.*col_lo.*\\+.*col_hi.*>>.*1", "dc_solve.*col_lo.*mid", "dc_solve.*mid.*col_hi"},
+            new String[]{"knapsack", "subset_sum"}
+        ),
+        new PatternDef("dc_dp_opt_monotone", "divide_conquer_dp_monotone_opt_range_constraint", "high",
+            new String[]{"opt_lo.*best_k", "best_k.*opt_hi", "opt.*i.*j.*=.*best_k"},
+            new String[]{"bitmask_dp", "profile_dp"}
+        ),
+        new PatternDef("dc_dp_diagonal_fill", "divide_conquer_dp_diagonal_interval_cost_recurrence", "medium",
+            new String[]{"dp.*i.*k.*\\+.*dp.*k\\+1.*j", "cost.*i.*j", "len.*=.*2"},
+            new String[]{"matrix_chain", "knuth_yao"}
         ),
     };
 
