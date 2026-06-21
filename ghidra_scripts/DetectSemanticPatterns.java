@@ -2271,6 +2271,42 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cost.*=.*mcs.*i.*k.*\\+.*mcs.*k.*\\+.*1.*j.*\\+.*p.*i.*p.*k.*p.*j",
             "mcm_cost|dimension_product|chain_split_cost"
         ),
+
+        // ── Pollard's rho factorization ─────────────────────────────────────
+        new PatternDef("pollard_quad_poly", "pollard_rho_quadratic_polynomial", "high",
+            "x.*\\*.*x.*\\+.*c.*%.*n|pr_f.*x.*c.*n.*long.*long.*x.*x.*c.*mod.*n",
+            "return.*long.long.*x.*x.*\\+.*c.*%.*n|pollard.*f.*x.*quadratic",
+            "pollard_rho|rho_poly|x_sq_plus_c"
+        ),
+        new PatternDef("pollard_floyd_cycle", "pollard_rho_floyd_double_step", "high",
+            "y.*=.*pr_f.*pr_f.*y.*c.*n.*c.*n|y.*=.*f.*f.*y.*hare.*double.step",
+            "d.*=.*pr_gcd.*pr_abs.*x.*-.*y.*n|floyd.cycle.rho",
+            "pollard_floyd|hare_tortoise_rho|double_step_rho"
+        ),
+
+        // ── Balloon Burst interval DP ───────────────────────────────────────
+        new PatternDef("balloon_burst_product", "balloon_burst_three_boundary_product", "high",
+            "b_p.*l.*\\*.*b_p.*k.*\\*.*b_p.*r|p.*l.*p.*k.*p.*r.*balloon.*burst",
+            "coins.*=.*bpa.*l.*bpa.*k.*bpa.*r.*\\+.*bs.*l.*k.*\\+.*bs.*k.*r",
+            "balloon_burst|interval_dp_coins|boundary_product"
+        ),
+        new PatternDef("balloon_last_burst", "balloon_burst_last_popped_idiom", "medium",
+            "for.*k.*=.*l.*\\+.*1.*k.*<.*r.*b_p.*l.*b_p.*k.*b_p.*r|k.*last.*burst.*open.*interval",
+            "b_dp.*l.*r.*=.*best.*last.balloon.burst.interval",
+            "balloon_memo|burst_last|interval_dp_last"
+        ),
+
+        // ── Number Theoretic Transform (NTT) ────────────────────────────────
+        new PatternDef("ntt_primitive_root", "ntt_primitive_root_of_unity", "high",
+            "ntt_pow.*NTT_W.*k.*j.*NTT_P|ntt_pow.*13.*k.*j.*17",
+            "sum.*=.*ntt_a.*j.*\\*.*ntt_pow.*w.*k.*j.*p|dft.*primitive.root.unity",
+            "ntt_w|primitive_root_unity|ntt_modular"
+        ),
+        new PatternDef("ntt_outer_inner_loop", "ntt_dft_outer_k_inner_j", "high",
+            "for.*k.*0.*NTT_N.*for.*j.*0.*NTT_N.*sum.*\\+=|outer.*k.*inner.*j.*modular.dft",
+            "ntt_X.*k.*=.*sum.*modular.*ntt_a.*j.*ntt_pow.*w.*k.*j",
+            "ntt_loop|dft_loop|ntt_outer_k"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
