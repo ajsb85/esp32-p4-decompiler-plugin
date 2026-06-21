@@ -524,6 +524,21 @@ int main(void){
   /* test_n_queens: N=4:2 N=5:10 N=6:4; sum=16 xor=12 */
   {int s4=nqueens2(4),s5=nqueens2(5),s6=nqueens2(6);
    CHECK("test_n_queens",(6u<<16)|((uint32_t)(s4+s5+s6)<<8)|((uint32_t)(s4^s5^s6)&0xFFu),0x0006100Cu);}
+  /* test_rabin_karp: text="aaabaabaab" pat="aab" n=10 m=3 BASE=26 MOD=101; matches 1,4,7 count=3 xor=2 */
+  {const char rkt[]="aaabaabaab",rkp[]="aab";int rkn=10,rkm=3,rkb=26,rkmod=101;
+   int rkpow=1;for(int i=0;i<rkm-1;i++)rkpow=rkpow*rkb%rkmod;
+   int rkph=0,rkh=0;for(int i=0;i<rkm;i++){rkph=(rkph*rkb+(rkp[i]-'a'))%rkmod;rkh=(rkh*rkb+(rkt[i]-'a'))%rkmod;}
+   uint32_t rkc=0,rkx=0;
+   for(int i=0;i<=rkn-rkm;i++){if(rkh==rkph){int ok=1;for(int j=0;j<rkm;j++)if(rkt[i+j]!=rkp[j]){ok=0;break;}if(ok){rkc++;rkx^=(uint32_t)i;}}
+     if(i<rkn-rkm){int ld=rkt[i]-'a',nx=rkt[i+rkm]-'a';rkh=((rkh+(rkmod-ld)*rkpow)%rkmod*rkb+nx)%rkmod;}}
+   CHECK("test_rabin_karp",((uint32_t)rkn<<16)|(rkc<<8)|(rkx&0xFFu),0x000A0302u);}
+  /* test_pancake_sort: {3,6,1,5,2,4} n=6 → sorted {1..6} last=6 xor=7 */
+  {int ps[]={3,6,1,5,2,4},pn=6;
+   for(int sz=pn;sz>1;sz--){int mi=0;for(int i=1;i<sz;i++)if(ps[i]>ps[mi])mi=i;
+     if(mi==sz-1)continue;if(mi!=0){int lo=0,hi=mi;while(lo<hi){int t=ps[lo];ps[lo++]=ps[hi];ps[hi--]=t;}}
+     {int lo=0,hi=sz-1;while(lo<hi){int t=ps[lo];ps[lo++]=ps[hi];ps[hi--]=t;}}}
+   uint32_t psx=0;for(int i=0;i<pn;i++)psx^=(uint32_t)ps[i];
+   CHECK("test_pancake_sort",((uint32_t)pn<<16)|((uint32_t)ps[pn-1]<<8)|(psx&0xFFu),0x00060607u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

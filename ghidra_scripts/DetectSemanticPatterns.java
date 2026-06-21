@@ -982,6 +982,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "d2.*=.*row.*-.*c|diag2.*=.*row.*-",             // anti-diag assignment
             "nq_d2|diag2|anti_diag"                          // naming
         ),
+
+        // ── Sprint 51: Rabin-Karp Rolling Hash ──────────────────────────────
+        new PatternDef("rabin_karp_rolling", "rolling_hash_search", "high",
+            "h_pow.*=.*1.*for.*h_pow.*=.*h_pow.*\\*.*RK_BASE|h_pow.*BASE.*MOD", // h_pow init loop
+            "h_txt.*=.*h_txt.*-.*lead.*\\*.*h_pow|h.*MOD.*-.*lead.*h_pow.*BASE", // remove-and-slide
+            "rabin_karp|rolling_hash|rk_txt|h_pow"          // naming
+        ),
+
+        // ── Sprint 51: Pancake Sort ──────────────────────────────────────────
+        new PatternDef("pancake_sort_flip", "pancake_sort", "high",
+            "for.*size.*=.*n.*size.*>.*1.*size--",           // outer shrink loop
+            "ps_flip.*mi.*ps_flip.*size.*-.*1|flip.*mi.*flip.*size", // double-flip pattern
+            "pancake_sort|ps_flip|pancake"                   // naming
+        ),
+        new PatternDef("pancake_find_max", "pancake_max_scan", "medium",
+            "mi.*=.*0.*for.*i.*=.*1.*i.*<.*size.*arr.*i.*>.*arr.*mi.*mi.*=.*i", // find-max in shrinking range
+            "if.*mi.*==.*size.*-.*1.*continue",              // skip-if-in-place guard
+            "pancake_sort|mi.*size|ps_arr"                   // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
