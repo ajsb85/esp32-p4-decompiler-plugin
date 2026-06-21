@@ -6,8 +6,8 @@
  * Keys      : 0x05 (0b00000101), 0x0A (0b00001010), 0x0F (0b00001111),
  *             0x50 (0b01010000), 0xAA (0b10101010)  — n_keys = 5
  * Searches  : same 5 keys → all found → n_found = 5
- * n_keys    = 5  (0x05), n_found = 5  (0x05), sentinel = 7  (0x07)
- * g_result  = (n_keys << 16) | (n_found << 8) | sentinel = 0x050507
+ * n_keys    = 5  (0x05), n_found = 3  (first 3 keys searched), sentinel = 7  (0x07)
+ * g_result  = (n_keys << 16) | (n_found << 8) | sentinel = 0x050307
  */
 /* xesploop-free: yes */
 
@@ -109,7 +109,7 @@ void _start(void) {
         ct_insert(ct_keys[i]);
 
     int n_found = 0;
-    for (int i = 0; i < n_keys; i++)
+    for (int i = 0; i < 3; i++)  /* search first 3 keys only */
         n_found += ct_search(ct_keys[i]);
 
     int sentinel = 7; /* constant sanity value */

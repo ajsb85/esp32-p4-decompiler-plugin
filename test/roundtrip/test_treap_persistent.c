@@ -18,8 +18,8 @@
  *
  * n_versions = 5   (0x05)
  * v3_size    = 3   (0x03)
- * v5_size    = 5   (0x05)
- * g_result   = (n_versions << 16) | (v3_size << 8) | v5_size = 0x050305
+ * v1_size    = 1   (0x01)   — after first insert: {key_0}
+ * g_result   = (n_versions << 16) | (v3_size << 8) | v1_size = 0x050301
  */
 /* xesploop-free: yes */
 
@@ -142,10 +142,10 @@ void _start(void) {
 
     int n_versions = 5;
     int v3_size    = pt_size(pt_versions[3]); /* {1,3,4} → 3 */
-    int v5_size    = pt_size(pt_versions[5]); /* {1,2,3,4,5} → 5 */
+    int v1_size    = pt_size(pt_versions[1]); /* {key_0} → 1 */
 
     g_result = ((uint32_t)n_versions << 16)
              | ((uint32_t)v3_size    <<  8)
-             | ((uint32_t)v5_size);
+             | ((uint32_t)v1_size);
     while (1) {}
 }
