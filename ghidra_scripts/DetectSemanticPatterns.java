@@ -2489,6 +2489,40 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*k.*<.*n.*x.*\\+=.*a\\[k\\].*\\*.*prod.*prod.*\\*=.*m\\[k\\]|garner_crt",
             "garner_reconstruct|crt_product|mixed_radix_expand"
         ),
+
+        // ── Square-root decomposition ────────────────────────────────────────
+        new PatternDef("sqrt_block_update", "sqrt_decomp_block_sum_point_update", "high",
+            "sq_blk.*idx.*\\/.*SQ_BS.*\\+=.*val.*-.*sq_arr.*idx|block.*i.*\\/.*bs.*\\+=.*delta",
+            "block\\[i.*\\/.*block_sz\\].*\\+=.*val.*-.*arr\\[i\\]|sq_blk.*update",
+            "sqrt_block_update|block_point_update|sqrt_delta_block"
+        ),
+        new PatternDef("sqrt_query_partial", "sqrt_decomp_partial_block_range_query", "high",
+            "for.*b.*=.*bl.*\\+.*1.*b.*<.*br.*b\\+\\+.*sum.*\\+=.*sq_blk.*b|full.*middle.*blocks",
+            "for.*i.*=.*l.*i.*<.*bl.*\\+.*1.*\\*.*SQ_BS.*sum.*\\+=.*sq_arr|partial_left_block",
+            "sqrt_partial_query|sqrt_range_decomp|block_range_query"
+        ),
+        new PatternDef("sqrt_same_block", "sqrt_decomp_single_block_special_case", "medium",
+            "if.*bl.*==.*br.*for.*i.*=.*l.*i.*<=.*r.*sum.*\\+=.*sq_arr|same_block_iterate",
+            "bl.*==.*br.*\\{.*for.*i.*l.*to.*r.*sq_arr|sqrt_same_block_scan",
+            "sqrt_same_block|single_block_case|sqrt_trivial_range"
+        ),
+
+        // ── Treap (rotation-based insert) ────────────────────────────────────
+        new PatternDef("treap_right_rot", "treap_right_rotation_priority_fix", "high",
+            "pool.*r.*left.*=.*pool.*l.*right.*pool.*l.*right.*=.*r.*return.*l|right_rotation_treap",
+            "l.*=.*pool.*r.*left.*pool.*r.*left.*=.*pool.*l.*right.*pool.*l.*right.*=.*r",
+            "treap_right_rot|right_rotation|treap_priority_heapify"
+        ),
+        new PatternDef("treap_left_rot", "treap_left_rotation_priority_fix", "high",
+            "pool.*r.*right.*=.*pool.*ri.*left.*pool.*ri.*left.*=.*r.*return.*ri|left_rotation_treap",
+            "ri.*=.*pool.*r.*right.*pool.*r.*right.*=.*pool.*ri.*left|treap_left_rot",
+            "treap_left_rot|left_rotation|treap_pri_fix"
+        ),
+        new PatternDef("treap_insert_rot", "treap_bst_insert_with_rotation", "high",
+            "if.*key.*<.*pool.*r.*key.*pool.*r.*left.*=.*treap_insert.*left.*key|treap_bst_insert",
+            "if.*pool.*pool.*r.*left.*\\.pri.*>.*pool.*r.*\\.pri.*r.*=.*right_rot|treap_heapify_up",
+            "treap_insert|treap_bst_rot|treap_priority_insert"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

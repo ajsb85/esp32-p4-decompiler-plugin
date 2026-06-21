@@ -73,7 +73,7 @@ static void inorder(int r)
 
 volatile uint32_t g_result;
 
-int main(void)
+void test_treap(void)
 {
     static const int keys[7] = {5, 3, 7, 1, 4, 6, 8};
     static const int pris[7] = {10,40,20,30,50,15,25};
@@ -91,5 +91,10 @@ int main(void)
              | ((uint32_t)inorder_sum         <<  8)
              | ((uint32_t)pool[root].key & 0xFFu);
     /* expected: (7<<16)|(34<<8)|4 = 0x00072204 */
-    return 0;
+}
+
+__attribute__((noreturn)) void _start(void)
+{
+    test_treap();
+    for (;;);
 }
