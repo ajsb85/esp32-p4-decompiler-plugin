@@ -562,6 +562,16 @@ int main(void){
   /* test_miller_rabin: {2,3,5,9,11,15,17,97}; primes=6 xor=127 */
   {int mrv[]={2,3,5,9,11,15,17,97};uint32_t mrc=0,mrx=0;for(int i=0;i<8;i++){if(miller_rabin2(mrv[i])){mrc++;mrx^=(uint32_t)mrv[i];}}
    CHECK("test_miller_rabin",(8u<<16)|(mrc<<8)|(mrx&0xFFu),0x0008067Fu);}
+  /* test_max_rect_histogram: {2,1,5,6,2,3} n=6; max_area=10 xor=1 */
+  {const int mrh[]={2,1,5,6,2,3};int mrhn=6,mrhtop=-1,mrhma=0,mrhstk[7];
+   for(int i=0;i<=mrhn;i++){int c=i==mrhn?0:mrh[i];while(mrhtop>=0&&mrh[mrhstk[mrhtop]]>=c){int ht=mrh[mrhstk[mrhtop--]];int w=mrhtop<0?i:i-mrhstk[mrhtop]-1;if(ht*w>mrhma)mrhma=ht*w;}mrhstk[++mrhtop]=i;}
+   uint32_t mrhx=0;for(int i=0;i<mrhn;i++)mrhx^=(uint32_t)mrh[i];
+   CHECK("test_max_rect_histogram",((uint32_t)mrhn<<16)|((uint32_t)mrhma<<8)|(mrhx&0xFFu),0x00060A01u);}
+  /* test_trapping_rain: {4,2,0,3,2,5} n=6; water=9 xor=2 */
+  {const int trh[]={4,2,0,3,2,5};int trn=6,trl=0,trr=5,trml=0,trmr=0,trw=0;
+   while(trl<trr){if(trh[trl]<trh[trr]){if(trh[trl]>=trml)trml=trh[trl];else trw+=trml-trh[trl];trl++;}else{if(trh[trr]>=trmr)trmr=trh[trr];else trw+=trmr-trh[trr];trr--;}}
+   uint32_t trx=0;for(int i=0;i<trn;i++)trx^=(uint32_t)trh[i];
+   CHECK("test_trapping_rain",((uint32_t)trn<<16)|((uint32_t)trw<<8)|(trx&0xFFu),0x00060902u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 78 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 80 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -90,6 +90,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_cycle_sort.c` | Cycle sort min-writes; {3,1,5,4,2} n=5; writes=4 xor=1 | `0x00050401` | |
 | `test_ternary_search.c` | Ternary search min(x-t)^2; 3 queries {3,5,8}→min; sum=16 xor=14 | `0x0003100E` | |
 | `test_miller_rabin.c` | Miller-Rabin primality; {2,3,5,9,11,15,17,97}; prime count=6 xor=127 | `0x0008067F` | |
+| `test_max_rect_histogram.c` | Max rect in histogram; {2,1,5,6,2,3} n=6; max_area=10 xor=1 | `0x00060A01` | |
+| `test_trapping_rain.c` | Trapping rain two-pointer; {4,2,0,3,2,5} n=6; water=9 xor=2 | `0x00060902` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -172,7 +174,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-162 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+166 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -257,6 +259,8 @@ Pattern families currently covered (51 patterns):
 | Cycle sort | position count loop; nested cycle rotation; explicit writes counter; skip-duplicates guard |
 | Ternary search | two midpoints m1/m2; (hi-lo)/3 offset; while(hi-lo>2) condition; final linear scan |
 | Miller-Rabin primality | extract 2^s factor (d>>=1; s++); squaring loop; composite verdict (r==s) |
+| Max rectangle histogram | monotonic stack; pop-while-taller; width = (top<0)?i:i-stk[top]-1 |
+| Trapping rain water | two-pointer advance-shorter-side; running max_l/max_r; water+=max-h |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

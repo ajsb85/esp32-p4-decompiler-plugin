@@ -157,6 +157,8 @@ declare -A EXPECTED_RESULT=(
     [test_cycle_sort]=0x00050401
     [test_ternary_search]=0x0003100E
     [test_miller_rabin]=0x0008067F
+    [test_max_rect_histogram]=0x00060A01
+    [test_trapping_rain]=0x00060902
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -193,7 +195,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_interpolation_search test_n_queens \
        test_rabin_karp test_pancake_sort \
        test_comb_sort test_cycle_sort \
-       test_ternary_search test_miller_rabin)
+       test_ternary_search test_miller_rabin \
+       test_max_rect_histogram test_trapping_rain)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

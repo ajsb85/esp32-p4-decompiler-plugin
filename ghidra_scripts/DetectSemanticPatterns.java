@@ -1039,6 +1039,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*r.*=.*1.*r.*<.*s.*x.*=.*x.*\\*.*x.*%.*n", // squaring iteration
             "miller_rabin|r.*==.*s|witness"                 // naming
         ),
+
+        // ── Sprint 54: Max Rectangle in Histogram ───────────────────────────
+        new PatternDef("max_rect_histogram_stack", "max_rect_histogram", "high",
+            "while.*top.*>=.*0.*&&.*h.*mrh_stk.*top.*>=.*cur", // pop-while-taller
+            "top.*<.*0.*?.*i.*:.*i.*-.*mrh_stk.*top.*-.*1",  // width formula: sentinel or stack-top
+            "mrh_stk|max_rect|max_area.*hist"                // naming
+        ),
+
+        // ── Sprint 54: Trapping Rain Water ──────────────────────────────────
+        new PatternDef("trap_rain_two_pointer", "trapping_rain_water", "high",
+            "if.*h.*left.*<.*h.*right|h\\[left\\].*<.*h\\[right\\]", // advance-shorter-side
+            "water.*+=.*max_l.*-.*h.*left|water.*+=.*max_r.*-.*h.*right", // accumulation
+            "trap_rain|rain_h|max_l.*max_r|trapping"        // naming
+        ),
+        new PatternDef("trap_rain_running_max", "rain_running_max", "medium",
+            "max_l.*=.*h.*left.*max_l.*:.*max_l|h.*left.*>=.*max_l.*max_l.*=", // running max update
+            "water.*+=.*max_l|water.*+=.*max_r",             // water accumulation
+            "trap_rain|max_l|max_r"                          // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
