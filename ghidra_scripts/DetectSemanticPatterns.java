@@ -3135,6 +3135,40 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*b.*=.*bl.*\\+.*1.*b.*<.*br.*sum.*\\+=.*bsum.*b.*for.*i.*=.*right_start.*i.*<=.*r|sqd_query",
             "sqd_query|sqrt_range_sum|block_partial_full_query"
         ),
+
+        // ── Lucas theorem (C(n,k) mod prime) ────────────────────────────────
+        new PatternDef("lucas_digit_recurse", "lucas_theorem_base_p_digit_recursion", "high",
+            "comb_mod_p.*n.*%.*p.*k.*%.*p.*p.*\\*.*lucas.*n.*\\/.*p.*k.*\\/.*p.*p.*%.*p",
+            "return.*lt_comb.*n.*p.*k.*p.*p.*\\*.*lt_lucas.*n.*p.*k.*p.*p|lucas_recursive",
+            "lucas_recurse|lucas_digits|lucas_mod_p"
+        ),
+        new PatternDef("lucas_base_case", "lucas_theorem_base_case_k_zero", "medium",
+            "if.*k.*==.*0.*return.*1|lucas_base.*k.*zero.*return.*one",
+            "k.*==.*0.*\\{.*return.*1.*\\}.*lucas.*theorem|base.*case.*lucas",
+            "lucas_base|lucas_k_zero|lucas_trivial"
+        ),
+        new PatternDef("lucas_fact_table", "lucas_theorem_factorial_table_mod_p", "high",
+            "lt_fact.*0.*=.*1.*for.*i.*=.*1.*i.*<.*p.*i\\+\\+.*lt_fact.*i.*=.*lt_fact.*i.*-.*1.*\\*.*i.*%.*p",
+            "fact\\[0\\].*=.*1.*fact\\[i\\].*=.*fact\\[i.*-.*1\\].*\\*.*i.*%.*p|factorial_mod_p_table",
+            "lucas_fact|fact_mod_p|factorial_table_p"
+        ),
+
+        // ── Bitset-accelerated subset sum DP ────────────────────────────────
+        new PatternDef("bitset_shift_or", "bitset_dp_shift_or_update", "high",
+            "dp.*=.*dp.*|.*dp.*<<.*bs_a.*i.*&.*mask|dp.*\\|=.*dp.*<<.*a.*i.*&.*mask",
+            "dp.*\\|.*dp.*<<.*weight.*bitset.*dp.*update|shift_or_bitmask_dp",
+            "bitset_shift_or|bs_dp_update|dp_shift_or"
+        ),
+        new PatternDef("bitset_popcount", "bitset_dp_popcount_achievable_sums", "medium",
+            "for.*x.*=.*dp.*x.*x.*>>=.*1.*cnt.*\\+=.*x.*&.*1|popcount.*dp.*achievable.*sums",
+            "cnt.*\\+=.*x.*&.*1.*x.*>>=.*1|__builtin_popcount.*dp.*bitset",
+            "bitset_popcount|bs_count|bitset_bit_count"
+        ),
+        new PatternDef("bitset_mask_clamp", "bitset_dp_target_width_clamp_mask", "medium",
+            "mask.*=.*1u.*<<.*BS_W.*\\+.*1.*-.*1|mask.*=.*1.*<<.*W.*\\+.*1.*-.*1.*clamp",
+            "& mask.*where.*mask.*W.*bits|bitset_clamp.*target.*width",
+            "bitset_mask|bs_width_mask|dp_clamp"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
