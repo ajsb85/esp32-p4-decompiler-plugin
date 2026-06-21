@@ -29,6 +29,8 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -237,18 +239,88 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
     }
 
     private void annotateLoopSetup(Program program, Instruction instr, MessageLog log) {
-        // The esp.lp.setup instruction encodes the loop body end as an operand.
-        // Add a comment explaining the hardware loop semantics.
         try {
-            int numOps = instr.getNumOperands();
-            String comment = "[xesploop] Hardware loop setup: loop body ends at next " +
-                             (numOps >= 3 ? instr.getDefaultOperandRepresentation(2) : "N/A") +
-                             ". Ghidra CFG may not show the back-edge correctly.";
-            instr.setComment(CommentType.PLATE, comment);
+            // Loop body starts at the instruction immediately after esp.lp.setup
+            Address loopStart = instr.getFallThrough();
+            if (loopStart == null) return;
+
+            // Loop ID encoded in rd field (op0711): 0 → loop0, 1 → loop1
+            int loopId = 0;
+            try {
+                // rd=zero(0) → loop0, rd=ra(1) → loop1 per the Sleigh definition
+                String rdStr = instr.getDefaultOperandRepresentation(0);
+                if ("ra".equals(rdStr)) loopId = 1;
+            } catch (Exception ignore) {}
+
+            // Extract lp_end address from pcode: find COPY to HWLP_END virtual register
+            Address loopEnd = extractLoopEndFromPcode(program, instr, loopId);
+
+            // Annotate setup instruction
+            String setupComment = (loopEnd != null)
+                ? String.format("[xesploop%d] Hardware loop: body %s..%s, count=rs1",
+                                loopId, loopStart, loopEnd)
+                : String.format("[xesploop%d] Hardware loop setup (lp_end not resolved)", loopId);
+            instr.setComment(CommentType.PLATE, setupComment);
+
+            if (loopEnd == null) return;
+
+            // Create a label at the loop body entry
+            try {
+                String lbl = String.format("HWLP%d_BODY_%s", loopId,
+                        loopStart.toString().replaceFirst(".*:", ""));
+                program.getSymbolTable().createLabel(loopStart, lbl, SourceType.ANALYSIS);
+            } catch (Exception ignore) {}
+
+            // Add a back-edge reference loopEnd → loopStart so the CFG shows the cycle.
+            // CONDITIONAL_JUMP: the loop either falls through (count exhausted) or jumps back.
+            program.getReferenceManager().addMemoryReference(
+                loopEnd, loopStart, RefType.CONDITIONAL_JUMP, SourceType.ANALYSIS, 0);
+
+            // Annotate the loop-end instruction
+            Instruction lpEndInstr = program.getListing().getInstructionAt(loopEnd);
+            if (lpEndInstr != null) {
+                String backEdge = String.format(
+                    "[xesploop%d] Hardware loop back-edge → %s (decrement count; jump if count≠0)",
+                    loopId, loopStart);
+                lpEndInstr.setComment(CommentType.POST, backEdge);
+            }
+        } catch (Exception e) {
+            log.appendMsg("Could not annotate loop at " + instr.getAddress() + ": " + e.getMessage());
         }
-        catch (Exception e) {
-            log.appendMsg("Could not annotate loop at " + instr.getAddress());
-        }
+    }
+
+    private Address extractLoopEndFromPcode(Program program, Instruction instr, int loopId) {
+        // HWLP0_END virtual register is at 0x5008, HWLP1_END at 0x5014.
+        // The Sleigh constructor writes: HWLP_END = lp_end (COPY pcodeop).
+        // We scan the instruction's pcode to find that COPY's input constant.
+        long hwlpEndOffset = (loopId == 0) ? 0x5008L : 0x5014L;
+        try {
+            AddressSpace regSpace =
+                program.getLanguage().getAddressFactory().getRegisterSpace();
+            for (PcodeOp op : instr.getPcode()) {
+                if (op.getOpcode() != PcodeOp.COPY) continue;
+                Varnode out = op.getOutput();
+                if (out == null) continue;
+                if (!out.getAddress().getAddressSpace().equals(regSpace)) continue;
+                if (out.getOffset() != hwlpEndOffset) continue;
+                Varnode in0 = op.getInput(0);
+                if (in0 == null || !in0.isConstant()) continue;
+                return program.getAddressFactory().getDefaultAddressSpace()
+                              .getAddress(in0.getOffset());
+            }
+        } catch (Exception ignore) {}
+
+        // Fallback: parse operand 2 display string (lp_end is the 3rd operand)
+        try {
+            String opStr = instr.getDefaultOperandRepresentation(2);
+            if (opStr != null) {
+                opStr = opStr.trim().replaceFirst("^0[xX]", "");
+                long addr = Long.parseUnsignedLong(opStr, 16);
+                return program.getAddressFactory().getDefaultAddressSpace().getAddress(addr);
+            }
+        } catch (Exception ignore) {}
+
+        return null;
     }
 
     // -------------------------------------------------------------------------

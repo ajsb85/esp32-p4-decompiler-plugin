@@ -274,6 +274,36 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for\\s*\\(",                     // vectorised loop
             "\\*\\s*q[0-7]|q[0-7]\\s*=\\s*\\*" // vector ld/st in loop body
         ),
+        new PatternDef("djb2_hash", "hash_djb2", "high",
+            "5381",                           // DJB2 magic seed
+            "<<\\s*5.*hash\\s*\\^",           // (hash<<5)+hash ^ byte
+            "\\^=.*[Bb]yte|hash.*\\^.*s\\[i\\]"
+        ),
+        new PatternDef("fnv1a_hash", "hash_fnv1a", "high",
+            "2166136261|0x811c9dc5",          // FNV offset basis
+            "16777619|0x1000193",             // FNV prime
+            "\\^=.*\\*="                      // XOR then multiply pattern
+        ),
+        new PatternDef("poly_hash", "poly_hash_eval", "medium",
+            "hash\\s*\\*.*base\\s*\\+|\\*=.*base",
+            "for\\s*\\(",
+            "hash.*\\+.*s\\[i\\]|\\+.*byte"
+        ),
+        new PatternDef("strlen_loop", "strlen_op", "high",
+            "!=\\s*0\\s*\\)|!=\\s*'\\\\0'|\\*s\\+\\+",
+            "\\+\\+.*len|len\\+\\+|n\\+\\+",
+            "while\\s*\\("
+        ),
+        new PatternDef("memcmp_pattern", "memcmp_op", "high",
+            "a\\[i\\]\\s*!=\\s*b\\[i\\]|\\*a\\s*!=\\s*\\*b",
+            "return.*i\\s*\\+\\s*1|return.*pos",
+            "for\\s*\\(.*<.*n\\b"
+        ),
+        new PatternDef("substring_search", "string_search", "medium",
+            "for\\s*\\(.*<=.*hlen|for\\s*\\(.*<.*hlen",
+            "for\\s*\\(.*<.*nlen",
+            "return.*[ij]\\b|0xFFFFFFFF"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

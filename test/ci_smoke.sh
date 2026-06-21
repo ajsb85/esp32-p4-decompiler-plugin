@@ -119,6 +119,13 @@ static uint32_t gray_encode(uint32_t n){return n^(n>>1);}
 static uint32_t gray_decode(uint32_t g){uint32_t m=g>>1;while(m){g^=m;m>>=1;}return g;}
 static uint32_t sat_add(uint32_t a,uint32_t b){uint32_t r=a+b;return(r<a)?0xFFFFFFFFu:r;}
 static uint32_t pop_k(uint32_t x){uint32_t n=0;while(x){x&=x-1;n++;}return n;}
+static uint32_t djb2_h(const uint8_t *s,uint32_t l){uint32_t h=5381u;for(uint32_t i=0;i<l;i++)h=((h<<5)+h)^s[i];return h;}
+static uint32_t fnv1a_h(const uint8_t *s,uint32_t l){uint32_t h=2166136261u;for(uint32_t i=0;i<l;i++){h^=s[i];h*=16777619u;}return h;}
+static uint32_t poly_h(const uint8_t *s,uint32_t l,uint32_t b){uint32_t h=0;for(uint32_t i=0;i<l;i++)h=h*b+s[i];return h;}
+static uint32_t my_strlen2(const char *s){uint32_t n=0;while(*s++)n++;return n;}
+static uint32_t my_memcmp2(const uint8_t *a,const uint8_t *b,uint32_t n){for(uint32_t i=0;i<n;i++)if(a[i]!=b[i])return i+1;return 0;}
+static uint32_t my_strchr_cnt(const char *s,char c){uint32_t n=0;while(*s){if(*s==c)n++;s++;}return n;}
+static uint32_t needle_srch(const char *h,uint32_t hl,const char *nd,uint32_t nl){if(!nl||nl>hl)return 0xFFFFFFFFu;for(uint32_t i=0;i<=hl-nl;i++){uint32_t j;for(j=0;j<nl;j++)if(h[i+j]!=nd[j])break;if(j==nl)return i;}return 0xFFFFFFFFu;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -131,6 +138,8 @@ int main(void){
   {uint32_t g=0xACE1u,f=0xACE1u;for(int i=0;i<32;i++){g=galois_step(g);f=fib_step(f);}CHECK("test_lfsr",g^f^lfsr_bits(0xACE1u,16),0x2F34BC35u);}
   {uint32_t xa=0,xb=0;for(int i=0;i<4;i++)xa^=(uint32_t)i;for(int i=4;i<=0x13;i++)xb^=(uint32_t)i;CHECK("test_fifo_queue",xa^xb,0x00000000u);}
   {uint32_t vge=gray_encode(0x1234u);CHECK("test_bitops",gcd_e(1071,462)^swap32(0x12345678u)^nibble_swap(0xABCDu)^par32(0xDEADBEEFu)^vge^gray_decode(vge)^sat_add(0xFFFF0000u,0x00010000u)^pop_k(0xDEADBEEFu),0x87A97826u);}
+  {static const uint8_t hm[8]={0x48,0x65,0x6C,0x6C,0x6F,0x21,0x42,0x00};CHECK("test_hash",djb2_h(hm,8)^fnv1a_h(hm,8)^poly_h(hm,8,31u),0x21708D55u);}
+  {static const char hay[]="hello world hello";static const char ndl[]="hello";uint32_t sl=my_strlen2(hay);uint32_t mc=my_memcmp2((const uint8_t*)"hello",(const uint8_t*)"hello",5);uint32_t sc=my_strchr_cnt(hay,'l');uint32_t ns=needle_srch(hay,17u,ndl,5u);CHECK("test_string",sl^(mc==0u?0x1000u:0u)^sc^ns,0x00001014u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

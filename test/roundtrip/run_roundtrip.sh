@@ -90,6 +90,8 @@ declare -A EXPECTED_RESULT=(
     [test_fifo_queue]=0x00000000
     [test_bitops]=0x87A97826
     [test_pie_simd]=0x0000109A
+    [test_hash]=0x21708D55
+    [test_string]=0x00001014
 )
 
 # test_pie_simd requires real ESP32-P4 ECO2 hardware to execute PIE instructions.
@@ -98,7 +100,7 @@ HARDWARE_ONLY_TESTS=(test_pie_simd)
 
 TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops \
-       test_pie_simd)
+       test_pie_simd test_hash test_string)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
