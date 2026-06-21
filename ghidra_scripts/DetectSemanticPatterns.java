@@ -5184,6 +5184,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*factor_sum.*&.*0xFF|semiprime_metric_factorsum",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|semiprime_pack"
         ),
+        new PatternDef("jacobsthal_recur", "jacobsthal_recurrence", "high",
+            "j_cur.*j_prev1.*\\+.*2.*\\*.*j_prev2|jacobsthal_double_prev",
+            "j_prev2.*=.*j_prev1.*j_prev1.*=.*j_cur|jacobsthal_shift",
+            "term_sum.*\\+=.*j_cur.*xor_acc.*\\^=.*j_cur.*&.*0xFF|jacobsthal_accumulate"
+        ),
+        new PatternDef("jacobsthal_init", "jacobsthal_seed_values", "medium",
+            "j_prev2.*=.*0.*j_prev1.*=.*1|jacobsthal_seed_01",
+            "term_sum.*=.*j_prev1.*xor_acc.*=.*j_prev1.*&.*0xFF|jacobsthal_init_accum",
+            "i.*=.*2.*i.*<=.*12|jacobsthal_loop_range"
+        ),
+        new PatternDef("jacobsthal_result", "jacobsthal_result_encode", "medium",
+            "metric_a.*term_sum.*%.*251|jacobsthal_metric_modprime",
+            "metric_b.*xor_acc.*&.*0xFF|jacobsthal_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|jacobsthal_pack"
+        ),
+        new PatternDef("pell_lucas_recur", "pell_lucas_recurrence", "high",
+            "q_cur.*=.*2.*\\*.*q_prev1.*\\+.*q_prev2|pell_lucas_double_plus",
+            "q_prev2.*=.*q_prev1.*q_prev1.*=.*q_cur|pell_lucas_shift",
+            "term_sum.*\\+=.*q_cur.*xor_acc.*\\^=.*q_cur.*&.*0xFF|pell_lucas_accumulate"
+        ),
+        new PatternDef("pell_lucas_init", "pell_lucas_seed_values", "medium",
+            "q_prev2.*=.*2.*q_prev1.*=.*2|pell_lucas_seed_22",
+            "term_sum.*=.*q_prev2.*\\+.*q_prev1|pell_lucas_init_sum",
+            "i.*=.*2.*i.*<=.*10|pell_lucas_loop_range"
+        ),
+        new PatternDef("pell_lucas_result", "pell_lucas_result_encode", "medium",
+            "metric_a.*term_sum.*%.*251|pell_lucas_metric_modprime",
+            "metric_b.*xor_acc.*&.*0xFF|pell_lucas_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|pell_lucas_pack"
+        ),
+        new PatternDef("perrin_recur", "perrin_recurrence", "high",
+            "p\\[i\\].*=.*p\\[i.*-.*2\\].*\\+.*p\\[i.*-.*3\\]|perrin_three_term",
+            "p\\[0\\].*=.*3.*p\\[1\\].*=.*0.*p\\[2\\].*=.*2|perrin_seed_302",
+            "i.*=.*3.*i.*<.*13|perrin_loop_from3"
+        ),
+        new PatternDef("perrin_property", "perrin_prime_property", "medium",
+            "term_sum.*\\+=.*p\\[i\\].*xor_acc.*\\^=.*p\\[i\\].*&.*0xFF|perrin_accumulate",
+            "p\\[1\\].*=.*0|perrin_zero_term",
+            "xor_acc.*\\^=.*p.*&.*0xFF|perrin_xor_loop"
+        ),
+        new PatternDef("perrin_result", "perrin_result_encode", "medium",
+            "metric_a.*term_sum.*%.*251|perrin_metric_modprime",
+            "metric_b.*xor_acc.*&.*0xFF|perrin_metric_xor",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|perrin_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
