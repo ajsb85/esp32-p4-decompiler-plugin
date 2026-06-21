@@ -3593,6 +3593,35 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*i.*<.*TD_V.*if.*td_dist.*i.*>.*longest|topo_dp_max_scan|dag_longest_path",
             "topo_dp_longest|td_dist_max|dag_longest|topological_dp_longest_path"
         ),
+
+        // ── Count-Min Sketch (probabilistic frequency estimation) ────────────
+        new PatternDef("cms_parallel_hash_update", "count_min_sketch_k_hash_update", "high",
+            "for.*i.*=.*0.*i.*<.*CMS_K.*i\\+\\+.*cms_table.*i.*cms_hash.*i.*x.*\\+\\+",
+            "for.*i.*<.*k.*table\\[i\\]\\[h_i\\(x\\)\\]\\+\\+|count_min_parallel_update",
+            "cms_update|count_min_update|cms_parallel_hash|sketch_increment"
+        ),
+        new PatternDef("cms_min_query", "count_min_sketch_minimum_over_tables", "high",
+            "mn.*=.*cms_table.*0.*cms_hash.*0.*x.*for.*i.*=.*1.*i.*<.*CMS_K.*v.*cms_table.*i.*if.*v.*<.*mn",
+            "if.*v.*<.*mn.*mn.*=.*v.*count_min_query.*min.*k.*tables|cms_estimate",
+            "cms_query|count_min_query|cms_min|sketch_frequency"
+        ),
+
+        // ── Viterbi algorithm (HMM most probable state sequence) ─────────────
+        new PatternDef("viterbi_dp_recurrence", "viterbi_dp_max_transition_times_emit", "high",
+            "vt_dp.*t.*s.*=.*best_p.*\\*.*vt_emit.*s.*vt_obs.*t.*for.*ps.*=.*0.*ps.*<.*VT_S",
+            "dp.*t.*s.*=.*argmax.*dp.*t-1.*ps.*trans.*ps.*s.*\\*.*emit.*s.*obs.*t|viterbi_update",
+            "viterbi_dp|vt_dp|viterbi_recurrence|hmm_viterbi"
+        ),
+        new PatternDef("viterbi_backpointer", "viterbi_backpointer_argmax", "high",
+            "vt_bt.*t.*s.*=.*best|bt.*t.*s.*=.*argmax_ps.*dp.*t.*-.*1.*trans.*ps.*s",
+            "backpointer.*=.*best.*argmax.*prev_state|viterbi_traceback_ptr",
+            "viterbi_bt|vt_bt|viterbi_backtrack|hmm_backpointer"
+        ),
+        new PatternDef("viterbi_traceback", "viterbi_path_traceback", "high",
+            "path.*VT_T.*-.*1.*=.*best_s.*for.*t.*=.*VT_T.*-.*2.*t.*>=.*0.*t--.*path.*t.*=.*vt_bt",
+            "path.*t.*=.*bt.*t.*\\+.*1.*path.*t.*\\+.*1.*|viterbi_retrace.*path",
+            "viterbi_traceback|vt_path|viterbi_decode|hmm_decode"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
