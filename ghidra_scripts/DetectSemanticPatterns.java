@@ -4671,6 +4671,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "parenthesization_count|bsq_paren|catalan_parenthesization_dp",
             "p.*1.*=.*1.*p.*0.*=.*0|parenthesization_init|paren_count_base"
         ),
+
+        // ── Sieve of Atkin (prime sieve via quadratic forms) ──────────────────
+        new PatternDef("atk_quadratic_flip", "atkin_quadratic_form_flag_flip", "high",
+            "flags.*n.*\\^=.*1|atkin_flip_prime_flag|sieve_atkin_toggle",
+            "4.*x2.*\\+.*y2|3.*x2.*\\+.*y2|3.*x2.*-.*y2|atkin_quadratic_forms",
+            "n.*%.*12.*==.*1.*||.*n.*%.*12.*==.*5|atkin_mod12_check|quadratic_form_residue"
+        ),
+        new PatternDef("atk_square_elim", "atkin_square_multiple_elimination", "high",
+            "r2.*=.*r.*\\*.*r.*k.*\\+=.*r2|atkin_eliminate_square_multiples",
+            "flags.*k.*=.*0.*k.*\\+=.*r2|atkin_clear_square_composites",
+            "atkin_sieve|atk_square_elim|sieve_of_atkin_squarefree"
+        ),
+        new PatternDef("atk_count_primes", "atkin_count_sieve_primes", "medium",
+            "atkin_flags.*i|atkin_count_primes|count_primes_atkin_sieve",
+            "cnt.*\\+\\+.*atkin_flags|prime_count_atkin|atkin_prime_accumulate",
+            "isqrt32|atkin_sqrt_limit|sieve_atkin_sqrt_bound"
+        ),
+
+        // ── MEX / Grundy values for combinatorial games ────────────────────────
+        new PatternDef("mex_present_mark", "mex_reachable_values_mark", "high",
+            "present.*reachable.*i|mex_mark_present|grundy_mex_bitmap_set",
+            "compute_mex|mex_grundy|minimum_excludant_compute",
+            "for.*m.*<=.*MEX_MAXN.*!present.*m.*return.*m|mex_scan_missing"
+        ),
+        new PatternDef("mex_subtraction_game", "grundy_subtraction_game_compute", "high",
+            "g.*n.*-.*1.*g.*n.*-.*2.*g.*n.*-.*3|subtraction_game_reachable",
+            "subtraction_grundy|grundy_subtraction|sub_g.*compute_mex",
+            "g.*n.*%.*4|subtraction_period4|subtraction_grundy_period"
+        ),
+        new PatternDef("mex_multi_xor", "grundy_multi_game_xor_sum", "high",
+            "nim_g.*\\[.*\\].*\\^.*nim_g|multi_game_grundy_xor|nimber_xor_combine",
+            "multi_xor.*!=.*0.*first_wins|grundy_xor_p_position|nimber_nonzero_wins",
+            "nim_pile_grundy|nim_g|single_pile_nim_grundy_value"
+        ),
+
+        // ── Goldbach conjecture verification ──────────────────────────────────
+        new PatternDef("gold_sieve_build", "goldbach_eratosthenes_sieve_build", "high",
+            "gold_is_prime.*j.*=.*0.*j.*\\+=.*i|goldbach_sieve_composite_mark",
+            "build_sieve|gold_sieve|eratosthenes_goldbach_prime_table",
+            "gold_is_prime.*0.*=.*0.*gold_is_prime.*1.*=.*0|goldbach_sieve_init"
+        ),
+        new PatternDef("gold_smallest_pair", "goldbach_find_smallest_prime_pair", "high",
+            "gold_is_prime.*p.*&&.*gold_is_prime.*n.*-.*p|goldbach_pair_check",
+            "goldbach_smallest|gold_smallest|goldbach_min_prime_decompose",
+            "p.*<=.*n.*\\/.*2.*gold_is_prime|goldbach_half_bound_scan"
+        ),
+        new PatternDef("gold_count_pairs", "goldbach_count_prime_pairs", "medium",
+            "goldbach_count_pairs|gold_count|goldbach_pair_count_unordered",
+            "cnt.*\\+\\+.*gold_is_prime.*p.*&&.*gold_is_prime.*n.*-.*p|goldbach_accumulate_pairs",
+            "goldbach_verify_all|gold_verify|goldbach_all_even_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
