@@ -1,64 +1,48 @@
-/* SPDX-License-Identifier: Apache-2.0
- * ESP32-P4 decompiler plugin — Euler's Totient function (prime-factorisation) fixture.
- *
- * Compute φ(n) via iterative prime factorisation:
- *   result = n
- *   for p = 2 while p*p <= n:
- *       if n % p == 0:
- *           result -= result / p      (multiply by 1-1/p)
- *           while n % p == 0: n /= p  (strip all factors of p)
- *   if n > 1: result -= result / n    (remaining prime factor)
- *
- * Distinctive decompiler idioms:
- *   1. `while (n % p == 0) n /= p` — strip prime power (repeated trial division)
- *   2. `result -= result / p`       — Euler product formula step
- *   3. `p * p <= n` loop bound       — trial division up to √n
- *   4. `if (n > 1) result -= result / n` — handle final prime > √original_n
- *
- * Tests: φ(12)=4, φ(13)=12, φ(36)=12, φ(100)=40
- *
- * n_tests  = 4
- * sum      = 4+12+12+40 = 68  = 0x44
- * xor      = 4^12^12^40 = 44  = 0x2C
- *
- * g_result = (n_tests << 16) | (sum << 8) | xor = 0x0004442C
+/* test_euler_totient.c
+ * Purpose   : Validate Euler's totient function via multiplicative sieve
+ * Algorithm : Initialize phi[i]=i, then for each prime p (detected when
+ *             phi[p]==p during iteration), subtract phi[j]/p for all multiples
+ *             j of p.  Implements phi[n] = n * prod(1 - 1/p) over prime p|n.
+ * Input     : limit = 30  (compute phi[1..30])
+ * Metrics   : n_primes = 10 (primes in [2,30]: 2,3,5,7,11,13,17,19,23,29)
+ *             sum_phi_primes = sum of phi[p] for prime p <= 30
+ *                           = 1+2+4+6+10+12+16+18+22+28 = 119 = 0x77
+ *             max_phi = phi[29] = 28 = 0x1C
+ * g_result  = (n_primes << 16) | (sum_phi_primes << 8) | max_phi
+ *           = (10 << 16) | (119 << 8) | 28 = 0x0A771C
  */
+/* xesploop-free: yes */
+
 #include <stdint.h>
 
 volatile uint32_t g_result;
 
-/* ── Euler's totient ─────────────────────────────────────────────────────────── */
+#define ET_LIMIT 30
+static int et_phi[ET_LIMIT + 1];
 
-static int euler_phi(int n)
-{
-    int result = n;
-    for (int p = 2; p * p <= n; p++) {
-        if (n % p == 0) {
-            result -= result / p;        /* multiply by (1 - 1/p) */
-            while (n % p == 0) n /= p;  /* strip all p factors   */
+static void et_sieve(void) {
+    for (int i = 0; i <= ET_LIMIT; i++) et_phi[i] = i;
+    for (int i = 2; i <= ET_LIMIT; i++) {
+        if (et_phi[i] == i) {           /* i is prime: phi unchanged so far */
+            for (int j = i; j <= ET_LIMIT; j += i) {
+                et_phi[j] -= et_phi[j] / i;
+            }
         }
     }
-    if (n > 1) result -= result / n;     /* remaining prime       */
-    return result;
 }
 
-/* ── Test entry point ────────────────────────────────────────────────────────── */
+void _start(void) {
+    et_sieve();
 
-void test_euler_totient(void)
-{
-    static const int et_vals[4] = {12, 13, 36, 100};
-    uint32_t sum = 0, xor_val = 0;
-    for (int i = 0; i < 4; i++) {
-        uint32_t p = (uint32_t)euler_phi(et_vals[i]);
-        sum     += p;
-        xor_val ^= p;
+    int n_primes = 0, sum_phi_p = 0, max_phi = 0;
+    for (int i = 2; i <= ET_LIMIT; i++) {
+        if (et_phi[i] == i - 1) {       /* prime iff phi[p] == p-1 */
+            n_primes++;
+            sum_phi_p += et_phi[i];
+        }
+        if (et_phi[i] > max_phi) max_phi = et_phi[i];
     }
-    /* sum=68, xor_val=44 */
-    g_result = (4u << 16) | (sum << 8) | (xor_val & 0xFFu);
-}
 
-__attribute__((noreturn)) void _start(void)
-{
-    test_euler_totient();
-    for (;;);
+    g_result = ((uint32_t)n_primes << 16) | ((uint32_t)sum_phi_p << 8) | (uint32_t)max_phi;
+    while (1) {}
 }

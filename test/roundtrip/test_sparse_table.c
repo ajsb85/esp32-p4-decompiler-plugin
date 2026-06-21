@@ -1,98 +1,57 @@
-/* SPDX-License-Identifier: Apache-2.0
- * ESP32-P4 decompiler plugin — Sparse table static Range Minimum Query (RMQ) fixture.
- *
- * Build O(n log n), query O(1).
- *
- * Build idiom:
- *   for j in 1..LOG:
- *     for i in 0..n-(1<<j):
- *       st[j][i] = min(st[j-1][i], st[j-1][i + (1<<(j-1))])
- *
- * Query idiom:
- *   k = ilog2(r - l + 1);
- *   return min(st[k][l], st[k][r - (1<<k) + 1])
- *
- * Input (n=8): arr = {3, 7, 1, 9, 2, 8, 5, 4}
- *
- * Sparse table (LOG=3):
- *   st[0] = {3,7,1,9,2,8,5,4}
- *   st[1] = {3,1,1,2,2,5,4}    (min over 2-element windows)
- *   st[2] = {1,1,1,2,2}        (min over 4-element windows)
- *   st[3] = {1}                 (min over 8-element window)
- *
- * Three RMQ queries:
- *   RMQ(0,1) = min(3,7) = 3   k=1: min(st[1][0], st[1][0])  = 3
- *   RMQ(1,4) = min(7,1,9,2)=1 k=2: min(st[2][1], st[2][1])  = 1
- *   RMQ(5,7) = min(8,5,4) = 4 k=1: min(st[1][5], st[1][6])  = 4
- *
- *   sum = 3+1+4 = 8
- *   xor = 3^1^4 = 6
- *   n   = 8
- *
- * g_result = (n << 16) | (sum << 8) | xor = 0x00080806
+/* test_sparse_table.c
+ * Purpose   : Validate sparse table for static range minimum query (RMQ)
+ * Algorithm : Build sparse table in O(n log n) using doubling.
+ *             Answer RMQ(l,r) in O(1) via two overlapping power-of-two ranges.
+ * Input     : arr = {3,1,4,1,5,9,2,6}  (n=8, classic digits-of-pi prefix)
+ * Queries   : RMQ(0,7)=1, RMQ(4,7)=2, RMQ(2,5)=1  (3 queries, sum=4)
+ * Expected  : n=8, n_queries=3, sum_results=4
+ * g_result  = (n << 16) | (n_queries << 8) | sum_results
+ *           = (8 << 16) | (3 << 8) | 4 = 0x080304
  */
+/* xesploop-free: yes */
+
 #include <stdint.h>
 
 volatile uint32_t g_result;
 
-/* ── Sparse table ─────────────────────────────────────────────────────────── */
+#define ST_N    8
+#define ST_LOG  4   /* 2^3 == 8 so k in [0,3], need 4 rows */
 
-#define ST_N   8
-#define ST_LOG 3    /* ceil(log2(8)) = 3 */
+static const int st_arr[ST_N] = {3, 1, 4, 1, 5, 9, 2, 6};
+static int st_table[ST_LOG][ST_N];
+static int st_log2[ST_N + 1]; /* floor(log2(i)) for i in [1..ST_N] */
 
-static int st[ST_LOG + 1][ST_N];
+static void st_build(void) {
+    st_log2[1] = 0;
+    for (int i = 2; i <= ST_N; i++) st_log2[i] = st_log2[i / 2] + 1;
 
-static int ilog2_st(int n)
-{
-    int k = 0;
-    while ((1 << (k + 1)) <= n) k++;
-    return k;
-}
+    for (int i = 0; i < ST_N; i++) st_table[0][i] = st_arr[i];
 
-static void sparse_build(const int *arr, int n)
-{
-    for (int i = 0; i < n; i++)
-        st[0][i] = arr[i];
-
-    for (int j = 1; j <= ST_LOG; j++) {
-        for (int i = 0; i + (1 << j) - 1 < n; i++) {
-            int a = st[j - 1][i];
-            int b = st[j - 1][i + (1 << (j - 1))];
-            st[j][i] = (a < b) ? a : b;
+    for (int k = 1; (1 << k) <= ST_N; k++) {
+        int half = 1 << (k - 1);
+        for (int i = 0; i + (1 << k) - 1 < ST_N; i++) {
+            int a = st_table[k-1][i];
+            int b = st_table[k-1][i + half];
+            st_table[k][i] = (a < b) ? a : b;
         }
     }
 }
 
-static int sparse_query(int l, int r)
-{
-    int k  = ilog2_st(r - l + 1);
-    int a  = st[k][l];
-    int b  = st[k][r - (1 << k) + 1];
+static int st_rmq(int l, int r) {
+    int k = st_log2[r - l + 1];
+    int a = st_table[k][l];
+    int b = st_table[k][r - (1 << k) + 1];
     return (a < b) ? a : b;
 }
 
-/* ── Test entry point ─────────────────────────────────────────────────────── */
+void _start(void) {
+    st_build();
 
-void test_sparse_table(void)
-{
-    static const int arr[ST_N] = {3, 7, 1, 9, 2, 8, 5, 4};
+    int sum = 0;
+    sum += st_rmq(0, 7); /* min(3,1,4,1,5,9,2,6) = 1 */
+    sum += st_rmq(4, 7); /* min(5,9,2,6) = 2           */
+    sum += st_rmq(2, 5); /* min(4,1,5,9) = 1           */
 
-    sparse_build(arr, ST_N);
-
-    int q0 = sparse_query(0, 1);   /* = 3 */
-    int q1 = sparse_query(1, 4);   /* = 1 */
-    int q2 = sparse_query(5, 7);   /* = 4 */
-
-    uint32_t sum_q = (uint32_t)(q0 + q1 + q2);   /* = 8 */
-    uint32_t xor_q = (uint32_t)(q0 ^ q1 ^ q2);   /* = 6 */
-
-    g_result = ((uint32_t)ST_N << 16)
-             | (sum_q << 8)
-             | (xor_q & 0xFFu);
-}
-
-__attribute__((noreturn)) void _start(void)
-{
-    test_sparse_table();
-    for (;;);
+    g_result = ((uint32_t)ST_N << 16) | (3u << 8) | (uint32_t)sum;
+    while (1) {}
 }

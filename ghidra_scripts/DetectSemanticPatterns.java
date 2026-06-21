@@ -2151,6 +2151,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*v.*==.*-1.*goto.*u.*c.*=.*goto.*fail|ac_redirect_missing",
             "ac_goto_fill|ac_goto_complete|aho_corasick_search"
         ),
+        /* ── Z-function (Z-algorithm) ─────────────────────────────────────── */
+        new PatternDef("z_window_advance", "z_function_window_extension", "high",
+            "if.*i.*<.*r.*z\\[i.*-.*l\\].*r.*-.*i|zi.*=.*z.*i.*-.*l.*zi.*>.*r.*-.*i",
+            "l.*=.*i.*r.*=.*i.*+.*zi|if.*i.*\\+.*zi.*>.*r.*l.*=.*i",
+            "z_function|z_algorithm|z_array"
+        ),
+        new PatternDef("z_prefix_extend", "z_prefix_match_extension_loop", "high",
+            "while.*s\\[zi\\].*==.*s\\[i.*\\+.*zi\\]|while.*zi.*<.*n.*s.*zi.*==.*s.*i.*zi",
+            "zi\\+\\+.*z\\[i\\].*=.*zi|z_extend.*while.*prefix",
+            "z_function|prefix_match|z_extend"
+        ),
+        new PatternDef("z_sum_max_metric", "z_sum_and_max_Z_values", "medium",
+            "sum_z.*\\+=.*z\\[i\\]|for.*i.*sum.*\\+=.*zf_z",
+            "if.*z\\[i\\].*>.*max_z.*max_z.*=.*z\\[i\\]|max_z.*z_function",
+            "z_sum|z_max|z_metric"
+        ),
+        /* ── Sparse table (static RMQ) ────────────────────────────────────── */
+        new PatternDef("sparse_table_log2_precompute", "sparse_table_floor_log2_sieve", "high",
+            "log2.*i.*=.*log2.*i.*2.*\\+.*1|st_log2.*i.*=.*st_log2.*i.*\\/.*2.*\\+.*1",
+            "for.*i.*2.*log2.*i.*log.*i.*2.*1|precompute.*log.*sparse",
+            "sparse_table|rmq|log2_table"
+        ),
+        new PatternDef("sparse_table_doubling_build", "sparse_table_doubling_construction", "high",
+            "st_table.*k.*i.*=.*st_table.*k.*-.*1.*i|table\\[k\\]\\[i\\].*=.*min.*table.*k-1.*i.*half",
+            "for.*k.*1.*1.*<<.*k.*<=.*n.*for.*i.*table.*k.*i.*min",
+            "sparse_table|doubling|range_min"
+        ),
+        new PatternDef("sparse_rmq_overlap_query", "sparse_table_overlapping_interval_rmq", "high",
+            "k.*=.*log2.*r.*-.*l.*\\+.*1|st_log2\\[r.*-.*l.*\\+.*1\\]",
+            "min.*table\\[k\\]\\[l\\].*table\\[k\\]\\[r.*-.*1.*<<.*k.*\\+.*1\\]|rmq.*overlap.*two.*intervals",
+            "sparse_rmq|range_minimum|overlap_query"
+        ),
+        /* ── Euler's totient sieve ────────────────────────────────────────── */
+        new PatternDef("euler_phi_identity_init", "euler_phi_initialize_identity", "high",
+            "phi\\[i\\].*=.*i|et_phi.*i.*=.*i.*for.*i.*0.*limit",
+            "for.*i.*0.*<=.*limit.*phi.*i.*=.*i|initialize.*phi.*identity",
+            "euler_phi|totient|phi_sieve"
+        ),
+        new PatternDef("euler_phi_prime_detect_sieve", "euler_phi_prime_detect_via_unchanged", "high",
+            "if.*phi\\[i\\].*==.*i.*for.*j.*=.*i.*j.*<=.*limit.*j.*\\+=.*i|phi.*==.*i.*prime",
+            "phi\\[j\\].*-=.*phi\\[j\\].*\\/.*i|et_phi.*j.*-=.*et_phi.*j.*\\/.*i",
+            "euler_phi|prime_detection|phi_sieve"
+        ),
+        new PatternDef("euler_phi_prime_check", "euler_phi_prime_identification_p_minus_1", "medium",
+            "if.*phi\\[i\\].*==.*i.*-.*1|et_phi.*i.*==.*i.*-.*1.*prime",
+            "n_primes.*\\+\\+.*sum_phi.*\\+=.*phi\\[i\\]|count_primes.*phi.*p.*minus.*1",
+            "euler_phi|prime_count|phi_prime"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
