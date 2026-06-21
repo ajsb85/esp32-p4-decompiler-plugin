@@ -3731,6 +3731,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cost.*=.*left.*\\+.*right.*\\+.*ob_w.*i.*j.*|optimal_bst_cost.*subtree.*root_weight",
             "ob_w|knuth_bst_weight|optimal_bst_freq_sum|bst_dp_weight"
         ),
+
+        // ── Ukkonen Suffix Tree ───────────────────────────────────────────────
+        new PatternDef("ukkonen_active_point", "ukkonen_suffix_tree_active_point_update", "high",
+            "active_len.*>=.*edge_len.*active_edge.*=.*char_idx.*active_len.*-=.*el.*active_node.*=.*nxt",
+            "al.*>=.*el.*ae.*=.*char_idx.*s.*i.*-.*al.*\\+.*el.*al.*-=.*el.*an.*=.*nxt|walk_down_active_point",
+            "ukon_active|active_point|ukkonen_walk_down|suffix_tree_active_len"
+        ),
+        new PatternDef("ukkonen_split_edge", "ukkonen_suffix_tree_split_internal_node", "high",
+            "spl.*=.*new_node.*start.*start.*\\+.*al.*ch.*ae.*=.*spl.*ch.*char_idx.*s.*i.*=.*new_node.*i.*INF",
+            "nd.*nxt.*start.*\\+=.*al.*nd.*spl.*ch.*char_idx.*s.*nd.*nxt.*start.*=.*nxt|ukkonen_split",
+            "ukon_split|split_edge|ukkonen_internal|suffix_tree_rule2"
+        ),
+        new PatternDef("ukkonen_suffix_link", "ukkonen_suffix_tree_suffix_link_chain", "high",
+            "last_new.*!=.*-1.*nd.*last_new.*link.*=.*spl|last_new.*link.*=.*active_node.*last_new.*=.*-1",
+            "ukon_last_new.*=.*spl.*rem--.*an.*==.*0.*al.*>.*0.*al--.*ae.*=.*char_idx|ukkonen_suffix_link_resolve",
+            "ukon_last_new|last_new_link|ukkonen_link|suffix_link_chain"
+        ),
+
+        // ── Jacobi Symbol ─────────────────────────────────────────────────────
+        new PatternDef("jacobi_strip_twos", "jacobi_symbol_factor_of_two_extraction", "high",
+            "while.*a.*&.*1.*==.*0.*a.*>>=.*1.*r.*=.*n.*&.*7.*r.*==.*3.*r.*==.*5.*result.*=.*-result",
+            "a.*>>=.*1.*n.*%.*8.*==.*3.*n.*%.*8.*==.*5.*result.*\\*=.*-1|jacobi_strip_factors_2",
+            "jacobi_strip|jacobi_factor_two|quadratic_reciprocity_2|legendre_strip_2"
+        ),
+        new PatternDef("jacobi_reciprocity", "jacobi_symbol_quadratic_reciprocity_swap", "high",
+            "tmp.*=.*a.*a.*=.*n.*n.*=.*tmp.*a.*&.*3.*==.*3.*n.*&.*3.*==.*3.*result.*=.*-result",
+            "swap.*a.*n.*both_3_mod_4.*result.*flip|jacobi_swap_reciprocity.*n.*%.*4.*==.*3",
+            "jacobi_reciprocity|jacobi_swap|quadratic_reciprocity|legendre_swap"
+        ),
+        new PatternDef("jacobi_reduce", "jacobi_symbol_iterative_reduction_loop", "high",
+            "while.*a.*!=.*0.*while.*a.*&.*1.*==.*0.*a.*>>=.*1.*a.*%.*n.*n.*==.*1.*return.*result",
+            "a.*=.*a.*%.*n.*n.*==.*1.*result.*0.*otherwise|jacobi_reduce_mod_n",
+            "jacobi_sym|jacobi_reduce|legendre_symbol|jacobi_gcd_check"
+        ),
+
+        // ── Segmented Prime Sieve ─────────────────────────────────────────────
+        new PatternDef("seg_sieve_base_primes", "segmented_sieve_base_prime_generation", "high",
+            "for.*i.*=.*2.*i.*<=.*SEG_SQRT.*seg_small.*i.*seg_primes.*seg_np\\+\\+.*=.*i.*seg_small.*j.*=.*0",
+            "sieve.*i.*<=.*sqrt.*R.*primes.*n_primes\\+\\+.*=.*i.*small.*j.*=.*false|seg_sieve_phase1",
+            "seg_small|seg_primes|sieve_base|segmented_sieve_phase1"
+        ),
+        new PatternDef("seg_sieve_range_mark", "segmented_sieve_range_composite_marking", "high",
+            "start.*=.*SEG_L.*\\+.*p.*-.*1.*\\/.*p.*\\*.*p.*start.*==.*p.*start.*\\+=.*p.*seg_sieve.*j.*-.*SEG_L.*=.*0",
+            "start.*=.*ceil.*L.*p.*\\*.*p.*if.*start.*==.*p.*start.*\\+=.*p.*for.*j.*=.*start.*j.*<=.*R.*j.*\\+=.*p",
+            "seg_sieve|seg_mark|segmented_composite|sieve_range_mark"
+        ),
+        new PatternDef("seg_sieve_count_primes", "segmented_sieve_prime_count_first_last", "high",
+            "for.*i.*<.*SEG_LEN.*seg_sieve.*i.*n_primes\\+\\+.*first_prime.*=.*SEG_L.*\\+.*i.*last_prime.*=.*SEG_L.*\\+.*i",
+            "seg_sieve.*i.*count\\+\\+.*if.*!first_prime.*first_prime.*=.*L.*\\+.*i.*last.*=.*L.*\\+.*i|count_range_primes",
+            "seg_count|first_prime|last_prime|segmented_sieve_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
