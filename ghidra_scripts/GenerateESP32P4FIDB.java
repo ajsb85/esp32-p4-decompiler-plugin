@@ -83,6 +83,18 @@ public class GenerateESP32P4FIDB extends GhidraScript {
         List<DomainFile> targets = new ArrayList<>();
         collectPrograms(state.getProject().getProjectData().getRootFolder(), targets);
 
+        // Fallback: when called as a -postScript during -import, the newly
+        // imported program lives in currentProgram but isn't yet in the project
+        // folder. Add it directly so one-step import+fingerprint works.
+        if (targets.isEmpty() && currentProgram != null) {
+            DomainFile df = currentProgram.getDomainFile();
+            if (df != null) {
+                println("Folder walk found nothing — using currentProgram: " +
+                        currentProgram.getName());
+                targets.add(df);
+            }
+        }
+
         if (targets.isEmpty()) {
             printerr("No ESP32-P4 programs found in the current project.");
             printerr("Import the IDF .a libraries first (see script header).");
@@ -126,7 +138,7 @@ public class GenerateESP32P4FIDB extends GhidraScript {
                     targets,
                     predicate,
                     langId,
-                    Collections.emptyList() /* no existing libs to relate */,
+                    null /* no existing libs to relate */,
                     ingestLog,
                     monitor);
 
@@ -136,8 +148,16 @@ public class GenerateESP32P4FIDB extends GhidraScript {
             }
 
             if (result != null) {
-                println("Populate result: " + result);
+                println("Functions attempted : " + result.getTotalAttempted());
+                println("Functions added     : " + result.getTotalAdded());
+                println("Functions excluded  : " + result.getTotalExcluded());
+                if (!result.getFailures().isEmpty()) {
+                    println("Failure breakdown   : " + result.getFailures());
+                }
             }
+
+            // MUST call saveDatabase before close to commit data to packed format
+            fidDB.saveDatabase("Saving ESP-IDF FIDB", monitor);
 
         } finally {
             fidDB.close();
@@ -153,7 +173,11 @@ public class GenerateESP32P4FIDB extends GhidraScript {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    /** Recursively collects all DomainFiles in the project that are ESP32-P4 Programs. */
+    /** Recursively collects all DomainFiles in the project that are Programs.
+     *  Language filter is best-effort: programs imported with -noanalysis may
+     *  not have metadata populated, so we accept any Program content type and
+     *  let FidService reject non-matching languages during ingest.
+     */
     private void collectPrograms(DomainFolder folder, List<DomainFile> out)
             throws Exception {
         monitor.checkCancelled();
@@ -161,7 +185,13 @@ public class GenerateESP32P4FIDB extends GhidraScript {
             if ("Program".equals(df.getContentType())) {
                 Map<String, String> meta = df.getMetadata();
                 String lang = meta != null ? meta.get("Language ID") : null;
-                if (TARGET_LANG.equals(lang)) out.add(df);
+                // Accept if language matches, if metadata is null (un-analysed
+                // import), or if language starts with RISCV:LE:32 (handles
+                // the RISCV:LE:32:ESP32-P4:gcc variant with compiler suffix).
+                if (lang == null || lang.startsWith("RISCV:LE:32") ||
+                        TARGET_LANG.equals(lang)) {
+                    out.add(df);
+                }
             }
         }
         for (DomainFolder sub : folder.getFolders()) {
