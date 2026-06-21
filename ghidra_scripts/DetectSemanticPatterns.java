@@ -5139,6 +5139,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*xor_acc.*\\^.*xor_acc.*>>.*16.*&.*0xFF|colatz_metric_xor",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|colatz_pack"
         ),
+        new PatternDef("pratt_mulmod", "pratt_mulmod32", "high",
+            "result.*\\+=.*a.*if.*result.*>=.*m.*result.*-=.*m|pratt_mulmod_addshift",
+            "a.*<<=.*1.*if.*a.*>=.*m.*a.*-=.*m|pratt_mulmod_doublemod",
+            "b.*>>=.*1|pratt_mulmod_halfb"
+        ),
+        new PatternDef("pratt_powmod", "pratt_powmod32", "high",
+            "result.*=.*mulmod.*result.*base.*m|pratt_powmod_square_accum",
+            "base.*=.*mulmod.*base.*base.*m|pratt_powmod_base_square",
+            "exp.*>>=.*1|pratt_powmod_expshift"
+        ),
+        new PatternDef("pratt_check", "pratt_certificate_verify", "high",
+            "powmod.*a.*pm1.*p.*!=.*1.*return.*0|pratt_fermat_condition",
+            "pm1.*\\/.*q.*powmod.*a.*pm1.*\\/.*q.*p.*==.*1.*return.*0|pratt_order_condition",
+            "ok_count.*\\+=.*pratt_check|pratt_verify_accumulate"
+        ),
+        new PatternDef("powerful_spf", "powerful_smallest_prime_factor", "high",
+            "d.*\\*.*d.*<=.*n.*n.*%.*d.*==.*0|powerful_trial_divide",
+            "n.*\\/.*d.*%.*d.*!=.*0.*return.*0|powerful_exponent_check",
+            "while.*n.*%.*d.*==.*0.*n.*\\/=.*d|powerful_consume_factor"
+        ),
+        new PatternDef("powerful_collect", "powerful_collect_upto", "medium",
+            "is_powerful.*n.*out.*cnt\\+\\+|powerful_collect_loop",
+            "r.*\\*.*r.*<.*v.*r\\+\\+|powerful_sqrt_iter",
+            "r.*\\*.*r.*==.*v.*sq_count\\+\\+|powerful_square_count"
+        ),
+        new PatternDef("powerful_result", "powerful_result_encode", "medium",
+            "metric_a.*sq_count.*&.*0xFF|powerful_metric_sq",
+            "small_sum.*%.*251|powerful_metric_modprime",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|powerful_pack"
+        ),
+        new PatternDef("semiprime_spf", "semiprime_smallest_prime_factor", "high",
+            "n.*&.*1.*==.*0.*return.*2|semiprime_even_check",
+            "d.*\\*.*d.*<=.*n.*n.*%.*d.*==.*0.*return.*d|semiprime_spf_loop",
+            "return.*n.*prime_self|semiprime_spf_prime_return"
+        ),
+        new PatternDef("semiprime_detect", "semiprime_is_semiprime", "high",
+            "f.*=.*spf.*n.*q.*=.*n.*\\/.*f|semiprime_factor_split",
+            "is_prime.*q.*p1.*=.*f.*p2.*=.*q.*return.*1|semiprime_factor_assign",
+            "sp_cnt\\+\\+.*factor_sum.*\\+=.*p1|semiprime_accumulate"
+        ),
+        new PatternDef("semiprime_result", "semiprime_result_encode", "medium",
+            "sq_count.*p1.*==.*p2|semiprime_square_detect",
+            "metric_b.*factor_sum.*&.*0xFF|semiprime_metric_factorsum",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|semiprime_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
