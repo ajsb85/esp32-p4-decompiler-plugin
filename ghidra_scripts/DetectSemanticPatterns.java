@@ -4145,6 +4145,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xl.*>.*r.*xr.*<.*l.*return.*0|range_tree_x_range_prune",
             "xl.*<=.*l.*r.*<=.*xr.*ort_count_range|range_tree_x_covered_y_search"
         ),
+        new PatternDef("johnson_reweight", "johnson_allpairs_edge_reweight", "high",
+            "w.*\\+.*h\\[u\\].*-.*h\\[v\\]|johnson_potential_reweight",
+            "bellman_ford.*src.*n.*\\+.*1|johnson_virtual_node_bf",
+            "dij_dist.*-.*h\\[s\\].*\\+.*h\\[v\\]|johnson_distance_correction"
+        ),
+        new PatternDef("johnson_dijkstra", "johnson_allpairs_dijkstra_phase", "high",
+            "dijkstra_reweighted.*src.*h.*n|johnson_per_source_dijkstra",
+            "dij_done.*dij_dist.*INF|johnson_dijkstra_init",
+            "dist_out\\[s\\]\\[v\\].*dij_dist|johnson_apsp_output_matrix"
+        ),
+        new PatternDef("johnson_apsp", "johnson_allpairs_shortest_paths", "medium",
+            "add_edge.*q.*0|johnson_virtual_source_zero_edges",
+            "finite_count.*path_sum|johnson_apsp_finite_path_accumulate",
+            "johnson.*n_nodes|johnson_algorithm_entry"
+        ),
+        new PatternDef("dsu_rollback_union", "dsu_rollback_union_by_rank", "high",
+            "parent\\[b\\].*=.*a.*rank\\[a\\].*\\+\\+|dsu_rollback_union_rank_merge",
+            "stk_node.*stk_old_parent.*stk_old_rank|dsu_rollback_stack_push",
+            "dsu_find.*while.*parent.*!=.*x|dsu_rollback_no_path_compression"
+        ),
+        new PatternDef("dsu_rollback_restore", "dsu_rollback_undo_union", "high",
+            "parent\\[b\\].*=.*stk_old_parent|dsu_rollback_restore_parent",
+            "rank\\[a\\].*=.*stk_old_rank|dsu_rollback_restore_rank",
+            "dsu_restore.*while.*top.*>.*checkpoint|dsu_rollback_to_checkpoint"
+        ),
+        new PatternDef("dsu_rollback_save", "dsu_rollback_checkpoint_save", "medium",
+            "dsu_save.*return.*dsu.*top|dsu_rollback_save_stack_depth",
+            "comp_full.*comp_after.*dsu_find|dsu_rollback_component_count",
+            "offline.*dsu.*rollback|dsu_rollback_offline_connectivity"
+        ),
+        new PatternDef("catalan_dp_recur", "catalan_number_dp_recurrence", "high",
+            "catalan\\[n\\].*\\+=.*catalan\\[i\\].*catalan\\[n.*-.*1.*-.*i\\]|catalan_convolution_recurrence",
+            "catalan\\[0\\].*=.*1.*catalan\\[1\\].*=.*1|catalan_base_cases",
+            "for.*n.*=.*2.*MAX_N.*catalan\\[n\\]|catalan_tabulation_loop"
+        ),
+        new PatternDef("catalan_bracket_dp", "catalan_bracket_sequence_dp", "high",
+            "bracket_dp.*i.*\\+.*1.*j.*\\+.*1|catalan_open_bracket_transition",
+            "bracket_dp.*i.*\\+.*1.*j.*-.*1|catalan_close_bracket_transition",
+            "bracket_dp.*len.*\\[0\\]|catalan_bracket_final_count"
+        ),
+        new PatternDef("catalan_verify", "catalan_number_multi_interpretation", "medium",
+            "count_bst.*count_bracket_sequences.*count_mountain|catalan_three_combinatorial_views",
+            "expected.*1.*1.*2.*5.*14.*42.*132|catalan_known_sequence_check",
+            "catalan\\[5\\].*\\+.*catalan\\[6\\].*\\+.*catalan\\[7\\]|catalan_sum_verification"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
