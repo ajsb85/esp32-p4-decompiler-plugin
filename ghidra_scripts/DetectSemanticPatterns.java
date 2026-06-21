@@ -5415,6 +5415,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "RS_N.*<<.*16.*pos_count.*<<.*8.*sum_pos|rs_pack",
             "rudin_shapiro.*pair_count.*&.*1u|rs_sign_map"
         ),
+        // ── Thue-Morse sequence ──────────────────────────────────────────────
+        new PatternDef("thue_morse_bittrick", "tm_parity_bittrick", "high",
+            "x\\s*\\^=\\s*\\(x\\s*>>\\s*16\\)|tm_xor_fold16",
+            "x\\s*\\^=\\s*\\(x\\s*>>\\s*[48]\\)|tm_xor_fold_byte",
+            "x\\s*&\\s*1u|tm_parity_extract"
+        ),
+        new PatternDef("thue_morse_recurrence", "tm_recurrence", "high",
+            "t\\s*\\^=\\s*\\(n\\s*&\\s*1u\\)|tm_bit_xor_accum",
+            "while.*n\\s*>\\s*0u.*n\\s*>>=\\s*1|tm_shift_loop",
+            "thue_morse_rec|tm_rec_call"
+        ),
+        new PatternDef("thue_morse_count", "tm_count_pack", "medium",
+            "thue_morse.*count\\+\\+|tm_count_ones",
+            "sum\\s*\\+=\\s*i.*thue_morse|tm_sum_indices",
+            "TM_N\\s*<<\\s*16.*count\\s*<<\\s*8|tm_pack_result"
+        ),
+        // ── Baum-Sweet sequence ───────────────────────────────────────────────
+        new PatternDef("baum_sweet_scanner", "bs_zero_run_scan", "high",
+            "in_zero.*run_len|bs_zero_run_state",
+            "run_len\\s*&\\s*1u.*return\\s*0u|bs_odd_run_reject",
+            "bit\\s*==\\s*0u.*in_zero|bs_zero_bit_accum"
+        ),
+        new PatternDef("baum_sweet_check", "bs_check", "high",
+            "baum_sweet.*if.*in_zero.*run_len|bs_run_exit_check",
+            "tmp\\s*>>=\\s*1.*bit\\s*=.*tmp\\s*&\\s*1u|bs_bit_shift_scan",
+            "if.*n\\s*==\\s*0u.*return\\s*1u|bs_zero_base_case"
+        ),
+        new PatternDef("baum_sweet_count", "bs_count_pack", "medium",
+            "baum_sweet.*count\\+\\+.*xor_idx|bs_count_xor",
+            "xor_idx\\s*\\^=\\s*i.*baum_sweet|bs_xor_accum",
+            "BS_N\\s*<<\\s*16.*count\\s*<<\\s*8.*xor_idx|bs_pack_result"
+        ),
+        // ── Regular Paper Folding sequence ────────────────────────────────────
+        new PatternDef("paperfolding_adic", "pf_2adic_strip", "high",
+            "while.*m\\s*&\\s*1u.*==\\s*0u.*m\\s*>>=\\s*1|pf_strip_twos",
+            "m\\s*&\\s*3u.*==\\s*1u|pf_mod4_check",
+            "paperfolding.*odd.*part|pf_odd_factor"
+        ),
+        new PatternDef("paperfolding_classify", "pf_valley_mountain", "high",
+            "return.*m\\s*&\\s*3u.*==\\s*1u.*1u.*0u|pf_classify",
+            "PF_N.*count.*xor_idx|pf_accum_loop",
+            "paperfolding.*count\\+\\+.*xor_idx\\s*\\^=\\s*i|pf_count_xor"
+        ),
+        new PatternDef("paperfolding_result", "pf_result_pack", "medium",
+            "PF_N\\s*<<\\s*16.*count\\s*<<\\s*8.*xor_idx|pf_pack",
+            "xor_idx\\s*\\^=\\s*i.*paperfolding|pf_xor_accum",
+            "count.*17.*xor.*40|pf_expected_vals"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
