@@ -5964,6 +5964,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x640818|PG_UPPER.*100.*max_gap.*8.*gap_count.*24|prime_gaps_metrics",
             "g_result.*0x64.*0x08.*0x18|pg_g_result"
         ),
+        new PatternDef("weird_numbers_abundant", "weird_numbers_abundant", "high",
+            "dsum\\s*[+]=\\s*d|div_sum.*proper.*divisor|wn_divisors.*dsum",
+            "dsum\\s*>\\s*n|sum.*proper.*divisors.*greater|abundant.*check",
+            "for.*d.*1.*d.*<.*n.*n.*%.*d.*==.*0|proper_divisors_loop"
+        ),
+        new PatternDef("weird_numbers_knapsack", "weird_numbers_knapsack", "high",
+            "wn_reach\\[s\\s*-\\s*d\\]|reachable.*subset.*sum.*backward",
+            "for.*s.*=.*n.*s.*>=.*d.*s--|knapsack.*backward.*sweep.*weird",
+            "wn_reach\\[n\\]|pseudoperfect.*reachable.*check"
+        ),
+        new PatternDef("weird_numbers_pack", "weird_numbers_pack", "medium",
+            "WN_UPPER\\s*<<\\s*16.*first_weird.*<<.*8.*wn_count|weird_numbers_pack",
+            "0x644601|WN_UPPER.*100.*first_weird.*70.*wn_count.*1|weird_numbers_metrics",
+            "g_result.*0x64.*0x46.*0x01|wn_g_result"
+        ),
+        new PatternDef("practical_numbers_divisors", "practical_numbers_divisors", "high",
+            "pn_divisors.*d.*<=.*n|for.*d.*1.*d.*<=.*n.*n.*%.*d.*==.*0",
+            "all.*divisors.*including.*n|pn_divisors.*nd.*<.*PN_MAXDIV",
+            "for.*d.*=.*1.*d.*<=.*n.*d[+][+]|full_divisors_loop_practical"
+        ),
+        new PatternDef("practical_numbers_coverage", "practical_numbers_coverage", "high",
+            "pn_reach\\[s\\s*-\\s*d\\]|reachable.*knapsack.*practical",
+            "for.*k.*=.*1.*k.*<=.*n.*!pn_reach|coverage.*check.*every.*1.*n",
+            "pn_reach\\[0\\].*=.*1|practical_sum_init"
+        ),
+        new PatternDef("practical_numbers_pack", "practical_numbers_pack", "medium",
+            "PN_UPPER\\s*<<\\s*16.*pn_count.*<<.*8.*second_practical|practical_numbers_pack",
+            "0x3C1402|PN_UPPER.*60.*pn_count.*20.*second.*2|practical_numbers_metrics",
+            "g_result.*0x3C.*0x14.*0x02|pn_g_result"
+        ),
+        new PatternDef("cousin_primes_isprime", "cousin_primes_isprime", "high",
+            "cp_is_prime.*n|d.*\\*.*d.*<=.*n.*d.*%.*d.*==.*0.*cousin",
+            "for.*d.*=.*3.*d.*\\*.*d.*<=.*n.*d.*[+]=.*2|trial_division_cousin",
+            "cp_is_prime.*p.*&&.*cp_is_prime.*p.*[+].*4|cousin_pair_test"
+        ),
+        new PatternDef("cousin_primes_sweep", "cousin_primes_sweep", "high",
+            "p.*[+].*4.*<=.*CP_UPPER|for.*p.*=.*2.*p.*[+].*4.*<=.*100",
+            "cp_count[+][+].*last_p.*=.*p|cousin_pair_count_track",
+            "for.*p.*2.*p.*\\+.*4u.*<=.*CP_UPPER.*p[+][+]|cousin_primes_loop"
+        ),
+        new PatternDef("cousin_primes_pack", "cousin_primes_pack", "medium",
+            "CP_UPPER\\s*<<\\s*16.*cp_count.*<<.*8.*last_p|cousin_primes_pack",
+            "0x64084F|CP_UPPER.*100.*cp_count.*8.*last_p.*79|cousin_primes_metrics",
+            "g_result.*0x64.*0x08.*0x4F|cp_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
