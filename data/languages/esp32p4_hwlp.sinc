@@ -20,9 +20,27 @@
 # Opcode space: custom-1 (0x2B) -- fully replaces riscv.custom.sinc custom-1 entries
 # Also covers generic custom-0/2/3 to avoid needing riscv.custom.sinc.
 
+# ---- Hardware loop virtual registers (Sprint 5) ----
+#
+# These registers model the xesploop CSR state so the decompiler can trace
+# loop-count and loop-address values through the instruction stream.
+#
+# Offsets 0x5000-0x5017 are unused by the standard RISC-V register file
+# (integer: 0x2000-0x207F, float: 0x3000-0x307F, vector: 0x4000-0x43FF).
+#
+# NOTE: Writing these registers makes loop setup visible to the decompiler
+# as dataflow.  The back-edge (branch from lp_end back to inst_next when
+# HWLP_COUNT > 0) still requires a post-analysis Java Analyzer to inject
+# synthetic pcode at the loop-end address.
+
+define register offset=0x5000 size=4 [ HWLP0_COUNT HWLP0_START HWLP0_END
+                                        HWLP1_COUNT HWLP1_START HWLP1_END ];
+
+
 # ---- pcodeop declarations ----
 
-# Hardware loop control
+# Hardware loop control (retained as opaque pcodeops for tooling that
+# does not yet consume the virtual register writes above).
 define pcodeop esp_lp_starti;
 define pcodeop esp_lp_endi;
 define pcodeop esp_lp_count;
@@ -76,26 +94,55 @@ define pcodeop custom3.rd.rs1.rs2;
 
 # esp.lp.count  loop_id, rs1
 # funct3=2 [14:12]=010; [19:15]=count register
-:esp.lp.count rd, rs1  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x2 & (op0711=0x0 | op0711=0x1) & rd & rs1
+# Split by loop ID so the decompiler can trace HWLP0_COUNT / HWLP1_COUNT dataflow.
+:esp.lp.count rd, rs1  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x2 & op0711=0x0 & rd & rs1
 {
-    esp_lp_count(rd:1, rs1);
+    HWLP0_COUNT = rs1;
+    esp_lp_count(rs1);
+}
+
+:esp.lp.count rd, rs1  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x2 & op0711=0x1 & rd & rs1
+{
+    HWLP1_COUNT = rs1;
+    esp_lp_count(rs1);
 }
 
 # esp.lp.counti  loop_id, count_imm
 # funct3=3 [14:12]=011; [31:20]=signed immediate loop count
-:esp.lp.counti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x3 & (op0711=0x0 | op0711=0x1) & rd & immI
+:esp.lp.counti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x3 & op0711=0x0 & rd & immI
 {
-    esp_lp_counti(rd:1, immI);
+    HWLP0_COUNT = immI;
+    esp_lp_counti(immI);
+}
+
+:esp.lp.counti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x3 & op0711=0x1 & rd & immI
+{
+    HWLP1_COUNT = immI;
+    esp_lp_counti(immI);
 }
 
 # esp.lp.setup  loop_id, rs1, loop_end_label
 # funct3=4 [14:12]=100; [19:15]=count register; [31:20]=body length in halfwords
 # loop_end = inst_next + (imm * 2) - 2  (imm halfwords after next instruction, minus 2 for last instr itself)
-# Encoded as: for "esp.lp.setup 0, t0, end_lbl" where body is N halfwords, [31:20] = N
-:esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & (op0711=0x0 | op0711=0x1) & rd & rs1 & op2031
+# Split by loop ID (op0711) so the decompiler can trace loop setup as real dataflow into
+# HWLP0/HWLP1 virtual registers.  The back-edge pcode (decrement + branch-to-start)
+# still requires a post-analysis Java Analyzer to inject synthetic pcode at lp_end.
+:esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & op0711=0x0 & rd & rs1 & op2031
     [ lp_end = inst_next + (op2031 * 2) - 2; ]
 {
-    esp_lp_setup(rd:1, rs1, lp_end:4);
+    HWLP0_COUNT = rs1;
+    HWLP0_START = inst_next;
+    HWLP0_END   = lp_end;
+    esp_lp_setup(rs1, lp_end:4);
+}
+
+:esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & op0711=0x1 & rd & rs1 & op2031
+    [ lp_end = inst_next + (op2031 * 2) - 2; ]
+{
+    HWLP1_COUNT = rs1;
+    HWLP1_START = inst_next;
+    HWLP1_END   = lp_end;
+    esp_lp_setup(rs1, lp_end:4);
 }
 
 # esp.lp.setupi  loop_id, count_imm, loop_end_label
