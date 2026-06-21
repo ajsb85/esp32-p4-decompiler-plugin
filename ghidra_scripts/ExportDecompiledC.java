@@ -30,13 +30,14 @@
 //    If the caller assigns the result, the C is invalid.  A two-pass scan
 //    detects this and promotes the return type to undefined4.
 //
-//  Fix 3 (improved in Sprint 7 + P5 ClangAST): Bare return in promoted functions
+//  Fix 3 (Sprint 7 + P5a SSA + P5 ClangAST): Bare return in promoted functions
 //    Bare "return;" in a promoted function is rewritten to "return <var>;"
-//    where <var> is the last Ghidra-local variable (uVar*, iVar*, param_*)
-//    assigned before the return.  When the backwards text scan finds nothing,
-//    a ClangAST walk over getCCodeMarkup() extracts the last variable token
-//    from the function body as a better fallback than always emitting
-//    "return param_1;".
+//    where <var> is (in priority order):
+//    1. The last Ghidra-local variable (uVar*, iVar*, param_*) assigned before
+//       the return (backwards text scan, Sprint 7).
+//    2. The HighVariable feeding the RETURN pcode op in the SSA graph (P5a).
+//       More accurate than text scan for complex control flow.
+//    3. The last variable token in the ClangAST body (P5, last resort).
 //
 // ── Semantic enrichments ─────────────────────────────────────────────────────
 //
@@ -86,6 +87,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.pcode.*;
 
 import java.io.*;
 import java.util.*;
@@ -273,6 +275,7 @@ public class ExportDecompiledC extends GhidraScript {
         int gpStripped      = 0;
         int promoted        = 0;
         int bareReturnFixed = 0;
+        int ssaFallbacks    = 0;
         int astFallbacks    = 0;
         int romSkipped      = 0;
         String prevRegion   = null;   // for section-header tracking
@@ -423,13 +426,22 @@ public class ExportDecompiledC extends GhidraScript {
                     Matcher lam = LOCAL_ASSIGN.matcher(line);
                     if (lam.find()) lastLocalVar = lam.group(1);
 
-                    // Fix 3: bare return → return <lastLocalVar or AST fallback or param_1>.
+                    // Fix 3: bare return → return <lastLocalVar or SSA or AST fallback or param_1>.
                     if (isPromoted) {
                         Matcher brm = BARE_RETURN.matcher(line);
                         if (brm.matches()) {
                             String retVar = lastLocalVar;
-                            // P5: when text scan found nothing, try ClangAST walk as fallback
                             if (retVar == null) {
+                                // P5a: SSA walk via HighFunction/PcodeOpAST — most accurate
+                                DecompileResults dr = resultsByAddr.get(addr);
+                                String ssaVar = extractReturnVarFromSSA(dr);
+                                if (ssaVar != null) {
+                                    retVar = ssaVar;
+                                    ssaFallbacks++;
+                                }
+                            }
+                            if (retVar == null) {
+                                // P5: ClangAST walk — tertiary fallback
                                 DecompileResults dr = resultsByAddr.get(addr);
                                 String astVar = extractReturnVarFromAST(dr);
                                 if (astVar != null) {
@@ -462,9 +474,10 @@ public class ExportDecompiledC extends GhidraScript {
 
         println(String.format(
             "Export: %d written, %d ROM externs, %d failed | "
-            + "gp_stripped=%d promoted=%d bare_fixed=%d (ast_fallbacks=%d) strings=%d → %s",
+            + "gp_stripped=%d promoted=%d bare_fixed=%d (ssa=%d ast=%d) strings=%d → %s",
             exported, romSkipped, failed,
-            gpStripped, promoted, bareReturnFixed, astFallbacks,
+            gpStripped, promoted, bareReturnFixed,
+            ssaFallbacks, astFallbacks,
             stringDecls.size(),
             outFile.getAbsolutePath()));
 
@@ -480,6 +493,47 @@ public class ExportDecompiledC extends GhidraScript {
             } catch (Exception ex) {
                 printerr("DOT generation failed: " + ex.getMessage());
             }
+        }
+    }
+
+    // ── P5a: SSA-based bare-return variable extractor ────────────────────────
+
+    /**
+     * Walk the HighFunction SSA graph for a decompiled function and return
+     * the name of the Ghidra high-variable that flows into a RETURN op.
+     *
+     * For RISC-V (gcc ABI) Ghidra models the return value as an input to
+     * the RETURN pcode op (input[0] = return address, input[1]+ = values).
+     * We scan all RETURN ops and return the last input HighVariable whose
+     * name matches the Ghidra local-variable pattern.
+     *
+     * This is more accurate than the ClangAST walk (which returns the last
+     * variable *token* anywhere in the function body) because it directly
+     * traces dataflow to the RETURN instruction.
+     */
+    private String extractReturnVarFromSSA(DecompileResults res) {
+        if (res == null || !res.decompileCompleted()) return null;
+        try {
+            HighFunction hf = res.getHighFunction();
+            if (hf == null) return null;
+            Iterator<PcodeOpAST> opIter = hf.getPcodeOps();
+            String best = null;
+            while (opIter.hasNext()) {
+                PcodeOpAST op = opIter.next();
+                if (op.getOpcode() != PcodeOp.RETURN) continue;
+                for (int i = 0; i < op.getNumInputs(); i++) {
+                    Varnode vn = op.getInput(i);
+                    if (vn == null) continue;
+                    HighVariable hv = vn.getHigh();
+                    if (hv == null) continue;
+                    String name = hv.getName();
+                    if (name != null && AST_VAR_NAME.matcher(name).matches())
+                        best = name;
+                }
+            }
+            return best;
+        } catch (Exception ex) {
+            return null;
         }
     }
 
