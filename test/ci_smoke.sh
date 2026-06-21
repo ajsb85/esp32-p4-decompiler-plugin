@@ -582,6 +582,36 @@ int main(void){
    const int*ggs[]={gg0,gg1,gg2};const int*gcs[]={gc0,gc1,gc2};int gls[]={5,3,5};uint32_t gsc=0,gsx=0;
    for(int t=0;t<3;t++){int tot=0,tank=0,start=0;for(int i=0;i<gls[t];i++){int d=ggs[t][i]-gcs[t][i];tot+=d;tank+=d;if(tank<0){start=i+1;tank=0;}}if(tot>=0){gsc++;gsx^=(uint32_t)start;}}
    CHECK("test_gas_station",(3u<<16)|(gsc<<8)|(gsx&0xFFu),0x00030207u);}
+  /* test_bipartite_check: triangle=0,square=1,pentagon=0; count=1 xor=1 */
+  {int bpc[5],bpq[5];uint32_t bpn=3,bpcnt=0,bpx=0;
+   /* T1 triangle adj: 0:{1,2},1:{0,2},2:{0,1} */
+   {int adj[][5]={{1,2,0,0,0},{0,2,0,0,0},{0,1,0,0,0}};int deg[]={2,2,2};int n=3;
+    for(int i=0;i<n;i++)bpc[i]=0;int f=0,b=0,ok=1;
+    for(int src=0;src<n&&ok;src++){if(bpc[src])continue;bpc[src]=1;bpq[b++]=src;
+      while(f<b&&ok){int u=bpq[f++];for(int i=0;i<deg[u];i++){int v=adj[u][i];if(!bpc[v]){bpc[v]=3-bpc[u];bpq[b++]=v;}else if(bpc[v]==bpc[u])ok=0;}}}
+    bpcnt+=ok;bpx^=(uint32_t)ok;}
+   /* T2 square adj: 0:{1,3},1:{0,2},2:{1,3},3:{2,0} */
+   {int adj[][5]={{1,3,0,0,0},{0,2,0,0,0},{1,3,0,0,0},{2,0,0,0,0}};int deg[]={2,2,2,2};int n=4;
+    for(int i=0;i<n;i++)bpc[i]=0;int f=0,b=0,ok=1;
+    for(int src=0;src<n&&ok;src++){if(bpc[src])continue;bpc[src]=1;bpq[b++]=src;
+      while(f<b&&ok){int u=bpq[f++];for(int i=0;i<deg[u];i++){int v=adj[u][i];if(!bpc[v]){bpc[v]=3-bpc[u];bpq[b++]=v;}else if(bpc[v]==bpc[u])ok=0;}}}
+    bpcnt+=ok;bpx^=(uint32_t)ok;}
+   /* T3 pentagon adj: 0:{1,4},1:{0,2},2:{1,3},3:{2,4},4:{3,0} */
+   {int adj[][5]={{1,4,0,0,0},{0,2,0,0,0},{1,3,0,0,0},{2,4,0,0,0},{3,0,0,0,0}};int deg[]={2,2,2,2,2};int n=5;
+    for(int i=0;i<n;i++)bpc[i]=0;int f=0,b=0,ok=1;
+    for(int src=0;src<n&&ok;src++){if(bpc[src])continue;bpc[src]=1;bpq[b++]=src;
+      while(f<b&&ok){int u=bpq[f++];for(int i=0;i<deg[u];i++){int v=adj[u][i];if(!bpc[v]){bpc[v]=3-bpc[u];bpq[b++]=v;}else if(bpc[v]==bpc[u])ok=0;}}}
+    bpcnt+=ok;bpx^=(uint32_t)ok;}
+   CHECK("test_bipartite_check",(bpn<<16)|(bpcnt<<8)|(bpx&0xFFu),0x00030101u);}
+  /* test_kahn_toposort: n=6 edges:5->2,5->0,4->0,4->1,2->3,3->1; nz=2 last=1 */
+  {int kti[6]={0},kto[6]={0},ktadj[6][3],ktdeg[6]={0},ktq[6],ktord[6];
+   int kte[][2]={{5,2},{5,0},{4,0},{4,1},{2,3},{3,1}};
+   for(int i=0;i<6;i++)for(int j=0;j<3;j++)ktadj[i][j]=0;
+   for(int i=0;i<6;i++){int u=kte[i][0],v=kte[i][1];kti[v]++;ktadj[u][kto[u]++]=v;}
+   int f=0,b=0,proc=0,last=-1,nz=0;
+   for(int i=0;i<6;i++)if(kti[i]==0){ktq[b++]=i;nz++;}
+   while(f<b){int u=ktq[f++];ktord[proc++]=u;last=u;for(int i=0;i<kto[u];i++){int v=ktadj[u][i];if(--kti[v]==0)ktq[b++]=v;}}
+   CHECK("test_kahn_toposort",(6u<<16)|((uint32_t)nz<<8)|((uint32_t)last&0xFFu),0x00060201u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

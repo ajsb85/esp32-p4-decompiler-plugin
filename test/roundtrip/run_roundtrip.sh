@@ -161,6 +161,8 @@ declare -A EXPECTED_RESULT=(
     [test_trapping_rain]=0x00060902
     [test_jump_game]=0x00050301
     [test_gas_station]=0x00030207
+    [test_bipartite_check]=0x00030101
+    [test_kahn_toposort]=0x00060201
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -199,7 +201,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_comb_sort test_cycle_sort \
        test_ternary_search test_miller_rabin \
        test_max_rect_histogram test_trapping_rain \
-       test_jump_game test_gas_station)
+       test_jump_game test_gas_station \
+       test_bipartite_check test_kahn_toposort)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

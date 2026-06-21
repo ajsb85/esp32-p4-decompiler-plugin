@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 82 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 84 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -94,6 +94,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_trapping_rain.c` | Trapping rain two-pointer; {4,2,0,3,2,5} n=6; water=9 xor=2 | `0x00060902` | |
 | `test_jump_game.c` | Jump game greedy; 5 tests; reachable count=3 xor=1 | `0x00050301` | |
 | `test_gas_station.c` | Gas station greedy; 3 tests; valid starts=2 xor=7 | `0x00030207` | |
+| `test_bipartite_check.c` | Bipartite BFS 2-coloring; triangle/square/pentagon; bipartite count=1 xor=1 | `0x00030101` | |
+| `test_kahn_toposort.c` | Kahn toposort BFS in-degree; 6-node DAG; n_init_zero=2 last=1 | `0x00060201` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -188,7 +190,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (51 patterns):
+Pattern families currently covered (54 patterns):
 
 | Family | Patterns |
 |--------|---------|
@@ -213,7 +215,7 @@ Pattern families currently covered (51 patterns):
 | String algorithms | KMP failure function backtrack, KMP full-match detection |
 | Graph shortest-path | Dijkstra edge relaxation, linear min-scan for unvisited node |
 | Binary search variants | lo/hi/mid bisection frame, leftmost/rightmost range convergence |
-| Topological sort | Kahn's in-degree decrement + BFS queue, topo order output |
+| Topological sort | DFS finish-time ordering, Kahn's in-degree decrement + BFS queue, topo order output |
 | Memoization DP | Fibonacci cache-check hit, recursive memoize-before-return |
 | Number theory | Sieve outer i*i bound + composite marking, prime scan |
 | Edit distance DP | Levenshtein 2D fill with 3-way min, character equality check |
@@ -265,6 +267,8 @@ Pattern families currently covered (51 patterns):
 | Trapping rain water | two-pointer advance-shorter-side; running max_l/max_r; water+=max-h |
 | Jump game (greedy) | if(i>max_reach) early-exit; max_reach=max(max_reach,i+arr[i]) update |
 | Gas station (greedy) | tank+=gas-cost; if(tank<0){start=i+1;tank=0}; feasibility via total |
+| Bipartite check (BFS 2-coloring) | color[v]=3-color[u] swap; if(color[v]==color[u]) conflict; outer loop for disconnected components |
+| Kahn's topological sort | pre-compute in_deg[v]++; seed queue with in_deg==0; --in_deg[v]==0 enqueue; cycle check processed<n |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

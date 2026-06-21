@@ -1077,6 +1077,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "total.*<.*0.*-1.*:.*start|total.*gas.*cost",    // total feasibility
             "gas_station|total.*cost|circuit"                // naming
         ),
+
+        // ── Sprint 56: Bipartite Check ───────────────────────────────────────
+        new PatternDef("bipartite_2coloring", "bipartite_check_bfs", "high",
+            "color.*v.*=.*3.*-.*color.*u|3.*-.*color.*color", // 3-color swap trick
+            "color.*v.*==.*color.*u.*return.*0|if.*color.*conflict", // same-color conflict
+            "bipartite|is_bipartite|bp_color"                // naming
+        ),
+
+        // ── Sprint 56: Kahn's Topological Sort ──────────────────────────────
+        new PatternDef("kahn_indegree_seed", "kahn_toposort_bfs", "high",
+            "for.*i.*<.*n.*in_deg.*i.*==.*0.*enqueue|for.*in_deg.*==.*0.*q.*=.*i", // seed queue
+            "if.*--.*in_deg.*v.*==.*0.*q.*back|--kt_indeg.*==.*0", // decrement-and-enqueue
+            "kahn.*sort|kt_indeg|in_deg.*0"                  // naming
+        ),
+        new PatternDef("kahn_cycle_check", "kahn_cycle_detection", "medium",
+            "if.*processed.*<.*n.*cycle|processed.*==.*n",   // cycle check post-BFS
+            "processed\\+\\+|order.*processed",              // process counter
+            "kahn_sort|kt_order|processed"                   // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
