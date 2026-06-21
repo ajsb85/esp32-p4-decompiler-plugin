@@ -4424,6 +4424,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "E_at_err.*=.*bw_eval.*E.*1.*2|error_locator_root_check",
             "bw_gauss|bw_mat.*j.*BW_UNK|berlekamp_welch_decode"
         ),
+        // ── eulerian_number ───────────────────────────────────────────────────────
+        new PatternDef("eulerian_recurrence", "eulerian_number_dp_recurrence", "high",
+            "en_dp.*n.*k.*=.*k.*\\+.*1.*en_dp.*n.*-.*1.*k.*\\+.*n.*-.*k.*en_dp.*n.*-.*1.*k.*-.*1|eulerian_ascent_recurrence",
+            "eulerian_build|eulerian_number_table|ascent_count_dp",
+            "en_dp|A_n_k_eulerian|permutation_ascent_count"
+        ),
+        new PatternDef("eulerian2_recurrence", "second_order_eulerian_dp_recurrence", "high",
+            "en2_dp.*n.*k.*=.*k.*\\+.*1.*en2_dp.*n.*-.*1.*k.*\\+.*2.*\\*.*n.*-.*1.*-.*k.*\\+.*1.*en2_dp|eulerian2_recurrence",
+            "eulerian2_build|second_order_eulerian|bspline_combinatorics",
+            "en2_dp|<<n,k>>|multiset_permutation_ascent"
+        ),
+        new PatternDef("eulerian_rowsum", "eulerian_number_row_sum_factorial", "medium",
+            "row_sum.*=.*0.*en_dp.*i.*\\+=|eulerian_row_sum_check",
+            "row_sum.*n.*==.*factorial|sum_row_equals_n_factorial",
+            "row_sum|eulerian_total_perms|factorial_verify_dp"
+        ),
+        // ── number_of_divisors_sieve ──────────────────────────────────────────────
+        new PatternDef("ndiv_additive_sieve", "divisor_count_additive_sieve", "high",
+            "nd_div.*m.*\\+\\+.*m.*\\+=.*d|divisor_count_increment_multiples",
+            "for.*d.*=.*1.*d.*<=.*ND_LIMIT.*for.*m.*=.*d.*m.*<=.*ND_LIMIT.*m.*\\+=.*d|additive_divisor_sieve",
+            "nd_div|ndiv_additive|divisor_sieve_inner_loop"
+        ),
+        new PatternDef("ndiv_spf_sieve", "divisor_count_spf_factorization", "high",
+            "spf.*m.*==.*spf.*p.*is.*prime.*spf.*m.*=.*p|smallest_prime_factor_sieve",
+            "nd_div2.*n.*=.*e.*\\+.*1.*\\*.*nd_div2.*m.*spf_factor_exponent|multiplicative_divisor_count",
+            "spf|nd_div2|smallest_prime_factor|multiplicative_ndiv"
+        ),
+        new PatternDef("ndiv_sum_formula", "divisor_count_sum_over_range", "medium",
+            "ndiv_sum.*=.*0.*arr.*i.*\\+=|sum_of_divisor_counts",
+            "sum_d_n_floor_L_d|divisor_function_sum|ndiv_sum_verify",
+            "ndiv_sum|divisor_count_total|sum_tau_function"
+        ),
+        // ── count_distinct_substrings ─────────────────────────────────────────────
+        new PatternDef("cds_suffix_array", "count_distinct_substrings_suffix_array", "high",
+            "build_sa.*prefix_doubling|cds_sort.*cds_cmp.*cds_gap|suffix_array_prefix_double",
+            "rk.*sa.*i.*=.*tmp.*sa.*i.*-.*1.*\\+.*cds_cmp|suffix_array_rank_update",
+            "cds_gap|build_sa|suffix_array_distinct_substrings"
+        ),
+        new PatternDef("cds_lcp_kasai", "count_distinct_substrings_kasai_lcp", "high",
+            "inv_sa.*sa.*i.*=.*i.*kasai|build_lcp.*h.*\\+\\+.*h--|kasai_lcp_algorithm",
+            "lcp.*inv_sa.*i.*-.*1.*=.*h.*if.*h.*>.*0.*h--|kasai_decrement_h",
+            "build_lcp|inv_sa|kasai|lcp_from_suffix_array"
+        ),
+        new PatternDef("cds_formula", "count_distinct_substrings_formula", "high",
+            "total.*=.*n.*\\*.*n.*\\+.*1.*\\/.*2.*-.*lcp.*i|distinct_substrings_formula",
+            "count_distinct.*total.*-=.*lcp.*i|subtract_lcp_array_sum",
+            "count_distinct|distinct_substrings_lcp|n_n1_div2_minus_sum_lcp"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
