@@ -5784,6 +5784,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x140E81|SN_UPPER.*20.*count.*14.*sum.*129|smooth_result",
             "g_result.*0x14.*0x0E.*0x81|sn_g_result"
         ),
+        new PatternDef("perfect_numbers_sigma", "perfect_numbers_sigma", "high",
+            "for.*d.*2.*d.*n.*2.*n.*%.*d.*0.*s.*d|proper_divisor_sum",
+            "sigma.*==.*n.*pf_count|perfect_divisor_equal",
+            "PF_UPPER.*100.*pf_count.*pf_sum|perfect_sweep_100"
+        ),
+        new PatternDef("perfect_numbers_check", "perfect_numbers_check", "high",
+            "proper_divisor_sum.*n.*==.*n|pf_count.*pf_sum.*perfect",
+            "6.*28.*perfect.*count.*2.*sum.*34|perfect_pair_6_28",
+            "pf_count.*pf_sum.*PF_UPPER|perfect_numbers_accumulate"
+        ),
+        new PatternDef("perfect_numbers_pack", "perfect_numbers_pack", "medium",
+            "PF_UPPER\\s*<<\\s*16.*pf_count.*<<.*8.*pf_sum|perfect_pack",
+            "0x640222|PF_UPPER.*100.*count.*2.*sum.*34|perfect_result",
+            "g_result.*0x64.*0x02.*0x22|pf_g_result"
+        ),
+        new PatternDef("amicable_numbers_sigma", "amicable_numbers_sigma", "high",
+            "for.*d.*1.*d.*n.*n.*%.*d.*0.*s.*d|am_sigma",
+            "am_sigma.*n.*s.*s.*!=.*n.*am_sigma.*s.*==.*n|amicable_mutual_check",
+            "AM_LO.*200.*AM_HI.*300.*amicable|amicable_range_200_300"
+        ),
+        new PatternDef("amicable_numbers_check", "amicable_numbers_check", "high",
+            "sigma.*s.*!=.*n.*sigma.*sigma.*n.*==.*n|amicable_pair_test",
+            "220.*284.*amicable.*count.*2.*sum.*504|amicable_pair_220_284",
+            "am_count.*am_sum.*amicable|amicable_accumulate"
+        ),
+        new PatternDef("amicable_numbers_pack", "amicable_numbers_pack", "medium",
+            "101.*<<.*16.*am_count.*<<.*8.*am_sum|amicable_pack",
+            "0x6502F8|n_tests.*101.*count.*2.*sum.*248|amicable_result",
+            "g_result.*0x65.*0x02.*0xF8|am_g_result"
+        ),
+        new PatternDef("abundant_numbers_sigma", "abundant_numbers_sigma", "high",
+            "for.*d.*1.*d.*n.*n.*%.*d.*0.*s.*d|ab_sigma",
+            "ab_sigma.*n.*>.*n.*ab_count|abundant_excess_test",
+            "AB_UPPER.*50.*abundant.*sigma|abundant_range_50"
+        ),
+        new PatternDef("abundant_numbers_check", "abundant_numbers_check", "high",
+            "sigma.*>.*n.*ab_count.*ab_sum|abundant_count_sum",
+            "12.*18.*20.*24.*30.*36.*40.*42.*48.*abundant.*9|abundant_list_9",
+            "ab_count.*ab_sum.*AB_UPPER|abundant_accumulate"
+        ),
+        new PatternDef("abundant_numbers_pack", "abundant_numbers_pack", "medium",
+            "AB_UPPER\\s*<<\\s*16.*ab_count.*<<.*8.*ab_sum|abundant_pack",
+            "0x32090E|AB_UPPER.*50.*count.*9.*sum.*14|abundant_result",
+            "g_result.*0x32.*0x09.*0x0E|ab_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
