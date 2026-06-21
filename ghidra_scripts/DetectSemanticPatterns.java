@@ -2860,6 +2860,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dp.*i.*=.*cht_query.*prefix.*i.*\\+.*prefix.*i.*prefix.*i|cht.*dp.*recurrence|slope_trick.*dp",
             "prefix.*i.*\\*.*prefix.*i|cht.*intercept.*dp.*j.*prefix.*j.*squared|cht.*line.*per.*dp.*state"
         ),
+        // ── Sprint 123: euler_tour_tree ───────────────────────────────────────
+        new PatternDef("ett_dfs_timestamps", "euler_tour_tree_dfs_timestamps", "high",
+            "ett_tin|euler_tour.*entry.*time|dfs.*tin.*tout.*timestamp",
+            "ett_timer\\+\\+|euler_tour.*timer.*increment|dfs.*timestamp.*assign",
+            "tin\\[v\\].*=.*timer|tout\\[v\\].*=.*timer|euler_tour.*record.*entry.*exit"
+        ),
+        new PatternDef("ett_subtree_range", "euler_tour_tree_subtree_range_query", "high",
+            "tin.*>=.*tin.*&&.*tin.*<=.*tout|euler_tour.*subtree.*range.*check",
+            "ett_subtree_sum|euler_tour.*sum.*within.*tin.*tout|subtree.*query.*euler.*timestamps",
+            "tin\\[i\\].*>=.*tin\\[v\\].*tin\\[i\\].*<=.*tout\\[v\\]|euler_tour.*range.*membership"
+        ),
+        new PatternDef("ett_iterative_dfs", "euler_tour_tree_iterative_dfs", "medium",
+            "ett_stack|euler_tour.*iterative.*stack|dfs.*stack.*phase.*enter.*exit",
+            "ph.*==.*0.*tin|euler_tour.*phase.*zero.*entry|iterative_dfs.*push.*exit.*marker",
+            "ett_phase|euler_tour.*phase.*array|dfs.*two_phase.*stack.*enter.*exit"
+        ),
+        // ── Sprint 123: aliens_trick ──────────────────────────────────────────
+        new PatternDef("aliens_lambda_search", "aliens_trick_lambda_binary_search", "high",
+            "aln_solve.*lam|aliens.*lambda.*binary.*search|wqs.*binary.*search.*penalty",
+            "cnt.*>=.*ALN_K|aliens.*group.*count.*check.*k|lambda.*optimisation.*segment.*count",
+            "lo.*=.*mid.*\\+.*1|hi.*=.*mid.*-.*1|aliens.*binary.*search.*convergence"
+        ),
+        new PatternDef("aliens_dp_penalty", "aliens_trick_dp_with_penalty", "high",
+            "aln_seg_cost.*lam|aliens.*dp.*penalty.*per.*group|wqs.*cost.*plus.*lambda",
+            "dp\\[j\\].*\\+.*aln_seg_cost.*\\+.*lam|aliens.*recurrence.*penalty|dp.*group.*penalty.*transition",
+            "final_cost.*-=.*final_lam.*\\*.*final_cnt|aliens.*remove.*lambda.*adjustment|wqs.*depenalise"
+        ),
+        new PatternDef("aliens_rmq_build", "aliens_trick_rmq_precompute", "medium",
+            "aln_mn|aln_mx|aliens.*precompute.*min.*max",
+            "aln_build_rmq|aliens.*build.*rmq.*table|wqs.*range.*min.*max.*precompute",
+            "aln_seg_cost.*=.*aln_mx.*-.*aln_mn|aliens.*segment.*cost.*max.*minus.*min"
+        ),
+        // ── Sprint 123: segment_tree_beats ────────────────────────────────────
+        new PatternDef("stb_chmin_update", "segment_tree_beats_chmin_update", "high",
+            "stb_update|segment_tree_beats.*chmin|ji_driver.*range.*chmin",
+            "stb_max2\\[nd\\].*<.*val|segment_tree_beats.*break.*condition|beats.*second.*max.*guard",
+            "stb_push_chmin|beats.*apply.*chmin.*lazy|ji_driver.*propagate.*max.*cap"
+        ),
+        new PatternDef("stb_pushup_max", "segment_tree_beats_pushup_max_tracking", "high",
+            "stb_max1|stb_max2|stb_maxcnt|segment_tree_beats.*max.*second.*count",
+            "stb_pushup|beats.*merge.*max1.*max2.*maxcnt|ji_driver.*pushup.*merge",
+            "maxcnt\\[nd\\].*=.*maxcnt.*nd.*2|beats.*count.*maximum.*merge|stb.*max.*count.*combine"
+        ),
+        new PatternDef("stb_lazy_propagate", "segment_tree_beats_lazy_propagation", "medium",
+            "stb_pushdown|segment_tree_beats.*pushdown|beats.*lazy.*propagate",
+            "stb_lazy\\[nd\\].*=.*0x7FFFFFFF|beats.*clear.*lazy.*sentinel|ji_driver.*reset.*lazy",
+            "push_chmin.*nd.*2.*lazy|beats.*push.*children.*chmin.*lazy|stb.*lazy.*inherit"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
