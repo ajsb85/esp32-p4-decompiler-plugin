@@ -6060,6 +6060,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x031561|CP_UPPER.*100.*chen_count.*21.*last_chen.*97|chen_primes_metrics",
             "g_result.*chen_count.*metric_a.*metric_b|cp_g_result_chen"
         ),
+        new PatternDef("sophie_germain_is_prime", "sophie_germain_is_prime", "high",
+            "is_prime_sgp.*n.*<.*2.*return.*0|sophie_germain_primality",
+            "for.*d.*3.*d.*d.*<=.*n.*d.*2.*n.*%.*d.*==.*0|sgp_trial_div_loop",
+            "return.*1.*is_prime_sgp|sgp_prime_return"
+        ),
+        new PatternDef("sophie_germain_scan", "sophie_germain_scan", "high",
+            "for.*p.*2.*p.*<=.*SGP_UPPER.*p[+][+]|sophie_germain_scan_loop",
+            "is_prime_sgp.*p.*&&.*is_prime_sgp.*2.*p.*1|sgp_sophie_test",
+            "sg_count[+][+].*last_sg\\s*=\\s*p|sgp_accumulate"
+        ),
+        new PatternDef("sophie_germain_pack", "sophie_germain_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|sophie_germain_pack",
+            "sg_count.*0xFF.*last_sg.*0xFF|sgp_mask_metrics",
+            "g_result.*n_tests.*metric_a.*metric_b|sgp_g_result"
+        ),
+        new PatternDef("ramanujan_sieve", "ramanujan_sieve", "high",
+            "is_p\\[0\\]\\s*=\\s*0.*is_p\\[1\\]\\s*=\\s*0|ramanujan_sieve_init",
+            "for.*i.*i.*i.*<=.*RAM_LIMIT.*is_p\\[i\\].*j.*i.*i.*j.*<=.*RAM_LIMIT.*j.*i|ramanujan_sieve_inner",
+            "sieve_ram|ramanujan_sieve_fn"
+        ),
+        new PatternDef("ramanujan_pi_scan", "ramanujan_pi_scan", "high",
+            "pi_ram.*x.*cnt.*i.*2.*i.*<=.*x.*is_p\\[i\\].*cnt[+][+]|ramanujan_pi_fn",
+            "for.*x.*2.*x.*<=.*RAM_LIMIT.*found.*<.*RAM_N|ramanujan_scan_loop",
+            "pi_ram.*x.*-.*pi_ram.*x.*>>.*1.*>=.*found.*1|ramanujan_diff_cond"
+        ),
+        new PatternDef("ramanujan_pack", "ramanujan_pack", "medium",
+            "found[+][+].*last_rp\\s*=\\s*x|ramanujan_accumulate",
+            "found.*0xFF.*last_rp.*0xFF|ramanujan_mask_metrics",
+            "g_result.*n_tests.*metric_a.*metric_b|ramanujan_g_result"
+        ),
+        new PatternDef("super_primes_build", "super_primes_build", "high",
+            "for.*n.*2.*n.*<=.*SP_LIMIT.*prime_cnt.*<.*SP_MAX|super_primes_build_loop",
+            "is_prime_sp.*n.*primes\\[prime_cnt[+][+]\\].*n|super_primes_store",
+            "build_primes|prime_cnt.*0|super_primes_init"
+        ),
+        new PatternDef("super_primes_scan", "super_primes_scan", "high",
+            "for.*i.*0.*i.*<.*prime_cnt.*i[+][+].*idx.*i.*1|super_primes_scan_loop",
+            "is_prime_sp.*idx.*sp_count[+][+].*last_sp.*primes\\[i\\]|super_prime_test",
+            "super_prime.*prime.*indexed|sp_comment_indexed"
+        ),
+        new PatternDef("super_primes_pack", "super_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|super_primes_pack",
+            "sp_count.*0xFF.*last_sp.*0xFF|super_primes_mask",
+            "g_result.*sp_count.*metric_a.*metric_b|super_primes_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
