@@ -3702,6 +3702,35 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*i.*<.*n.*crc.*=.*crc.*>>.*8.*\\^.*table.*crc.*\\^.*byte.*|crc32_roll",
             "crc32_compute|crc32_update|crc32_byte|crc_table_lookup"
         ),
+
+        // ── Gale-Shapley stable matching ─────────────────────────────────────
+        new PatternDef("gs_proposal_advance", "gale_shapley_proposal_pointer_advance", "high",
+            "w.*=.*gs_man_pref.*m.*gs_next.*m.*\\+\\+|man_pref.*m.*next_proposal.*m.*\\+\\+",
+            "proposal_pointer.*advance.*per_man.*gs_next.*\\+\\+|gale_shapley_next_woman",
+            "gs_next|gale_shapley_propose|stable_match_proposal|man_optimal_advance"
+        ),
+        new PatternDef("gs_woman_prefer_check", "gale_shapley_woman_rank_comparison", "high",
+            "gs_woman_rank.*w.*m.*<.*gs_woman_rank.*w.*m2|woman_rank.*m.*<.*woman_rank.*current",
+            "if.*woman_rank.*new_man.*<.*woman_rank.*current.*accept.*reject|gs_displace",
+            "gs_woman_rank|gale_shapley_displace|stable_match_accept|woman_rank_cmp"
+        ),
+        new PatternDef("gs_free_displaced", "gale_shapley_free_displaced_man", "high",
+            "gs_match_m.*m2.*=.*-1.*free_count|match_m.*m2.*=.*-1.*displaced_man_freed",
+            "gs_match_m.*m2.*=.*-1|displaced.*man.*m2.*freed.*gale_shapley|stable_match_displace",
+            "gs_match_m|gale_shapley_free|stable_match_displace|man_freed"
+        ),
+
+        // ── Optimal BST (Knuth-Yao quadrangle-inequality optimization) ───────
+        new PatternDef("knuth_bst_root_bound", "optimal_bst_knuth_root_range_optimization", "high",
+            "klo.*=.*ob_root.*i.*j.*-.*1.*khi.*=.*ob_root.*i.*\\+.*1.*j.*for.*k.*=.*klo.*k.*<=.*khi",
+            "root.*i.*j.*-1.*<=.*root.*i.*j.*<=.*root.*i.*\\+1.*j.*knuth.*quadrangle",
+            "ob_root|knuth_root_bound|optimal_bst_bound|knuth_yao_opt"
+        ),
+        new PatternDef("knuth_bst_weight_sum", "optimal_bst_cumulative_frequency_weight", "high",
+            "ob_w.*i.*j.*=.*ob_w.*i.*j.*-.*1.*\\+.*ob_freq.*j.*|w.*i.*j.*=.*w.*i.*j_minus_1.*\\+.*freq.*j",
+            "cost.*=.*left.*\\+.*right.*\\+.*ob_w.*i.*j.*|optimal_bst_cost.*subtree.*root_weight",
+            "ob_w|knuth_bst_weight|optimal_bst_freq_sum|bst_dp_weight"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
