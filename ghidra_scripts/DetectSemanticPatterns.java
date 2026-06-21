@@ -5649,6 +5649,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "c1.*4.*c4.*2|sum_sq_expected_vals",
             "0x140402|sum_of_squares.*0x14.*0x04.*0x02|sum_sq_byte_check"
         ),
+        new PatternDef("digit_dp_count_zeros_state", "digit_dp_count_zeros", "high",
+            "extract_digits|dp_count|dp_sum|has_zero|tight",
+            "digit_dp_solve|count_zeros_in_range|zero_digit_dp",
+            "num_so_far.*10.*d|pos.*tight.*has_zero|digit_dp_leaf"
+        ),
+        new PatternDef("digit_dp_count_zeros_accumulate", "digit_dp_count_zeros_acc", "high",
+            "total_count.*dp_count|total_sum.*dp_sum|accumulate_dp_states",
+            "sum_mod.*0xFF|sq.*64.*count.*10|zero_digit_accumulate",
+            "n_tests.*100|upper.*100|digit_dp_count_upper"
+        ),
+        new PatternDef("digit_dp_count_zeros_pack", "digit_dp_count_zeros_pack", "medium",
+            "n_tests\\s*<<\\s*16.*total_count\\s*<<\\s*8.*sum_mod|digit_dp_pack",
+            "0x640A26|count.*10.*sum_mod.*38|digit_dp_zero_result",
+            "upper.*100.*count.*10|digit_dp.*0x64.*0x0A.*0x26"
+        ),
+        new PatternDef("catalan_triangle_build", "catalan_triangle", "high",
+            "cat_tri|catalan_triangle|ballot_triangle",
+            "T\\[n\\]\\[0\\].*1|cat_tri.*k-1.*n-1|catalan_recurrence",
+            "T.*n.*k.*T.*n.*k.*minus.*1.*T.*n.*minus.*1.*k|catalan_tri_fill"
+        ),
+        new PatternDef("catalan_triangle_sum", "catalan_triangle_sum", "high",
+            "grand_total.*cat_tri|sum_catalan_rows|catalan_grand_sum",
+            "max_row5.*cat_tri.*5.*5|catalan_max_entry",
+            "grand_total.*625|grand_total_mod.*113|catalan_row_sum_check"
+        ),
+        new PatternDef("catalan_triangle_pack", "catalan_triangle_pack", "medium",
+            "n_tests\\s*<<\\s*16.*grand_total_mod\\s*<<\\s*8.*max_row5|catalan_tri_pack",
+            "0x07712A|0x7712a|grand_total_mod.*113.*max_row5.*42",
+            "n_tests.*7.*grand_total.*625|catalan_result_check"
+        ),
+        new PatternDef("squares_of_fibonacci_check", "squares_of_fibonacci", "high",
+            "is_fibonacci|fib_table|sq.*f.*f|fibonacci_square",
+            "f.*fibs.*k.*sq.*f.*f|fib_squared_check",
+            "sq_sum.*sq|count.*is_fibonacci.*sq|fib_sq_accumulate"
+        ),
+        new PatternDef("squares_of_fibonacci_identity", "squares_of_fibonacci_id", "high",
+            "fib_table.*20|FIB_TABLE_SIZE|fibonacci_square_table",
+            "fibs.*1.*1.*2.*3.*5.*8|fib_first10|fibonacci_sq_input",
+            "sq_sum.*4895|sum_mod.*31|fib_sq_sum_check"
+        ),
+        new PatternDef("squares_of_fibonacci_pack", "squares_of_fibonacci_pack", "medium",
+            "n_tests\\s*<<\\s*16.*count\\s*<<\\s*8.*sum_mod|fib_sq_pack",
+            "0x0A021F|count.*2.*sum_mod.*31|fib_sq_result",
+            "n_tests.*10.*count.*2|squares_fibonacci.*0x0A.*0x02.*0x1F"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
