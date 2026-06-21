@@ -107,8 +107,12 @@ public class ExportFirmwareHeader extends GhidraScript {
         // function signatures) so structs that appear only in function bodies,
         // as global variable types, or as nested members are all captured.
         Set<DataType> usedTypes = new LinkedHashSet<>();
-        for (DataType dt : currentProgram.getDataTypeManager().getAllDataTypes()) {
+        // getAllDataTypes() returns Iterator, not Iterable — use while loop.
+        java.util.Iterator<DataType> dtIter =
+                currentProgram.getDataTypeManager().getAllDataTypes();
+        while (dtIter.hasNext()) {
             monitor.checkCancelled();
+            DataType dt = dtIter.next();
             if (isEmittable(dt)) {
                 usedTypes.add(dt);
                 collectNestedTypes(dt, usedTypes);

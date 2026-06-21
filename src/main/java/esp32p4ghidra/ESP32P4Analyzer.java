@@ -285,12 +285,12 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
                 lpEndInstr.setComment(CommentType.POST, backEdge);
 
                 // Override the fall-through of the loop-end instruction to create a
-                // back-edge in the decompiler's CFG.  The hardware decrements COUNT
-                // and jumps to loopStart if COUNT != 0; the fall-through override
-                // makes Ghidra's decompiler see the back-edge and reconstruct a loop
-                // structure (for/while) instead of a goto-tangle.
+                // back-edge in the decompiler's CFG.  setFallThrough() is a method
+                // on Instruction (not Listing) — it overrides the natural fall-through
+                // so the CFG shows a back-edge, enabling the decompiler to reconstruct
+                // a loop structure (for/while) rather than a goto-tangle.
                 try {
-                    program.getListing().setFallThrough(loopEnd, loopStart);
+                    lpEndInstr.setFallThrough(loopStart);
                 } catch (Exception ex) {
                     log.appendMsg("Could not set fall-through at " + loopEnd
                             + " → " + loopStart + ": " + ex.getMessage());
@@ -349,14 +349,18 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
 
     private boolean isESP32P4(Program program) {
         if (!isRiscV32(program)) return false;
-        // Check if the program has ESP32-P4 characteristic memory sections
+        // Primary check: program was loaded with the ESP32-P4 language spec.
+        // This is always true when analyzeHeadless uses -processor RISCV:LE:32:ESP32-P4
+        // or when the plugin's loader auto-detected the architecture.
+        String langId = program.getLanguageID().getIdAsString();
+        if (langId.contains("ESP32-P4")) return true;
+        // Fallback: check for ESP32-P4 characteristic memory sections.
+        // (applies when a generic RV32 loader is used on real firmware)
         Memory mem = program.getMemory();
         for (MemoryBlock block : mem.getBlocks()) {
             long start = block.getStart().getOffset();
-            // IRAM at 0x4FF00000 is characteristic of ESP32-P4
-            if (start >= 0x4FF00000L && start < 0x50000000L) return true;
-            // SPM at 0x30100000 is ESP32-P4 specific
-            if (start >= 0x30100000L && start < 0x30200000L) return true;
+            if (start >= 0x4FF00000L && start < 0x50000000L) return true; // IRAM
+            if (start >= 0x30100000L && start < 0x30200000L) return true; // SPM
         }
         return false;
     }

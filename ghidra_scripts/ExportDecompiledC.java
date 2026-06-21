@@ -390,8 +390,8 @@ public class ExportDecompiledC extends GhidraScript {
                 StringBuilder fixed     = new StringBuilder();
 
                 // For Fix 3 improved: track last Ghidra local var assigned per scope.
-                // We use a simple stack: push null on '{', update on assignment, pop on '}'.
-                // The "last" at the top of the stack when we hit bare return is our candidate.
+                // We use a simple stack: push "" on '{', update on assignment, pop on '}'.
+                // ArrayDeque does not allow null, so we use "" as a sentinel for "not yet seen".
                 Deque<String> scopeStack    = new ArrayDeque<>();
                 String        lastLocalVar  = null;  // running last across all scopes
 
@@ -413,7 +413,8 @@ public class ExportDecompiledC extends GhidraScript {
 
                     // Track scope depth for var lifetime (simple { } counting).
                     for (char c : line.toCharArray()) {
-                        if (c == '{') scopeStack.push(lastLocalVar); // save on entry
+                        // ArrayDeque rejects null; use "" sentinel for "no var seen yet".
+                        if (c == '{') scopeStack.push(lastLocalVar != null ? lastLocalVar : "");
                         else if (c == '}' && !scopeStack.isEmpty())
                             scopeStack.pop(); // restore on exit (but we keep the global lastLocalVar)
                     }
