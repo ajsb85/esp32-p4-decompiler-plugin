@@ -1,60 +1,182 @@
-# Round-trip validation
+# Round-Trip Validation
 
-Validates the full pipeline: compile → decompile → recompile.
+Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-## Files
+The suite ships 13 bare-metal RISC-V fixtures covering a broad range of algorithm
+families. Each fixture stores its result in `volatile uint32_t g_result` so the
+hardware flash-and-verify path can read it from a known address via serial output.
 
-| File | Purpose |
-|------|---------|
-| `hello.c` | Bare-metal RISC-V source (fib + CRC32, no libc) |
-| `hello.ld` | Linker script (text @ 0x40000000, data @ 0x4FF00000) |
+---
 
-## Running the round-trip
+## Fixtures
+
+| Fixture | Algorithms / Patterns | Expected `g_result` | HW only? |
+|---------|----------------------|---------------------|----------|
+| `hello.c` | Fibonacci, CRC-32, bare startup | `0xBE34BDFC` | |
+| `test_sorting.c` | Bubble sort, insertion sort | `0x00000029` | |
+| `test_math.c` | Popcount, integer sqrt (Newton), bit reverse, `ilog2`, `clz` | `0x000000F9` | |
+| `test_state_machine.c` | 4-state FSM, packet parser, ring buffer | `0x00000244` | |
+| `test_crypto.c` | XOR stream cipher, key schedule, Poly-1305-style MAC, CRC-8 | `0xABCD65DD` | |
+| `test_linked_list.c` | Static-pool singly-linked list, push/pop, XOR checksum | `0x0000781E` | |
+| `test_matrix.c` | 3×3 matrix multiply, cofactor determinant, element XOR | `0x0000003A` | |
+| `test_lfsr.c` | Galois LFSR (0x80200003), Fibonacci LFSR, bit collection | `0x2F34BC35` | |
+| `test_fifo_queue.c` | Lock-free FIFO (head/tail modulo), enqueue/dequeue XOR | `0x00000000` | |
+| `test_bitops.c` | GCD (Euclidean), byte-swap, nibble-swap, parity, Gray code, sat-add, Kernighan popcount | `0x87A97826` | |
+| `test_hash.c` | DJB2, FNV-1a, polynomial rolling hash | `0x21708D55` | |
+| `test_string.c` | `strlen`, `memcmp`, `strchr` count, brute-force substring search | `0x00001014` | |
+| `test_pie_simd.c` | xespv2p2 PIE: `esp.vld.128.ip`, `esp.vst.128.ip` (raw `.word`) | `0x0000109A` | ✓ |
+
+`test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
+hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
+
+---
+
+## Quick start
+
+### CI smoke (no Ghidra, no hardware)
+
+Validates Java script compilation, Sleigh compilation, gcc cross-compilation of all
+fixtures, and native reference values — in under 30 s on a typical workstation.
 
 ```bash
-GCC=~/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/bin/riscv32-esp-elf-gcc
-
-# 1. Compile original
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O1 -g \
-     -nostdlib -nostartfiles -ffreestanding \
-     -T hello.ld -o hello.elf hello.c
-
-# 2. Decompile with Ghidra (ExportDecompiledC.java post-script)
-analyzeHeadless /tmp/proj RoundtripTest \
-  -import hello.elf \
-  -processor "RISCV:LE:32:ESP32-P4" \
-  -scriptPath ../../ghidra_scripts \
-  -postScript ExportDecompiledC.java \
-  -deleteProject
-
-# 3. Recompile decompiled output
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 \
-     -nostdlib -nostartfiles -ffreestanding \
-     -include ../../tools/ghidra_types.h \
-     -c decompiled.c -o decompiled.o
-
-# 4. Link rebuilt binary
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f \
-     -nostdlib -nostartfiles \
-     -T hello.ld -o decompiled_rebuilt.elf decompiled.o
+# From the repo root:
+GHIDRA_INSTALL_DIR=/opt/ghidra_12.1.2_PUBLIC \
+RISCV_GCC=~/.espressif/tools/riscv32-esp-elf/esp-14.2.0_20260121/riscv32-esp-elf/bin/riscv32-esp-elf-gcc \
+bash test/ci_smoke.sh
 ```
 
-## Expected result
+Exit 0 = all pass. Phases that require a missing tool are silently skipped (SKIP,
+not FAIL) so CI works in environments without a cross-compiler or Ghidra install.
 
-Both ELFs contain the same functions (`hello_world`, `_start`) at the
-same load addresses.  The rebuilt binary is larger because decompiled C
-is compiled at -O0 (no compression, stack-spilled locals); the
-algorithm and memory layout are functionally identical.
+### Full round-trip (Ghidra headless required)
 
-| Metric | `hello.elf` | `decompiled_rebuilt.elf` |
-|--------|-------------|--------------------------|
-| `.text` | ~138 B | ~348 B |
-| `.bss` | 4 B | 4 B |
-| `g_result` | 0x4FF00000 | 0x4FF00000 |
+```bash
+# From the repo root:
+bash test/roundtrip/run_roundtrip.sh
+```
 
-## Known limitation
+Options:
 
-Ghidra's decompiler emits function bodies but not global variable
-declarations.  Any global referenced in decompiled code must be
-declared manually before the first use (e.g. `volatile uint g_result;`).
-This is a Ghidra decompiler characteristic, not a plugin bug.
+```
+--ghidra-project /tmp/rt-proj   Override project directory (default /tmp/esp32p4-roundtrip-proj)
+--flash COM12                    Flash each recompiled ELF and read g_result from serial
+```
+
+The script runs six phases:
+
+| Phase | What it does |
+|-------|-------------|
+| 1 | Compile originals with `riscv32-esp-elf-gcc -O2` |
+| 2 | Ghidra headless decompile → `.c` via `ExportDecompiledC.java` |
+| 3 | Recompile decompiled `.c` with `-O0 -include ghidra_types.h` |
+| 4 | `objdump` mnemonic diff (normalised, ignoring addresses) |
+| 5 | Pattern detection via `DetectSemanticPatterns.java` → `*_hints.json` |
+| 6 | Optional hardware flash + serial `g_result` read (requires `--flash`) |
+
+### Manual single-fixture run
+
+```bash
+GCC=~/.espressif/tools/riscv32-esp-elf/esp-14.2.0_20260121/riscv32-esp-elf/bin/riscv32-esp-elf-gcc
+CFLAGS="-march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O2 -ffreestanding -nostdlib"
+LD=test/roundtrip/hello.ld
+
+# 1. Compile
+$GCC $CFLAGS -T$LD test/roundtrip/test_hash.c -o /tmp/test_hash.elf
+
+# 2. Decompile (Ghidra headless)
+analyzeHeadless /tmp/proj RT_hash \
+  -import /tmp/test_hash.elf \
+  -processor "RISCV:LE:32:ESP32-P4" \
+  -scriptPath ghidra_scripts \
+  -postScript ExportDecompiledC.java /tmp/test_hash_decompiled.c \
+  -deleteProject
+
+# 3. Recompile decompiled C
+$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 -ffreestanding -nostdlib \
+     -include tools/ghidra_types.h -T$LD \
+     /tmp/test_hash_decompiled.c -o /tmp/test_hash_rebuilt.elf
+
+# 4. Compare (mnemonic diff)
+riscv32-esp-elf-objdump -d /tmp/test_hash.elf     > /tmp/orig.dis
+riscv32-esp-elf-objdump -d /tmp/test_hash_rebuilt.elf > /tmp/rebuilt.dis
+diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
+```
+
+---
+
+## Semantic pattern detection
+
+`DetectSemanticPatterns.java` classifies decompiled function bodies against
+39 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+and it emits `semantic_hints.json` alongside the decompiled `.c`:
+
+```bash
+analyzeHeadless /tmp/proj RT_hash \
+  -import /tmp/test_hash.elf \
+  -processor "RISCV:LE:32:ESP32-P4" \
+  -scriptPath ghidra_scripts \
+  -postScript DetectSemanticPatterns.java /tmp/test_hash_hints.json \
+  -deleteProject
+```
+
+Pattern families currently covered (39 patterns):
+
+| Family | Patterns |
+|--------|---------|
+| Sorting | bubble, insertion, selection, quick, merge |
+| Math | bitwise tricks, Newton sqrt, bit-reverse, ilog2, clz |
+| Crypto-like | XOR cipher, CRC-8/32, Poly-1305 MAC |
+| State machine | FSM sync-byte, ring buffer |
+| Linked list | traverse, push/pop (static pool) |
+| Matrix | 3×N multiply (triple nested `for`) |
+| LFSR | Galois (mask XOR shift), Fibonacci (multi-tap XOR) |
+| FIFO | modulo-indexed head/tail |
+| Bit operations | GCD Euclidean, endian swap, Gray encode/decode, sat-add |
+| Hash | DJB2, FNV-1a, polynomial rolling |
+| String | `strlen` loop, `memcmp`, substring search |
+| PIE SIMD | `vld/vst.128.ip` loops, `zero.q`, bitwise Q ops, SIMD loop |
+
+---
+
+## Prerequisites
+
+| Tool | Version | Role |
+|------|---------|------|
+| `riscv32-esp-elf-gcc` | esp-14.2.0+ | Cross-compile fixtures and decompiled C |
+| Ghidra | 12.1.2+ | Headless decompile (phases 2, 5) |
+| `gcc` (host) | any | Native reference-value verifier (ci_smoke Phase 4) |
+| `esptool.py` | 4.x+ | Flash to hardware (phase 6, optional) |
+| `python3` + `pyserial` | any | Read `g_result` from serial (phase 6, optional) |
+
+Set `RISCV_GCC` or `GHIDRA_INSTALL_DIR` to override default paths.
+
+---
+
+## Linker script (`hello.ld`)
+
+All fixtures share a single linker script:
+
+| Section | Address | Notes |
+|---------|---------|-------|
+| `.text` | `0x40000000` | Flash IROM — execute-in-place |
+| `.data` | `0x4FF00000` | HP-SRAM (IRAM on ESP32-P4) |
+| `g_result` | `0x4FF00000` | First 4 bytes of `.data`; read by flash verifier |
+
+The `g_result` address is stable across all fixtures, so a serial read script
+can poll that one address regardless of which firmware is flashed.
+
+---
+
+## Adding a new fixture
+
+1. Create `test/roundtrip/test_<name>.c` with `volatile uint32_t g_result = 0;`
+   at global scope and a `void _start(void)` that sets it and loops.
+2. Compute the expected `g_result` with a host-native verifier:
+   ```bash
+   gcc -O2 -o /tmp/verify test/roundtrip/test_<name>.c && /tmp/verify
+   ```
+   *(Strip the bare-metal parts — `_start` / `while(1)` — for the host build.)*
+3. Add the fixture to `run_roundtrip.sh` (`EXPECTED_RESULT` map + `TESTS` array).
+4. Add a `CHECK()` call to `ci_smoke.sh` Phase 4 native verifier heredoc.
+5. Consider adding a `PatternDef` to `DetectSemanticPatterns.java` if the fixture
+   exercises an algorithm not yet covered.
