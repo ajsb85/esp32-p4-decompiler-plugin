@@ -171,6 +171,15 @@ static void td2_dfs(int v){td2_vis[v]=1;for(int i=0;i<td2_deg[v];i++)if(!td2_vis
 static int ch2_px[6]={0,2,3,2,0,1},ch2_py[6]={0,0,1,2,2,1},ch2_hull[6],ch2_ht;
 static int ch2_cross(int oi,int ai,int bi){return(ch2_px[ai]-ch2_px[oi])*(ch2_py[bi]-ch2_py[oi])-(ch2_py[ai]-ch2_py[oi])*(ch2_px[bi]-ch2_px[oi]);}
 static void ch2_scan(void){int mi=0;for(int i=1;i<6;i++)if(ch2_py[i]<ch2_py[mi]||(ch2_py[i]==ch2_py[mi]&&ch2_px[i]<ch2_px[mi]))mi=i;int tx=ch2_px[0];ch2_px[0]=ch2_px[mi];ch2_px[mi]=tx;int ty=ch2_py[0];ch2_py[0]=ch2_py[mi];ch2_py[mi]=ty;for(int i=1;i<5;i++){int b=i;for(int j=i+1;j<6;j++){int c=ch2_cross(0,b,j);if(c<0){b=j;}else if(c==0){int d1=(ch2_px[b]-ch2_px[0])*(ch2_px[b]-ch2_px[0])+(ch2_py[b]-ch2_py[0])*(ch2_py[b]-ch2_py[0]);int d2=(ch2_px[j]-ch2_px[0])*(ch2_px[j]-ch2_px[0])+(ch2_py[j]-ch2_py[0])*(ch2_py[j]-ch2_py[0]);if(d2>d1)b=j;}}if(b!=i){tx=ch2_px[i];ch2_px[i]=ch2_px[b];ch2_px[b]=tx;ty=ch2_py[i];ch2_py[i]=ch2_py[b];ch2_py[b]=ty;}}ch2_ht=0;for(int i=0;i<6;i++){while(ch2_ht>=2&&ch2_cross(ch2_hull[ch2_ht-2],ch2_hull[ch2_ht-1],i)<=0)ch2_ht--;ch2_hull[ch2_ht++]=i;}}
+/* Sprint 70: suffix_array helper */
+static const char sa2_str[]="banana";
+static int sa2_idx[6];
+static int sa2_cmp(int a,int b){const char*pa=sa2_str+a,*pb=sa2_str+b;while(*pa&&*pa==*pb){pa++;pb++;}return (unsigned char)*pa-(unsigned char)*pb;}
+static void build_sa2(void){for(int i=0;i<6;i++)sa2_idx[i]=i;for(int i=1;i<6;i++){int key=sa2_idx[i],j=i-1;while(j>=0&&sa2_cmp(sa2_idx[j],key)>0){sa2_idx[j+1]=sa2_idx[j];j--;}sa2_idx[j+1]=key;}}
+/* Sprint 73: articulation_point helper */
+static int ap2_disc[5],ap2_low[5],ap2_vis[5],ap2_par[5],ap2_is_ap[5],ap2_timer2=0;
+static int ap2_adj[5][4],ap2_deg[5];
+static void ap2_dfs(int u){ap2_disc[u]=ap2_low[u]=ap2_timer2++;ap2_vis[u]=1;int cc=0;for(int i=0;i<ap2_deg[u];i++){int v=ap2_adj[u][i];if(!ap2_vis[v]){cc++;ap2_par[v]=u;ap2_dfs(v);if(ap2_low[v]<ap2_low[u])ap2_low[u]=ap2_low[v];if(ap2_par[u]==-1&&cc>1)ap2_is_ap[u]=1;if(ap2_par[u]!=-1&&ap2_low[v]>=ap2_disc[u])ap2_is_ap[u]=1;}else if(v!=ap2_par[u]){if(ap2_disc[v]<ap2_low[u])ap2_low[u]=ap2_disc[v];}}}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -799,6 +808,58 @@ int main(void){
   {int c3=0,c5=0;for(int n=1;n<=100;n++){int t=n,s=0;while(t>0){s+=t%10;t/=10;}if(s%3==0)c3++;if(s%5==0)c5++;}
    uint32_t dds=(uint32_t)(c3+c5),ddx=(uint32_t)(c3^c5);
    CHECK("test_digit_dp",(2u<<16)|((dds&0xFFu)<<8)|(ddx&0xFFu),0x00023432u);}
+  /* test_suffix_array: "banana" SA={5,3,1,0,4,2} n=6 first=5 xor=1 */
+  {build_sa2();uint32_t fsa=(uint32_t)sa2_idx[0],xsa=0;for(int i=0;i<6;i++)xsa^=(uint32_t)sa2_idx[i];
+   CHECK("test_suffix_array",(6u<<16)|(fsa<<8)|(xsa&0xFFu),0x00060501u);}
+  /* test_house_robber: {1,2,3,1}->4 {2,7,9,3,1}->12 {2,1,1,2}->4 sum=20 xor=12 */
+  {int hr1[]={1,2,3,1},hr2[]={2,7,9,3,1},hr3[]={2,1,1,2};
+   int r1=0,r2=0,r3=0,p2=0,p1=0,cur=0;
+   p2=0;p1=0;for(int i=0;i<4;i++){cur=p2+hr1[i]>p1?p2+hr1[i]:p1;p2=p1;p1=cur;}r1=p1;
+   p2=0;p1=0;for(int i=0;i<5;i++){cur=p2+hr2[i]>p1?p2+hr2[i]:p1;p2=p1;p1=cur;}r2=p1;
+   p2=0;p1=0;for(int i=0;i<4;i++){cur=p2+hr3[i]>p1?p2+hr3[i]:p1;p2=p1;p1=cur;}r3=p1;
+   CHECK("test_house_robber",(3u<<16)|(((uint32_t)(r1+r2+r3)&0xFFu)<<8)|((uint32_t)(r1^r2^r3)&0xFFu),0x0003140Cu);}
+  /* test_egg_drop: dp[t][e]=dp[t-1][e-1]+dp[t-1][e]+1; n=10,e=2->4; n=100,e=2->14; n=36,e=3->6 */
+  {static int edp[21][4];for(int e=0;e<=3;e++)edp[0][e]=0;for(int t=1;t<=20;t++){edp[t][0]=0;edp[t][1]=t;}
+   for(int t=1;t<=20;t++)for(int e=2;e<=3;e++)edp[t][e]=edp[t-1][e-1]+edp[t-1][e]+1;
+   int et1=0,et2=0,et3=0;for(int t=1;t<=20;t++){if(!et1&&edp[t][2]>=10)et1=t;if(!et2&&edp[t][2]>=100)et2=t;if(!et3&&edp[t][3]>=36)et3=t;}
+   CHECK("test_egg_drop",(3u<<16)|(((uint32_t)(et1+et2+et3)&0xFFu)<<8)|((uint32_t)(et1^et2^et3)&0xFFu),0x0003180Cu);}
+  /* test_unique_paths: 3x3->6, 3x7->28, 4x4->20 sum=54 xor=14 */
+  {static int updp[4][8];
+   for(int i=0;i<3;i++)for(int j=0;j<3;j++)updp[i][j]=(i==0||j==0)?1:updp[i-1][j]+updp[i][j-1];int upr1=updp[2][2];
+   for(int i=0;i<3;i++)for(int j=0;j<7;j++)updp[i][j]=(i==0||j==0)?1:updp[i-1][j]+updp[i][j-1];int upr2=updp[2][6];
+   for(int i=0;i<4;i++)for(int j=0;j<4;j++)updp[i][j]=(i==0||j==0)?1:updp[i-1][j]+updp[i][j-1];int upr3=updp[3][3];
+   CHECK("test_unique_paths",(3u<<16)|(((uint32_t)(upr1+upr2+upr3)&0xFFu)<<8)|((uint32_t)(upr1^upr2^upr3)&0xFFu),0x0003360Eu);}
+  /* test_regex_match: aa/a*=1 ab/.*=1 aab/c*a*b=1 mississippi/mis*is*p*.=0 sum=3 xor=1 */
+  {static int rmdp[13][12];
+   const char*rms[4]={"aa","ab","aab","mississippi"},*rmp[4]={"a*",".*","c*a*b","mis*is*p*."};
+   int rmr[4]={0,0,0,0};
+   for(int q=0;q<4;q++){int ls=0,lp=0;while(rms[q][ls])ls++;while(rmp[q][lp])lp++;
+    for(int i=0;i<=ls;i++)for(int j=0;j<=lp;j++)rmdp[i][j]=0;rmdp[0][0]=1;
+    for(int j=2;j<=lp;j++)if(rmp[q][j-1]=='*')rmdp[0][j]=rmdp[0][j-2];
+    for(int i=1;i<=ls;i++)for(int j=1;j<=lp;j++){if(rmp[q][j-1]=='*'){rmdp[i][j]=rmdp[i][j-2];if(j>=2&&(rms[q][i-1]==rmp[q][j-2]||rmp[q][j-2]=='.'))rmdp[i][j]|=rmdp[i-1][j];}else{rmdp[i][j]=rmdp[i-1][j-1]&&(rms[q][i-1]==rmp[q][j-1]||rmp[q][j-1]=='.');}}
+    rmr[q]=rmdp[ls][lp];}
+   CHECK("test_regex_match",(4u<<16)|(((uint32_t)(rmr[0]+rmr[1]+rmr[2]+rmr[3])&0xFFu)<<8)|((uint32_t)(rmr[0]^rmr[1]^rmr[2]^rmr[3])&0xFFu),0x00040301u);}
+  /* test_max_product: {2,3,-2,4}->6 {-2,0,-1}->0 {-2,-3,-4}->12 sum=18 xor=10 */
+  {int mpa[]={2,3,-2,4},mpb[]={-2,0,-1},mpc[]={-2,-3,-4};
+   int mpr[3];
+   {int mh=mpa[0],mn=mpa[0],b=mpa[0];for(int i=1;i<4;i++){int a2=mh*mpa[i],b2=mn*mpa[i];int nm=mpa[i]>a2?(mpa[i]>b2?mpa[i]:b2):(a2>b2?a2:b2);int nmin=mpa[i]<a2?(mpa[i]<b2?mpa[i]:b2):(a2<b2?a2:b2);mh=nm;mn=nmin;if(mh>b)b=mh;}mpr[0]=b;}
+   {int mh=mpb[0],mn=mpb[0],b=mpb[0];for(int i=1;i<3;i++){int a2=mh*mpb[i],b2=mn*mpb[i];int nm=mpb[i]>a2?(mpb[i]>b2?mpb[i]:b2):(a2>b2?a2:b2);int nmin=mpb[i]<a2?(mpb[i]<b2?mpb[i]:b2):(a2<b2?a2:b2);mh=nm;mn=nmin;if(mh>b)b=mh;}mpr[1]=b;}
+   {int mh=mpc[0],mn=mpc[0],b=mpc[0];for(int i=1;i<3;i++){int a2=mh*mpc[i],b2=mn*mpc[i];int nm=mpc[i]>a2?(mpc[i]>b2?mpc[i]:b2):(a2>b2?a2:b2);int nmin=mpc[i]<a2?(mpc[i]<b2?mpc[i]:b2):(a2<b2?a2:b2);mh=nm;mn=nmin;if(mh>b)b=mh;}mpr[2]=b;}
+   CHECK("test_max_product",(3u<<16)|(((uint32_t)(mpr[0]+mpr[1]+mpr[2])&0xFFu)<<8)|((uint32_t)(mpr[0]^mpr[1]^mpr[2])&0xFFu),0x0003120Au);}
+  /* test_articulation: graph 0-1,1-2,2-0,1-3,3-4; APs={1,3} count=2 xor=2 */
+  {int ap2e[5][2]={{0,1},{1,2},{2,0},{1,3},{3,4}};
+   for(int i=0;i<5;i++){ap2_vis[i]=ap2_is_ap[i]=ap2_deg[i]=0;ap2_par[i]=-1;}ap2_timer2=0;
+   for(int i=0;i<5;i++)ap2_adj[i][0]=ap2_adj[i][1]=ap2_adj[i][2]=ap2_adj[i][3]=-1;
+   for(int i=0;i<5;i++){int u=ap2e[i][0],v=ap2e[i][1];ap2_adj[u][ap2_deg[u]++]=v;ap2_adj[v][ap2_deg[v]++]=u;}
+   ap2_dfs(0);uint32_t apc=0,apx=0;for(int i=0;i<5;i++)if(ap2_is_ap[i]){apc++;apx^=(uint32_t)i;}
+   CHECK("test_articulation",(5u<<16)|((apc&0xFFu)<<8)|(apx&0xFFu),0x00050202u);}
+  /* test_sqrt_decomp: arr={1..9} blksz=3; q[2..7]=33 update[4]=10 q[1..8]=49 */
+  {int sqa[9]={1,2,3,4,5,6,7,8,9},sqb[3]={0,0,0};
+   for(int i=0;i<9;i++)sqb[i/3]+=sqa[i];
+   int sq1=0;for(int i=2;i<3;i++)sq1+=sqa[i];sq1+=sqb[1];for(int i=6;i<=7;i++)sq1+=sqa[i];
+   sqb[4/3]+=10-sqa[4];sqa[4]=10;
+   int sq2=0;for(int i=1;i<3;i++)sq2+=sqa[i];sq2+=sqb[1];for(int i=6;i<=8;i++)sq2+=sqa[i];
+   CHECK("test_sqrt_decomp",(9u<<16)|(((uint32_t)sq1&0xFFu)<<8)|((uint32_t)sq2&0xFFu),0x00092131u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

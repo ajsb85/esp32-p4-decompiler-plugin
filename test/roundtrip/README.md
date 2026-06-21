@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 109 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 117 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -114,6 +114,22 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_interval_merge.c` | Merge overlapping intervals; {[1,3],[2,6],[8,10],[15,18]}→3 merged; xor_ends=30 | `0x0004031E` | |
 | `test_num_islands.c` | DFS flood-fill island count; 3 grids; islands={1,2,2}; sum=5 xor=1 | `0x00030501` | |
 | `test_prefix_xor.c` | Prefix XOR range queries; arr={1..8}; xorRange results={4,4,8}; sum=16 xor=8 | `0x00031008` | |
+| `test_tarjan_scc.c` | Tarjan SCC on directed graph; 5 nodes; 3 SCCs; sizes={2,2,1}; xor=1 | `0x00050201` | |
+| `test_huffman.c` | Huffman code-length DFS; freqs={5,2,1,3,4}; sum_codelen=33 n_leaf=5 | `0x00052102` | |
+| `test_toposort_dfs.c` | Post-order DFS toposort; 5-node DAG; order sum=10 xor=4 | `0x00050A04` | |
+| `test_nim.c` | Sprague-Grundy XOR nim; 5 piles; various game states | `0x00050102` | |
+| `test_tsp_bitmask.c` | Held-Karp TSP DP; 4 cities; min Hamiltonian cycle=80 | `0x00045004` | |
+| `test_euler_circuit.c` | Hierholzer Euler circuit; 5-node multigraph; circuit length | `0x00050601` | |
+| `test_convex_hull.c` | Graham scan; 6 points; hull size=5 sum_x=7 sum_y=5 | `0x00050705` | |
+| `test_digit_dp.c` | Tight-bound digit DP; count 1..100 with digit-sum divisible by 3 or 5 | `0x00023432` | |
+| `test_suffix_array.c` | Suffix array "banana"; insertion-sort; SA={5,3,1,0,4,2}; first=5 xor=1 | `0x00060501` | |
+| `test_house_robber.c` | House Robber rolling DP; 3 arrays; profits={4,12,4}; sum=20 xor=12 | `0x0003140C` | |
+| `test_egg_drop.c` | Egg Drop DP (floors testable); n=10/100/36; trials={4,14,6}; sum=24 xor=12 | `0x0003180C` | |
+| `test_unique_paths.c` | Grid unique paths 2-D DP; 3×3=6, 3×7=28, 4×4=20; sum=54 xor=14 | `0x0003360E` | |
+| `test_regex_match.c` | Regex DP with '.' and '*'; 4 test cases; sum=3 xor=1 | `0x00040301` | |
+| `test_max_product.c` | Max product subarray (max+min rolling); 3 arrays; prods={6,0,12}; sum=18 xor=10 | `0x0003120A` | |
+| `test_articulation.c` | Tarjan articulation points; 5-node graph; APs={1,3}; count=2 xor=2 | `0x00050202` | |
+| `test_sqrt_decomp.c` | Sqrt decomposition range sum; n=9 blksz=3; q1=33 q2=49 | `0x00092131` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -196,7 +212,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-212 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+224 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -208,7 +224,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (77 patterns):
+Pattern families currently covered (90 patterns):
 
 | Family | Patterns |
 |--------|---------|

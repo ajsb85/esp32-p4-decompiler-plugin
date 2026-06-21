@@ -1315,6 +1315,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dd_memo.*pos.*rem.*tight.*=.*cnt.*dd_memo_set.*pos.*rem.*tight.*=.*1",
             "dd_memo|digit_dp_cache|memo_set|dp_digits"
         ),
+        /* Sprint 70 — suffix array + house robber */
+        new PatternDef("suffix_array_sort", "suffix_array_build", "high",
+            "while.*j.*>=.*0.*strcmp.*sa.*\\+.*sa.*j.*sa.*\\+.*key.*>.*0.*sa.*j.*1.*=.*sa.*j",
+            "sa_cmp_suffix.*a.*b|strcmp.*sa_str.*\\+.*a.*sa_str.*\\+.*b",
+            "suffix_array|sa_idx|sa_cmp|build_sa"
+        ),
+        new PatternDef("house_robber_rolling", "house_robber_dp", "high",
+            "cur.*=.*prev2.*\\+.*arr.*i.*>.*prev1.*prev2.*\\+.*arr.*i.*:.*prev1",
+            "prev2.*=.*prev1.*prev1.*=.*cur.*for.*i.*<.*n",
+            "house_robber|hr_rob|rob_linear|prev2.*prev1"
+        ),
+        new PatternDef("suffix_array_init", "suffix_array_index_init", "medium",
+            "for.*i.*=.*0.*i.*<.*n.*sa.*i.*=.*i|sa_idx.*i.*=.*i.*suffix.*init",
+            "insertion.*sort.*suffix.*cmp|suffix.*sort.*index",
+            "sa_idx|suffix_idx|sa_init"
+        ),
+        /* Sprint 71 — egg drop + unique paths */
+        new PatternDef("egg_drop_dp", "egg_drop_floor_count", "high",
+            "dp.*t.*e.*=.*dp.*t.*-.*1.*e.*-.*1.*\\+.*dp.*t.*-.*1.*e.*\\+.*1",
+            "for.*t.*=.*1.*t.*<=.*MAX_T.*for.*ee.*=.*2.*dp.*t.*ee",
+            "egg_drop|ed_dp|min_trials|dp.*eggs"
+        ),
+        new PatternDef("unique_paths_grid_dp", "grid_path_counting", "high",
+            "up_dp.*i.*j.*=.*i.*==.*0.*||.*j.*==.*0.*?.*1.*:.*up_dp.*i.*-.*1.*j.*\\+.*up_dp.*i.*j.*-.*1",
+            "for.*i.*<.*m.*for.*j.*<.*n.*dp.*i.*j.*=.*dp.*i.*-.*1.*j.*\\+.*dp.*i.*j.*-.*1",
+            "unique_paths|up_dp|grid_dp|paths_grid"
+        ),
+        new PatternDef("egg_drop_scan", "egg_drop_min_trials_scan", "medium",
+            "for.*t.*=.*1.*dp.*t.*e.*>=.*n.*return.*t|min_trials.*dp.*e.*>=.*n",
+            "egg_min_trials.*n.*e.*for.*t.*<=.*MAX_T.*if.*dp.*t.*e.*>=.*n",
+            "egg_min_trials|min_trials_scan|egg_floor"
+        ),
+        /* Sprint 72 — regex match + max product subarray */
+        new PatternDef("regex_match_dp", "regex_star_dot_dp", "high",
+            "if.*p.*j.*-.*1.*==.*'\\*'.*dp.*i.*j.*=.*dp.*i.*j.*-.*2",
+            "dp.*i.*-.*1.*j.*&.*s.*i.*-.*1.*==.*p.*j.*-.*2.*||.*p.*j.*-.*2.*==.*'\\.'",
+            "regex_dp|rm_dp|star_match|regex_match"
+        ),
+        new PatternDef("max_product_subarray", "max_product_min_max_dp", "high",
+            "new_max.*=.*mp_max3.*arr.*i.*a.*b|max_h.*=.*new_max.*min_h.*=.*new_min",
+            "int.*a.*=.*max_h.*\\*.*arr.*i.*int.*b.*=.*min_h.*\\*.*arr.*i",
+            "max_product|max_h.*min_h|mp_max3|product_subarray"
+        ),
+        new PatternDef("regex_dp_star_init", "regex_dp_star_base_case", "medium",
+            "dp.*0.*j.*=.*dp.*0.*j.*-.*2.*&&.*p.*j.*-.*1.*==.*'\\*'",
+            "for.*j.*=.*2.*j.*<=.*lp.*if.*p.*j.*-.*1.*==.*'\\*'.*dp.*0.*j.*=.*dp.*0.*j.*-.*2",
+            "regex_init|dp_star_zero|empty_match"
+        ),
+        /* Sprint 73 — articulation points + sqrt decomposition */
+        new PatternDef("articulation_point_tarjan", "cut_vertex_detection", "high",
+            "if.*ap_par.*u.*==.*-1.*&&.*child_cnt.*>.*1.*ap_is_ap.*u.*=.*1",
+            "if.*ap_par.*u.*!=.*-1.*&&.*ap_low.*v.*>=.*ap_disc.*u.*ap_is_ap.*u.*=.*1",
+            "articulation|cut_vertex|ap_is_ap|ap_disc.*ap_low"
+        ),
+        new PatternDef("sqrt_decomp_query", "sqrt_decomposition_range", "high",
+            "for.*b.*=.*bl.*\\+.*1.*b.*<.*br.*sum.*\\+=.*sq_blk.*b|full.*blocks.*block.*sum",
+            "for.*i.*=.*br.*\\*.*SQ_BS.*i.*<=.*r.*sum.*\\+=.*sq_arr.*i|partial.*right.*block",
+            "sqrt_decomp|sq_blk|block_sum|sq_query"
+        ),
+        new PatternDef("sqrt_decomp_update", "sqrt_block_point_update", "medium",
+            "sq_blk.*idx.*SQ_BS.*\\+=.*val.*-.*sq_arr.*idx|block.*i.*block_sz.*\\+=.*delta",
+            "sq_arr.*idx.*=.*val.*sq_blk.*idx.*SQ_BS.*\\+=",
+            "sq_update|sqrt_update|block_point_update"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
