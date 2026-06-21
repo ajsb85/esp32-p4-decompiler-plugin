@@ -305,6 +305,17 @@ int main(void){
    while(pu2){pu2&=pu2-1;cu2++;}while(pi3){pi3&=pi3-1;ci2++;}
    uint32_t xu2=0;for(int b=0;b<32;b++)if((u2>>b)&1)xu2^=(uint32_t)b;
    CHECK("test_bitset",(cu2<<16)|(ci2<<8)|(xu2&0xFFu),0x0008041Eu);}
+  /* test_pow_mod: pow_mod({2,3,5,7},{10,7,5,3},{1000,100,31,13})={24,87,25,5}, sum=141, xor=83 */
+  {static const uint32_t pmb[]={2,3,5,7},pme[]={10,7,5,3},pmm[]={1000,100,31,13};uint32_t pms=0,pmx=0;
+   for(int k=0;k<4;k++){uint32_t b=pmb[k]%pmm[k],e=pme[k],r=1,m=pmm[k];while(e>0){if(e&1)r=r*b%m;e>>=1;b=b*b%m;}pms+=r;pmx^=r;}
+   CHECK("test_pow_mod",(4u<<16)|(pms<<8)|(pmx&0xFFu),0x00048D53u);}
+  /* test_segment_tree: n=8 arr={2,4,6,8,10,12,14,16}, q(0..7)=72,q(2..5)=36,q(1..4)=28, xor=112 */
+  {uint32_t sgt2[16]={0};static const uint32_t sga2[]={2,4,6,8,10,12,14,16};
+   for(int i=0;i<8;i++)sgt2[8+i]=sga2[i];
+   for(int i=7;i>=1;i--)sgt2[i]=sgt2[2*i]+sgt2[2*i+1];
+   static const int sqlo[]={0,2,1},sqhi[]={7,5,4};uint32_t sqr[3]={0};
+   for(int q=0;q<3;q++){int l=8+sqlo[q],r=8+sqhi[q]+1;uint32_t s=0;while(l<r){if(l&1)s+=sgt2[l++];if(r&1)s+=sgt2[--r];l>>=1;r>>=1;}sqr[q]=s;}
+   CHECK("test_segment_tree",(8u<<16)|(72u<<8)|((sqr[0]^sqr[1]^sqr[2])&0xFFu),0x00084870u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

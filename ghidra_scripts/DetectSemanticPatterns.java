@@ -614,6 +614,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "isect_bs|bitset_a.*&.*bitset_b",                  // intersection variable
             "bs_popcount|pop_union|pop_isect"                  // popcount result
         ),
+
+        // ── Fast modular exponentiation (91, 92) ─────────────────────────────
+        new PatternDef("pow_mod_square", "powmod_squaremul", "high",
+            "if.*exp.*&.*1.*result.*base.*%.*mod",             // odd-bit multiply
+            "exp.*>>=.*1|exp.*=.*exp.*>>.*1",                  // exponent right shift
+            "base.*=.*base.*\\*.*base.*%|base.*base.*mod"     // squaring step
+        ),
+        new PatternDef("pow_mod_loop", "powmod_whileloop", "high",
+            "while.*exp.*>.*0|while.*e.*>.*0",                 // main while loop
+            "result.*=.*1.*base.*%=.*mod|result\\s*=\\s*1u",  // init: result=1, base%=mod
+            "pow_mod|fast_pow|modpow"                         // function name
+        ),
+
+        // ── Segment tree range sum (93, 94) ──────────────────────────────────
+        new PatternDef("segment_tree_build", "segtree_build", "high",
+            "for.*i.*=.*n.*-.*1.*i.*>=.*1",                    // bottom-up loop i=n-1..1
+            "seg_tree.*2.*\\*.*i.*\\+.*seg_tree.*2.*\\*.*i.*\\+.*1", // tree[2i]+tree[2i+1]
+            "seg_tree|segtree|segment_tree_build"             // naming
+        ),
+        new PatternDef("segment_tree_query", "segtree_query", "high",
+            "if.*l.*&.*1.*sum.*tree.*l\\+\\+|if.*l.*&.*1",    // left boundary odd check
+            "if.*r.*&.*1.*sum.*tree.*--r|if.*r.*&.*1",        // right boundary odd check
+            "l.*>>=.*1.*r.*>>=.*1|l>>1.*r>>1"                 // halving step
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 38 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 40 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -50,6 +50,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_counting_sort.c` | Stable counting sort {4,2,2,8,3,3,1,4,1,8}→{1…8,8}; sum=36, xor=0 | `0x000A2400` | |
 | `test_floyd_warshall.c` | Floyd-Warshall all-pairs SP on 4-node graph; sum_off_diag=46, xor=2 | `0x00042E02` | |
 | `test_bitset.c` | Word bitset union/intersect: A={1,3,5,7,9,11}, B={3,5,7,11,13,17}; pop_u=8, pop_i=4 | `0x0008041E` | |
+| `test_pow_mod.c` | Fast modular exponentiation (square-and-multiply); 4 calls, sum=141, xor=83 | `0x00048D53` | |
+| `test_segment_tree.c` | Segment tree range sum n=8; queries [0..7]=72,[2..5]=36,[1..4]=28; xor=112 | `0x00084870` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -132,7 +134,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-89 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+93 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -177,6 +179,8 @@ Pattern families currently covered (51 patterns):
 | Counting sort | Frequency count by value, prefix-sum, stable right-to-left output |
 | Floyd-Warshall | Triple k/i/j loop + INF guard + 2D relaxation |
 | Bitset | Shift-set / shift-test, Kernighan popcount, word-level OR/AND |
+| Modular arithmetic | Square-and-multiply loop (while exp>0 + right-shift + squaring) |
+| Segment tree | Bottom-up build (2i/2i+1 formula), l/r odd-boundary query halving |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
