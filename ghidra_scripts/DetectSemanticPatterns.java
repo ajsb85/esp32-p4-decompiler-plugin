@@ -5004,6 +5004,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xor_low.*=.*xor_arm.*&.*0xFF|arm_xor_low_byte",
             "arm_count.*<<.*16.*xor_low.*<<.*8.*checksum|arm_pack_result"
         ),
+        new PatternDef("delannoy_dp_fill", "delannoy_table_fill", "high",
+            "dp.*i.*0.*=.*1.*dp.*0.*j.*=.*1|delannoy_boundary_init",
+            "dp.*i.*j.*=.*dp.*i.*-.*1.*j.*\\+.*dp.*i.*j.*-.*1.*\\+.*dp.*i.*-.*1.*j.*-.*1|delannoy_recurrence",
+            "for.*i.*1.*i.*<=.*m.*for.*j.*1.*j.*<=.*n|delannoy_nested_loop"
+        ),
+        new PatternDef("delannoy_checksum", "delannoy_grid_checksum", "high",
+            "for.*m.*1.*m.*<=.*4.*for.*n.*1.*n.*<=.*4|delannoy_grid_iter",
+            "s.*\\+=.*delannoy_table.*m.*n.*|delannoy_sum_accum",
+            "return.*s.*&.*0xFF|delannoy_checksum_mask"
+        ),
+        new PatternDef("delannoy_result", "delannoy_result_encode", "medium",
+            "d33.*=.*delannoy_table.*3.*3|delannoy_d33_call",
+            "metric_a.*=.*d33.*&.*0xFF|delannoy_metric_a",
+            "n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|delannoy_pack_result"
+        ),
+        new PatternDef("motzkin_conv_sum", "motzkin_convolution_step", "high",
+            "for.*k.*0.*k.*<=.*i.*-.*2.*s.*\\+=.*m.*k.*\\*.*m.*i.*-.*2.*-.*k|motzkin_convolution",
+            "s.*=.*m.*i.*-.*1.*for.*k.*0|motzkin_step_init",
+            "m.*i.*=.*s.*|motzkin_store_result"
+        ),
+        new PatternDef("motzkin_xor_check", "motzkin_xor_fingerprint", "high",
+            "for.*i.*1.*i.*<=.*9.*x.*\\^=.*motzkin.*i|motzkin_xor_loop",
+            "return.*x.*&.*0xFF|motzkin_xor_mask",
+            "motzkin_xor_check.*void|motzkin_check_fn"
+        ),
+        new PatternDef("motzkin_result", "motzkin_result_encode", "medium",
+            "m6.*=.*motzkin.*6.*m7.*=.*motzkin.*7|motzkin_m6_m7_eval",
+            "metric_a.*=.*m6.*&.*0xFF|motzkin_metric_a",
+            "n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|motzkin_pack_result"
+        ),
+        new PatternDef("digital_root_digit_sum", "digital_root_digit_sum_loop", "high",
+            "while.*n.*>.*0.*s.*\\+=.*n.*%.*10.*n.*\\/=.*10|dr_digit_sum_loop",
+            "return.*s.*digit_sum|dr_digit_sum_return",
+            "uint32_t.*digit_sum.*uint32_t.*n|dr_digit_sum_sig"
+        ),
+        new PatternDef("digital_root_formula", "digital_root_formula_apply", "high",
+            "if.*n.*==.*0.*return.*0|dr_zero_base_case",
+            "return.*1.*\\+.*n.*-.*1.*%.*9|dr_mod9_formula",
+            "uint32_t.*digital_root.*uint32_t.*n|dr_formula_sig"
+        ),
+        new PatternDef("digital_root_result", "digital_root_result_encode", "medium",
+            "for.*i.*0.*i.*<.*n_tests.*dr_xor.*\\^=.*digital_root|dr_xor_loop",
+            "persist_sum.*\\+=.*additive_persistence|dr_persist_accum",
+            "n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|dr_pack_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
