@@ -221,6 +221,26 @@ declare -A EXPECTED_RESULT=(
     [test_bell_num]=0x0003483E
     [test_min_window_substr]=0x00030C02
     [test_max_gap]=0x00031505
+    [test_sos_dp]=0x00033F03
+    [test_inclusion_excl]=0x00038C70
+    [test_roman_to_int]=0x000405EF
+    [test_next_perm]=0x00030603
+    [test_lcs_dp]=0x00030A02
+    [test_lca_subarray]=0x00030707
+    [test_merge_intervals]=0x00030701
+    [test_wiggle_sort]=0x00060506
+    [test_longest_common_prefix]=0x00030705
+    [test_power_set]=0x00102050
+    [test_maximal_square]=0x00040405
+    [test_bucket_sort]=0x000A0908
+    [test_subarray_xor]=0x00020606
+    [test_valid_parentheses]=0x0004020A
+    [test_count_rooms]=0x00030C0A
+    [test_dependency_order]=0x00050504
+    [test_trie_ops]=0x00060402
+    [test_chain_pairs]=0x0005030C
+    [test_circular_buffer]=0x00070407
+    [test_spiral_matrix]=0x000C4E0C
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -289,7 +309,17 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_mod_exp test_gcd_ext \
        test_matrix_exp test_derange \
        test_stirling2 test_bell_num \
-       test_min_window_substr test_max_gap)
+       test_min_window_substr test_max_gap \
+       test_sos_dp test_inclusion_excl \
+       test_roman_to_int test_next_perm \
+       test_lcs_dp test_lca_subarray \
+       test_merge_intervals test_wiggle_sort \
+       test_longest_common_prefix test_power_set \
+       test_maximal_square test_bucket_sort \
+       test_subarray_xor test_valid_parentheses \
+       test_count_rooms test_dependency_order \
+       test_trie_ops test_chain_pairs \
+       test_circular_buffer test_spiral_matrix)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

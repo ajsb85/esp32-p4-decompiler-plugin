@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 141 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 161 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -154,6 +154,20 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_bell_num.c` | Bell numbers B(3)=5 B(4)=15 B(5)=52; sum=72 xor=62 | `0x0003483E` | |
 | `test_min_window_substr.c` | Min window substring; 3 cases sum=12 xor=2 | `0x00030C02` | |
 | `test_max_gap.c` | Max gap sorted; 3 arrays sum=21 xor=5 | `0x00031505` | |
+| `test_merge_intervals.c` | Merge overlapping intervals; 3 sets merged counts=3+1+3 | `0x00030701` | |
+| `test_wiggle_sort.c` | Wiggle sort alternating; {1,5,1,1,6,4} n_ok=5 xor=6 | `0x00060506` | |
+| `test_longest_common_prefix.c` | LCP vertical scan; 3 string arrays sum_len=7 last=5 | `0x00030705` | |
+| `test_power_set.c` | Bitmask power set of {1,2,3,4}; total=16 sum_sizes=32 elem_sum=80 | `0x00102050` | |
+| `test_maximal_square.c` | Largest square of 1s; 4×5 matrix max_side=2 area=4 | `0x00040405` | |
+| `test_bucket_sort.c` | Bucket sort {4,2,8,1,9,3,7,5,6,0}; largest=9 second=8 n=10 | `0x000A0908` | |
+| `test_subarray_xor.c` | Count subarrays with XOR=k; c1=4 c2=2 sum=6 xor=6 | `0x00020606` | |
+| `test_valid_parentheses.c` | Stack-based bracket validation; 4 strings n_valid=2 len_sum=10 | `0x0004020A` | |
+| `test_count_rooms.c` | Grid DFS connected components; 3 grids rooms=3+8+1 | `0x00030C0A` | |
+| `test_dependency_order.c` | Kahn BFS toposort; 5-node DAG first=0 last=4 n_edges=5 | `0x00050504` | |
+| `test_trie_ops.c` | Flat-array trie insert/search; 6 queries found=4 miss=2 | `0x00060402` | |
+| `test_chain_pairs.c` | Greedy longest pair chain; 5 pairs chain=3 xor_b=12 | `0x0005030C` | |
+| `test_circular_buffer.c` | Ring buffer head/tail; cap=5 pushes=6 front=4 xpush=7 | `0x00070407` | |
+| `test_spiral_matrix.c` | Spiral traversal 3×4; n=12 sum=78 xor=12 | `0x000C4E0C` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.

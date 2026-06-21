@@ -188,6 +188,18 @@ static int ge2_ext(int a,int b,int*x,int*y){if(b==0){*x=1;*y=0;return a;}int x1,
 /* Sprint 83: matrix_exp helper */
 static void me2_mul(uint32_t a[2][2],uint32_t b[2][2],uint32_t c[2][2]){uint32_t t[2][2]={{0,0},{0,0}};for(int i=0;i<2;i++)for(int j=0;j<2;j++)for(int k=0;k<2;k++)t[i][j]=(t[i][j]+a[i][k]*b[k][j])%10000u;for(int i=0;i<2;i++)for(int j=0;j<2;j++)c[i][j]=t[i][j];}
 static uint32_t me2_fib(uint32_t n){uint32_t r[2][2]={{1,0},{0,1}},A[2][2]={{1,1},{1,0}};while(n>0){if(n&1u)me2_mul(r,A,r);me2_mul(A,A,A);n>>=1;}return r[0][1];}
+/* Sprint 86: LCP helpers (non-recursive but needed across CHECK blocks) */
+static int lcp2_two(const char*a,const char*b){int i=0;while(a[i]&&b[i]&&a[i]==b[i])i++;return i;}
+static int lcp2_str(const char**strs,int n){int len=lcp2_two(strs[0],strs[1]);for(int i=2;i<n;i++){int l=lcp2_two(strs[0],strs[i]);if(l<len)len=l;}return len;}
+/* Sprint 89: count_rooms DFS (recursive — must be static before CHECK) */
+static int cr2_grid[5][5],cr2_vis[5][5],cr2_R,cr2_C,cr2_gen;
+static void cr2_dfs(int r,int c){if(r<0||r>=cr2_R||c<0||c>=cr2_C||!cr2_grid[r][c]||cr2_vis[r][c]==cr2_gen)return;cr2_vis[r][c]=cr2_gen;cr2_dfs(r-1,c);cr2_dfs(r+1,c);cr2_dfs(r,c-1);cr2_dfs(r,c+1);}
+static int cr2_count(void){int cnt=0;cr2_gen++;for(int r=0;r<cr2_R;r++)for(int c=0;c<cr2_C;c++)if(cr2_grid[r][c]&&cr2_vis[r][c]!=cr2_gen){cr2_dfs(r,c);cnt++;}return cnt;}
+/* Sprint 90: trie ops helpers */
+static int tr2_ch[60][26],tr2_end[60],tr2_sz;
+static void tr2_init(void){tr2_sz=1;} /* BSS zero-initializes all nodes */
+static void tr2_ins(const char*s){int cur=0;for(;*s;s++){int c=*s-'a';if(!tr2_ch[cur][c]){int n=tr2_sz++;tr2_ch[cur][c]=n;}cur=tr2_ch[cur][c];}tr2_end[cur]=1;}
+static int tr2_srch(const char*s){int cur=0;for(;*s;s++){int c=*s-'a';if(!tr2_ch[cur][c])return 0;cur=tr2_ch[cur][c];}return tr2_end[cur];}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -1044,6 +1056,131 @@ int main(void){
    if(mga1[1]-mga1[0]>mg1)mg1=mga1[1]-mga1[0];
    for(int i=1;i<7;i++)if(mga2[i]-mga2[i-1]>mg2)mg2=mga2[i]-mga2[i-1];
    CHECK("test_max_gap",(3u<<16)|(((uint32_t)(mg0+mg1+mg2)&0xFFu)<<8)|((uint32_t)(mg0^mg1^mg2)&0xFFu),0x00031505u);}
+  /* Sprint 86: test_sos_dp — f[7]=31 f[5]=18 f[6]=14; sum=63 xor=3 */
+  {uint32_t sf[8]={3,1,4,1,5,9,2,6};
+   for(int i=0;i<3;i++) for(int m=0;m<8;m++) if(m&(1<<i)) sf[m]+=sf[m^(1<<i)];
+   CHECK("test_sos_dp",(3u<<16)|(((sf[7]+sf[5]+sf[6])&0xFFu)<<8)|((sf[7]^sf[5]^sf[6])&0xFFu),0x00033F03u);}
+  /* Sprint 86: test_inclusion_excl — div by {2,3,5} in N={30,60,100}; sum=140 xor=112 */
+  {int ie0,ie1,ie2;
+   ie0=30/2+30/3+30/5-30/6-30/10-30/15+30/30;
+   ie1=60/2+60/3+60/5-60/6-60/10-60/15+60/30;
+   ie2=100/2+100/3+100/5-100/6-100/10-100/15+100/30;
+   CHECK("test_inclusion_excl",(3u<<16)|(((uint32_t)(ie0+ie1+ie2)&0xFFu)<<8)|((uint32_t)(ie0^ie1^ie2)&0xFFu),0x00038C70u);}
+  /* Sprint 87: test_roman_to_int — III=3,IX=9,XLII=42,MCMXCIX=1999; sum%256=5 xor%256=239 */
+  {const char*rs[4]={"III","IX","XLII","MCMXCIX"};int rlen[4]={3,2,4,7};
+   int rtab[128]={0};rtab['I']=1;rtab['V']=5;rtab['X']=10;rtab['L']=50;rtab['C']=100;rtab['D']=500;rtab['M']=1000;
+   uint32_t rsum=0,rxr=0;
+   for(int t=0;t<4;t++){int v=0;for(int i=0;i<rlen[t]-1;i++){if(rtab[(unsigned char)rs[t][i]]<rtab[(unsigned char)rs[t][i+1]])v-=rtab[(unsigned char)rs[t][i]];else v+=rtab[(unsigned char)rs[t][i]];}v+=rtab[(unsigned char)rs[t][rlen[t]-1]];rsum+=v;rxr^=v;}
+   CHECK("test_roman_to_int",(4u<<16)|((rsum&0xFFu)<<8)|(rxr&0xFFu),0x000405EFu);}
+  /* Sprint 87: test_next_perm — {1,2,3} after 3 nexts={2,3,1}; sum=6 first^last=3 */
+  {int npa[3]={1,2,3};
+   for(int step=0;step<3;step++){int ni=1;while(ni>=0&&npa[ni]>=npa[ni+1])ni--;if(ni>=0){int nj=2;while(npa[nj]<=npa[ni])nj--;int nt=npa[ni];npa[ni]=npa[nj];npa[nj]=nt;}int lo=ni+1,hi=2;while(lo<hi){int nt=npa[lo];npa[lo]=npa[hi];npa[hi]=nt;lo++;hi--;}}
+   CHECK("test_next_perm",(3u<<16)|(((uint32_t)(npa[0]+npa[1]+npa[2])&0xFFu)<<8)|(((uint32_t)(npa[0]^npa[2])&0xFFu)),0x00030603u);}
+  /* Sprint 88: test_lcs_dp — "ABCBDAB"/"BDCAB"=4,"AGGTAB"/"GXTXAYB"=4,"ABC"/"AC"=2; sum=10 xor=2 */
+  {static int lc2[9][9];
+   const char*ls1[3]={"ABCBDAB","AGGTAB","ABC"},*ls2[3]={"BDCAB","GXTXAYB","AC"};
+   int lm[3]={7,6,3},ln[3]={5,7,2}; uint32_t lcsum=0,lcxr=0;
+   for(int tc=0;tc<3;tc++){for(int i=0;i<=lm[tc];i++)lc2[i][0]=0;for(int j=0;j<=ln[tc];j++)lc2[0][j]=0;
+     for(int i=1;i<=lm[tc];i++) for(int j=1;j<=ln[tc];j++){if(ls1[tc][i-1]==ls2[tc][j-1])lc2[i][j]=lc2[i-1][j-1]+1;else lc2[i][j]=lc2[i-1][j]>lc2[i][j-1]?lc2[i-1][j]:lc2[i][j-1];}
+     lcsum+=(uint32_t)lc2[lm[tc]][ln[tc]]; lcxr^=(uint32_t)lc2[lm[tc]][ln[tc]];}
+   CHECK("test_lcs_dp",(3u<<16)|((lcsum&0xFFu)<<8)|(lcxr&0xFFu),0x00030A02u);}
+  /* Sprint 88: test_lca_subarray — {1,2,3,2,1}/{3,2,1,4,7}=3,{0,0,0,0,1}/{1,0,0,0,0}=4,{1,2,3}/{4,5,6}=0 */
+  {static int lcd[6][6];
+   const int la0[5]={1,2,3,2,1},lb0[5]={3,2,1,4,7};
+   const int la1[5]={0,0,0,0,1},lb1[5]={1,0,0,0,0};
+   const int la2[3]={1,2,3},lb2[3]={4,5,6};
+   int lcr0=0,lcr1=0,lcr2=0;
+   for(int i=0;i<=5;i++)for(int j=0;j<=5;j++)lcd[i][j]=0;
+   for(int i=1;i<=5;i++)for(int j=1;j<=5;j++){lcd[i][j]=(la0[i-1]==lb0[j-1])?lcd[i-1][j-1]+1:0;if(lcd[i][j]>lcr0)lcr0=lcd[i][j];}
+   for(int i=0;i<=5;i++)for(int j=0;j<=5;j++)lcd[i][j]=0;
+   for(int i=1;i<=5;i++)for(int j=1;j<=5;j++){lcd[i][j]=(la1[i-1]==lb1[j-1])?lcd[i-1][j-1]+1:0;if(lcd[i][j]>lcr1)lcr1=lcd[i][j];}
+   for(int i=0;i<=3;i++)for(int j=0;j<=3;j++)lcd[i][j]=0;
+   for(int i=1;i<=3;i++)for(int j=1;j<=3;j++){lcd[i][j]=(la2[i-1]==lb2[j-1])?lcd[i-1][j-1]+1:0;if(lcd[i][j]>lcr2)lcr2=lcd[i][j];}
+   CHECK("test_lca_subarray",(3u<<16)|(((uint32_t)(lcr0+lcr1+lcr2)&0xFFu)<<8)|((uint32_t)(lcr0^lcr1^lcr2)&0xFFu),0x00030707u);}
+  /* Sprint 89: test_merge_intervals — 3 interval sets; merged counts=3+1+3 sum=7 xor=1 */
+  {int ms1[][2]={{1,3},{2,6},{8,10},{15,18}};int mn1=4;
+   int ms2[][2]={{1,4},{4,5}};int mn2=2;
+   int ms3[][2]={{1,3},{4,6},{8,10}};int mn3=3;
+   int cnt[3]={0,0,0};int cs=0,ce=0;
+   cs=ms1[0][0];ce=ms1[0][1];cnt[0]=1;for(int i=1;i<mn1;i++){if(ms1[i][0]<=ce){if(ms1[i][1]>ce)ce=ms1[i][1];}else{cnt[0]++;cs=ms1[i][0];ce=ms1[i][1];}}
+   cs=ms2[0][0];ce=ms2[0][1];cnt[1]=1;for(int i=1;i<mn2;i++){if(ms2[i][0]<=ce){if(ms2[i][1]>ce)ce=ms2[i][1];}else{cnt[1]++;cs=ms2[i][0];ce=ms2[i][1];}}
+   cs=ms3[0][0];ce=ms3[0][1];cnt[2]=1;for(int i=1;i<mn3;i++){if(ms3[i][0]<=ce){if(ms3[i][1]>ce)ce=ms3[i][1];}else{cnt[2]++;cs=ms3[i][0];ce=ms3[i][1];}}
+   (void)cs;
+   CHECK("test_merge_intervals",(3u<<16)|(((uint32_t)(cnt[0]+cnt[1]+cnt[2])&0xFFu)<<8)|((uint32_t)(cnt[0]^cnt[1]^cnt[2])&0xFFu),0x00030701u);}
+  /* Sprint 89: test_wiggle_sort — {1,5,1,1,6,4}; n_ok=5 xor=6 */
+  {int wsa[6]={1,5,1,1,6,4};
+   for(int i=1;i<6;i++){if((i&1)&&wsa[i]<wsa[i-1]){int t=wsa[i];wsa[i]=wsa[i-1];wsa[i-1]=t;}else if(!(i&1)&&wsa[i]>wsa[i-1]){int t=wsa[i];wsa[i]=wsa[i-1];wsa[i-1]=t;}}
+   int nok=0;for(int i=1;i<6;i++)if((i&1)?wsa[i]>wsa[i-1]:wsa[i]<wsa[i-1])nok++;
+   uint32_t wxr=0;for(int i=0;i<6;i++)wxr^=(uint32_t)wsa[i];
+   CHECK("test_wiggle_sort",(6u<<16)|(((uint32_t)nok&0xFFu)<<8)|(wxr&0xFFu),0x00060506u);}
+  /* Sprint 86: test_longest_common_prefix — lcp("flower","flow","flight")=2 lcp("dog","racecar","car")=0 lcp("interview","interstellar","internal")=5; sum=7 last=5 */
+  {const char*s1[3]={"flower","flow","flight"};const char*s2[3]={"dog","racecar","car"};const char*s3[3]={"interview","interstellar","internal"};
+   int l0=lcp2_str(s1,3),l1=lcp2_str(s2,3),l2=lcp2_str(s3,3);
+   CHECK("test_longest_common_prefix",(3u<<16)|((uint32_t)(l0+l1+l2)<<8)|(uint32_t)l2,0x00030705u);}
+  /* Sprint 86: test_power_set — bitmask subsets of {1,2,3,4}; total=16 sum_sizes=32 elem_sum=80 */
+  {static const int pe[4]={1,2,3,4};uint32_t tot=0,ss=0,es=0;
+   for(int mask=0;mask<16;mask++){tot++;for(int i=0;i<4;i++)if(mask&(1<<i)){ss++;es+=(uint32_t)pe[i];}}
+   CHECK("test_power_set",(tot<<16)|((ss&0xFFu)<<8)|(es&0xFFu),0x00102050u);}
+  /* Sprint 87: test_maximal_square — 4x5 matrix; max_side=2 max_area=4 n_cols=5 */
+  {static const int ms_mat[4][5]={{1,0,1,0,0},{1,0,1,1,1},{1,1,1,1,1},{1,0,0,1,0}};
+   static int ms_dp[4][5];int ms_max=0;
+   #define MS2MIN3(a,b,c) ((a)<(b)?((a)<(c)?(a):(c)):((b)<(c)?(b):(c)))
+   for(int i=0;i<4;i++)for(int j=0;j<5;j++){if(ms_mat[i][j]==1){if(i==0||j==0)ms_dp[i][j]=1;else ms_dp[i][j]=MS2MIN3(ms_dp[i-1][j],ms_dp[i][j-1],ms_dp[i-1][j-1])+1;if(ms_dp[i][j]>ms_max)ms_max=ms_dp[i][j];}else ms_dp[i][j]=0;}
+   CHECK("test_maximal_square",(4u<<16)|((uint32_t)(ms_max*ms_max)<<8)|5u,0x00040405u);}
+  /* Sprint 87: test_bucket_sort — {4,2,8,1,9,3,7,5,6,0}; largest=9 second=8 n=10 */
+  {int bsa[10]={4,2,8,1,9,3,7,5,6,0};static int bkt[10];int bi;
+   for(bi=0;bi<10;bi++)bkt[bi]=0;for(bi=0;bi<10;bi++)bkt[bsa[bi]]++;int bidx=0;for(bi=0;bi<10;bi++)while(bkt[bi]-->0)bsa[bidx++]=bi;
+   CHECK("test_bucket_sort",(10u<<16)|((uint32_t)bsa[9]<<8)|(uint32_t)bsa[8],0x000A0908u);}
+  /* Sprint 88: test_subarray_xor — a1[]={4,2,2,6,4} k=6 -> c1=4; a2[]={1,3,3,4,2,4} k=7 -> c2=2; sum=6 xor=6 */
+  {static int xf2[256];int xpx,xres;
+   for(int xi=0;xi<256;xi++)xf2[xi]=0;xf2[0]=1;xpx=0;xres=0;int xa1[]={4,2,2,6,4};for(int xi=0;xi<5;xi++){xpx^=xa1[xi];xres+=xf2[xpx^6];xf2[xpx]++;}int c1=xres;
+   for(int xi=0;xi<256;xi++)xf2[xi]=0;xf2[0]=1;xpx=0;xres=0;int xa2[]={1,3,3,4,2,4};for(int xi=0;xi<6;xi++){xpx^=xa2[xi];xres+=xf2[xpx^7];xf2[xpx]++;}int c2=xres;
+   CHECK("test_subarray_xor",(2u<<16)|((uint32_t)(c1+c2)<<8)|(uint32_t)(c1^c2),0x00020606u);}
+  /* Sprint 88: test_valid_parentheses — "()[]{}"->1 "([)]"->0 "{[]}"->1 "((("->0; n_valid=2 valid_len_sum=10 */
+  {static const char*vps[4]={"()[]{}","([)]","{[]}","((("}; int vn=0;uint32_t vls=0;
+   for(int vi=0;vi<4;vi++){char vstk[16];int vtop=0,vok=1;for(int j=0;vps[vi][j];j++){char vc=vps[vi][j];if(vc=='('||vc=='['||vc=='{')vstk[vtop++]=vc;else{if(vtop==0){vok=0;break;}char vt=vstk[vtop-1];if((vc==')'&&vt!='(')||(vc==']'&&vt!='[')||(vc=='}'&&vt!='{')){{vok=0;break;}}vtop--;}}vok=vok&&(vtop==0);if(vok){vn++;int vl=0;while(vps[vi][vl])vl++;vls+=(uint32_t)vl;}}
+   CHECK("test_valid_parentheses",(4u<<16)|((uint32_t)vn<<8)|(vls&0xFFu),0x0004020Au);}
+  /* Sprint 89: test_count_rooms — grid1 4x4->3 grid2 3x5->8 grid3 2x3->1; sum=12 xor=10 */
+  {static const int cr2g1[4][4]={{1,1,0,1},{1,0,0,1},{0,0,1,1},{1,0,0,0}};
+   cr2_R=4;cr2_C=4;for(int r=0;r<4;r++)for(int c=0;c<4;c++)cr2_grid[r][c]=cr2g1[r][c];int ro1=cr2_count();
+   static const int cr2g2[3][5]={{1,0,1,0,1},{0,1,0,1,0},{1,0,1,0,1}};
+   cr2_R=3;cr2_C=5;for(int r=0;r<3;r++)for(int c=0;c<5;c++)cr2_grid[r][c]=cr2g2[r][c];int ro2=cr2_count();
+   static const int cr2g3[2][3]={{1,1,1},{1,1,1}};
+   cr2_R=2;cr2_C=3;for(int r=0;r<2;r++)for(int c=0;c<3;c++)cr2_grid[r][c]=cr2g3[r][c];int ro3=cr2_count();
+   CHECK("test_count_rooms",(3u<<16)|((uint32_t)(ro1+ro2+ro3)<<8)|(uint32_t)(ro1^ro2^ro3),0x00030C0Au);}
+  /* Sprint 89: test_dependency_order — 5 packages DAG; Kahn BFS; first=0 last=4 n_edges=5 */
+  {static const int doe[5][2]={{0,1},{0,2},{1,3},{2,3},{3,4}};
+   static int do2adj[5][4],do2deg[5],do2ind[5];int do2q[5],do2ord[5],dof=0,dob=0,doc=0;
+   for(int i=0;i<5;i++){do2deg[i]=0;do2ind[i]=0;}
+   for(int i=0;i<5;i++){int u=doe[i][0],v=doe[i][1];do2adj[u][do2deg[u]++]=v;do2ind[v]++;}
+   for(int i=0;i<5;i++)if(do2ind[i]==0)do2q[dob++]=i;
+   while(dof<dob){int u=do2q[dof++];do2ord[doc++]=u;for(int i=0;i<do2deg[u];i++){int v=do2adj[u][i];if(--do2ind[v]==0)do2q[dob++]=v;}}
+   CHECK("test_dependency_order",(5u<<16)|(5u<<8)|(uint32_t)(do2ord[0]*10+do2ord[doc-1]),0x00050504u);}
+  /* Sprint 90: test_trie_ops — insert apple/app/application/apt; search 6 queries; found=4 miss=2 */
+  {tr2_init();static const char*tw[4]={"apple","app","application","apt"};for(int i=0;i<4;i++)tr2_ins(tw[i]);
+   static const char*tq[6]={"app","apple","ap","application","xyz","apt"};int tf=0,tm=0;
+   for(int i=0;i<6;i++){if(tr2_srch(tq[i]))tf++;else tm++;}
+   CHECK("test_trie_ops",(6u<<16)|((uint32_t)tf<<8)|(uint32_t)tm,0x00060402u);}
+  /* Sprint 90: test_chain_pairs — pairs (5,24)(15,25)(27,40)(50,60)(15,28); greedy chain=3 xb=24^40^60=12 */
+  {int cpa[5]={5,15,27,50,15},cpb[5]={24,25,40,60,28};
+   for(int i=1;i<5;i++){int ka=cpa[i],kb=cpb[i],j=i-1;while(j>=0&&cpb[j]>kb){cpa[j+1]=cpa[j];cpb[j+1]=cpb[j];j--;}cpa[j+1]=ka;cpb[j+1]=kb;}
+   int cpch=1,cplb=cpb[0];uint32_t cpxb=(uint32_t)cpb[0];
+   for(int i=1;i<5;i++)if(cpa[i]>cplb){cpch++;cpxb^=(uint32_t)cpb[i];cplb=cpb[i];}
+   CHECK("test_chain_pairs",(5u<<16)|((uint32_t)cpch<<8)|(cpxb&0xFFu),0x0005030Cu);}
+  /* Sprint 91: test_circular_buffer — cap=5; push 1-5, pop1, push6, pop2-3; front=4 n_pushes=6 xpush=7 */
+  {int cbb[5],cbh=0,cbt=0,cbcnt=0,cbnp=0;uint32_t cbxp=0u;
+   for(int v=1;v<=5;v++){cbb[cbt]=v;cbt=(cbt+1)%5;cbcnt++;cbnp++;cbxp^=(uint32_t)v;}
+   cbh=(cbh+1)%5;cbcnt--;
+   cbb[cbt]=6;cbt=(cbt+1)%5;cbcnt++;cbnp++;cbxp^=6u;
+   cbh=(cbh+1)%5;cbcnt--;cbh=(cbh+1)%5;cbcnt--;
+   int cbfv=cbb[cbh];(void)cbcnt;
+   CHECK("test_circular_buffer",((uint32_t)(cbnp+1)<<16)|((uint32_t)cbfv<<8)|(cbxp&0xFFu),0x00070407u);}
+  /* Sprint 91: test_spiral_matrix — 3x4 matrix; n=12 sum=78=0x4E xor=12=0x0C */
+  {static const int sm[3][4]={{1,2,3,4},{5,6,7,8},{9,10,11,12}};int ssp[12],si=0;
+   int st=0,sb=2,sl=0,sr=3;
+   while(st<=sb&&sl<=sr){for(int c=sl;c<=sr;c++)ssp[si++]=sm[st][c];st++;for(int r=st;r<=sb;r++)ssp[si++]=sm[r][sr];sr--;if(st<=sb){for(int c=sr;c>=sl;c--)ssp[si++]=sm[sb][c];sb--;}if(sl<=sr){for(int r=sb;r>=st;r--)ssp[si++]=sm[r][sl];sl++;}}
+   uint32_t ssum=0,sxr=0;for(int i=0;i<si;i++){ssum+=(uint32_t)ssp[i];sxr^=(uint32_t)ssp[i];}
+   CHECK("test_spiral_matrix",((uint32_t)si<<16)|((ssum&0xFFu)<<8)|(sxr&0xFFu),0x000C4E0Cu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

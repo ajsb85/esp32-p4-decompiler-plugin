@@ -1561,6 +1561,151 @@ public class DetectSemanticPatterns extends GhidraScript {
             "sort.*first.*then.*linear.*scan.*gap|mg_max_gap",
             "max_gap|mg_max|consecutive_gap"
         ),
+        /* Sprint 86: SOS DP + Inclusion-Exclusion */
+        new PatternDef("sum_over_subsets_dp", "bitmask_subset_sum", "high",
+            "for.*i.*<.*n.*for.*mask.*<.*M.*if.*mask.*&.*1.*<<.*i.*f.*mask.*\\+=.*f.*mask.*\\^.*1.*<<.*i",
+            "f.*mask.*=.*a.*mask.*init.*sos.*dp|sum.*over.*subsets.*bitmask",
+            "sos_dp|sos_f|subset_sum_mask"
+        ),
+        new PatternDef("inclusion_exclusion_count", "count_divisible_union", "high",
+            "N/2.*\\+.*N/3.*\\+.*N/5.*-.*N/6.*-.*N/10.*-.*N/15.*\\+.*N/30|incl_excl.*formula",
+            "\\|A.*\\|.*\\+.*\\|B.*\\|.*-.*\\|A.*B.*\\||inclusion.*exclusion.*principle",
+            "inclusion_excl|incl_excl|union_count"
+        ),
+        /* Sprint 87: Roman to Int + Next Permutation */
+        new PatternDef("roman_numeral_decode", "roman_to_integer", "high",
+            "if.*rval.*s.*i.*<.*rval.*s.*i.*1.*result.*-=.*rval|subtraction.*rule.*roman",
+            "switch.*I.*=.*1.*V.*=.*5.*X.*=.*10.*L.*=.*50.*C.*=.*100|roman.*value.*table",
+            "roman_to_int|rval|roman_decode"
+        ),
+        new PatternDef("next_permutation_inplace", "lexicographic_next_permutation", "high",
+            "i.*=.*n-2.*while.*i.*>=.*0.*&&.*arr.*i.*>=.*arr.*i.*1.*i--|find.*rightmost.*ascent",
+            "j.*=.*n-1.*while.*arr.*j.*<=.*arr.*i.*j--.*swap.*arr.*i.*arr.*j|find.*swap.*point",
+            "next_perm|np_next|next_permutation"
+        ),
+        new PatternDef("next_perm_reverse_suffix", "permutation_suffix_reverse", "medium",
+            "lo.*=.*i.*\\+.*1.*hi.*=.*n.*-.*1.*while.*lo.*<.*hi.*swap.*arr.*lo.*arr.*hi.*lo\\+\\+.*hi--|reverse.*suffix",
+            "reverse.*arr.*i.*1.*arr.*n-1|suffix.*reversal.*permutation",
+            "np_reverse|perm_suffix|reverse_tail"
+        ),
+        /* Sprint 88: LCS DP + LCA Subarray */
+        new PatternDef("longest_common_subsequence", "lcs_dp_classic", "high",
+            "if.*s1.*i-1.*==.*s2.*j-1.*dp.*i.*j.*=.*dp.*i-1.*j-1.*\\+.*1.*else.*dp.*i.*j.*=.*max",
+            "dp.*0.*j.*=.*0.*dp.*i.*0.*=.*0.*lcs.*init|lcs_dp.*base.*case",
+            "lcs_dp|lcs_len|longest_common_subseq"
+        ),
+        new PatternDef("longest_common_subarray_dp", "contiguous_match_dp", "high",
+            "dp.*i.*j.*=.*a1.*i-1.*==.*a2.*j-1.*?.*dp.*i-1.*j-1.*\\+.*1.*:.*0|lcsa.*contiguous",
+            "if.*dp.*i.*j.*>.*max_len.*max_len.*=.*dp.*i.*j|track.*max.*subarray.*len",
+            "lca_subarray|lcsa_dp|longest_common_subarray"
+        ),
+        /* Sprint 89: Merge Intervals + Wiggle Sort */
+        new PatternDef("merge_overlapping_intervals", "interval_merge_sweep", "high",
+            "if.*iv.*i.*s.*<=.*res.*cnt.*e.*if.*iv.*i.*e.*>.*res.*cnt.*e.*res.*cnt.*e.*=.*iv.*i.*e|overlap.*extend",
+            "else.*res.*cnt\\+\\+.*=.*iv.*i|non.*overlap.*append",
+            "merge_intervals|merge_ivl|mi_res"
+        ),
+        new PatternDef("wiggle_sort_inplace", "alternating_hi_lo_sort", "high",
+            "if.*i.*&.*1.*&&.*arr.*i.*<.*arr.*i-1.*swap|odd.*index.*must.*be.*peak",
+            "else.*if.*!.*i.*&.*1.*&&.*arr.*i.*>.*arr.*i-1.*swap|even.*index.*must.*be.*valley",
+            "wiggle_sort|ws_arr|alternating_sort"
+        ),
+        /* Sprint 86: Longest Common Prefix + Power Set */
+        new PatternDef("longest_common_prefix", "lcp_vertical_scan", "high",
+            "for.*col.*=.*0.*for.*each.*str.*if.*str.*col.*!=.*c.*return.*col",
+            "c.*=.*strs.*0.*col.*for.*i.*=.*1.*n.*if.*strs.*i.*col.*!=.*c",
+            "lcp|longest_common_prefix|lcp_len"
+        ),
+        new PatternDef("power_set_bitmask", "subset_enumeration_bitmask", "high",
+            "for.*mask.*=.*0.*mask.*<.*1.*<<.*n.*mask.*\\+\\+",
+            "for.*i.*=.*0.*i.*<.*n.*i.*\\+\\+.*if.*mask.*&.*1.*<<.*i",
+            "power_set|subset_enum|bitmask_subset"
+        ),
+        new PatternDef("subset_size_popcount", "subset_element_count", "medium",
+            "popcount.*mask|__builtin_popcount.*mask|count_bits.*mask",
+            "subset_size.*=.*0.*for.*i.*mask.*&.*1.*<<.*i.*size.*\\+\\+",
+            "subset_size|popcount_mask|bit_count_mask"
+        ),
+        /* Sprint 87: Maximal Square + Bucket Sort */
+        new PatternDef("maximal_square_dp", "largest_square_of_ones", "high",
+            "dp.*i.*j.*=.*MS_MIN3.*dp.*i-1.*j.*dp.*i.*j-1.*dp.*i-1.*j-1.*\\+.*1",
+            "if.*mat.*i.*j.*==.*1.*if.*i.*==.*0.*||.*j.*==.*0.*dp.*i.*j.*=.*1",
+            "maximal_square|max_side|dp_sq"
+        ),
+        new PatternDef("bucket_sort_integer", "counting_bucket_sort", "high",
+            "for.*i.*=.*0.*i.*<.*range.*i.*\\+\\+.*bucket.*i.*=.*0",
+            "for.*i.*=.*0.*i.*<.*n.*i.*\\+\\+.*bucket.*arr.*i.*\\+\\+",
+            "bucket_sort|bucket_cnt|counting_sort"
+        ),
+        new PatternDef("bucket_rebuild_sorted", "bucket_sort_scatter", "medium",
+            "for.*i.*=.*0.*i.*<.*range.*while.*bucket.*i.*--.*>.*0.*arr.*idx.*\\+\\+.*=.*i",
+            "idx.*=.*0.*for.*i.*=.*0.*range.*while.*bucket.*i.*>.*0",
+            "bucket_rebuild|scatter_sorted|sort_idx"
+        ),
+        /* Sprint 88: Subarray XOR + Valid Parentheses */
+        new PatternDef("subarray_xor_count", "prefix_xor_frequency", "high",
+            "px.*\\^=.*arr.*i.*res.*\\+=.*freq.*px.*\\^.*k",
+            "freq.*0.*=.*1.*for.*i.*=.*0.*n.*px.*\\^=.*arr.*i",
+            "subarray_xor|xor_count|px_freq"
+        ),
+        new PatternDef("valid_parentheses_stack", "bracket_matching_stack", "high",
+            "if.*c.*==.*\\(.*||.*c.*==.*\\[.*||.*c.*==.*\\{.*stk.*top.*\\+\\+.*=.*c",
+            "if.*top.*==.*0.*return.*0.*char.*t.*=.*stk.*top.*-.*1",
+            "valid_paren|bracket_match|is_valid_paren"
+        ),
+        new PatternDef("stack_mismatch_check", "closing_bracket_validation", "medium",
+            "if.*c.*==.*\\).*&&.*t.*!=.*\\(.*||.*c.*==.*\\].*&&.*t.*!=.*\\[",
+            "return.*top.*==.*0.*empty.*stack.*means.*all.*matched",
+            "paren_mismatch|close_check|bracket_valid"
+        ),
+        /* Sprint 89: Count Rooms + Dependency Order */
+        new PatternDef("count_rooms_dfs", "grid_component_count_dfs", "high",
+            "if.*r.*<.*0.*||.*r.*>=.*R.*||.*c.*<.*0.*||.*c.*>=.*C.*return",
+            "if.*!cr_grid.*r.*c.*||.*cr_vis.*r.*c.*return.*cr_vis.*r.*c.*=.*1",
+            "count_rooms|grid_dfs|connected_components"
+        ),
+        new PatternDef("dependency_order_kahn", "topological_sort_bfs", "high",
+            "for.*i.*=.*0.*i.*<.*n.*i.*\\+\\+.*if.*indeg.*i.*==.*0.*q.*back.*\\+\\+.*=.*i",
+            "if.*--indeg.*v.*==.*0.*q.*back.*\\+\\+.*=.*v",
+            "dependency_order|kahn_bfs|topo_sort"
+        ),
+        new PatternDef("toposort_order_validate", "dag_order_position_check", "medium",
+            "pos.*order.*i.*=.*i.*for.*i.*=.*0.*cnt",
+            "if.*pos.*edges.*0.*>=.*pos.*edges.*1.*valid.*=.*0",
+            "topo_validate|pos_check|dag_valid"
+        ),
+        /* Sprint 90: Trie Ops + Chain Pairs */
+        new PatternDef("trie_insert_search", "trie_array_node_ops", "high",
+            "if.*!tr_ch.*cur.*c.*int.*nn.*=.*tr_sz.*\\+\\+.*tr_ch.*cur.*c.*=.*nn",
+            "cur.*=.*tr_ch.*cur.*c.*for.*s.*s.*\\+\\+.*c.*=.*\\*s.*-.*a",
+            "trie_insert|tr_ch|trie_ops"
+        ),
+        new PatternDef("trie_exact_search", "trie_end_flag_lookup", "high",
+            "if.*!tr_ch.*cur.*c.*return.*0.*cur.*=.*tr_ch.*cur.*c",
+            "return.*tr_end.*cur.*exact.*word.*match.*requires.*end.*flag",
+            "trie_search|tr_end|trie_exact"
+        ),
+        new PatternDef("chain_pairs_greedy", "longest_pair_chain_greedy", "high",
+            "if.*pa.*i.*>.*last_b.*chain.*\\+\\+.*xb.*\\^=.*pb.*i.*last_b.*=.*pb.*i",
+            "insertion.*sort.*pb.*j.*>.*kb.*pa.*j\\+1.*=.*pa.*j.*pb.*j\\+1.*=.*pb.*j",
+            "chain_pairs|longest_chain|greedy_chain"
+        ),
+        /* Sprint 91: Circular Buffer + Spiral Matrix */
+        new PatternDef("circular_buffer_ops", "ring_buffer_head_tail", "high",
+            "buf.*tail.*=.*v.*tail.*=.*tail.*\\+.*1.*%.*cap",
+            "val.*=.*buf.*head.*head.*=.*head.*\\+.*1.*%.*cap",
+            "circular_buffer|ring_buf|head_tail"
+        ),
+        new PatternDef("spiral_matrix_boundary", "spiral_traversal_shrink", "high",
+            "for.*c.*=.*left_b.*c.*<=.*right_b.*spiral.*idx.*\\+\\+.*=.*mat.*top.*c.*top.*\\+\\+",
+            "for.*r.*=.*top.*r.*<=.*bot.*spiral.*idx.*\\+\\+.*=.*mat.*r.*right_b.*right_b.*--",
+            "spiral_matrix|boundary_shrink|top_bot_left_right"
+        ),
+        new PatternDef("spiral_inner_guards", "spiral_direction_guards", "medium",
+            "if.*top.*<=.*bot.*for.*c.*=.*right_b.*c.*>=.*left_b.*bot.*--",
+            "if.*left_b.*<=.*right_b.*for.*r.*=.*bot.*r.*>=.*top.*left_b.*\\+\\+",
+            "spiral_guard|inner_spiral|spiral_reverse"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
