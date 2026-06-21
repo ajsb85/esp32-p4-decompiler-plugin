@@ -185,6 +185,10 @@ int main(void){
   {static const uint32_t ia[7]={1,2,3,4,5,6,9};uint32_t ax=0,as2=0;
    for(int i=0;i<7;i++){ax^=ia[i];as2+=ia[i];}
    CHECK("test_avl",(7u<<16)|(as2<<8)|(ax&0xFFu),0x00071E0Eu);}
+  /* test_trie: 6 words {"cat","car","card","care","dog","door"}, 8 searches, 5 found, xor_len=7 */
+  {static const uint32_t wlens[6]={3,3,4,4,3,4};uint32_t xl=0;
+   for(int i=0;i<6;i++)xl^=wlens[i];
+   CHECK("test_trie",(6u<<16)|(5u<<8)|(xl&0xFFu),0x00060507u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

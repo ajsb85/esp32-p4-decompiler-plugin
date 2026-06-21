@@ -386,6 +386,18 @@ public class DetectSemanticPatterns extends GhidraScript {
             "LL|RR|LR|RL|left.*heavy|right.*heavy",           // rotation-case labels
             "height.*left.*-.*height.*right|avl_balance"      // balance-factor formula
         ),
+
+        // ── Prefix trie (53, 54) ──────────────────────────────────────────────
+        new PatternDef("trie_insert", "trie_insert", "high",
+            "\\.children\\[|children\\s*\\[.*-\\s*'a'",      // children array indexed by char
+            "is_end\\s*=\\s*1|tpool.*is_end|trie.*end",       // mark end-of-word flag
+            "trie_alloc|tnode_alloc|alloc.*trie"              // node allocator call
+        ),
+        new PatternDef("trie_search", "trie_search", "high",
+            "\\.children\\[.*<\\s*0|children.*==\\s*-1",      // child-miss check
+            "is_end|trie.*return.*0|return.*is_end",           // search-failure or result
+            "trie_search|trie_find|prefix_search"             // search function names
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
