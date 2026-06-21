@@ -27,8 +27,16 @@ decompiled-C export pipeline validated on real hardware.
 - **FIDB generator** — `GenerateESP32P4FIDB.java` guidance script for
   building ESP-IDF function-ID databases
 - **Decompiled-C export** — `ExportDecompiledC.java` dumps all decompiled
-  functions to a single `.c` file with three RISC-V artifacts fixed
-  automatically (see [Decompilation Pipeline](#decompilation-pipeline))
+  functions to a single `.c` file with four RISC-V artifact fixes, peripheral
+  access annotations, section organization, and string constant extraction
+  (see [Decompilation Pipeline](#decompilation-pipeline))
+- **Semantic pattern detection** — `DetectSemanticPatterns.java` classifies
+  functions by algorithm (CRC, popcount, sort, state machine, cipher, …) and
+  emits a `semantic_hints.json` with suggested rename targets
+- **Firmware header export** — `ExportFirmwareHeader.java` emits a compilable
+  `firmware.h` with type definitions, `extern` prototypes, and volatile globals
+- **Call graph export** — `ExportCallGraph.java` emits a Graphviz `.dot` call
+  graph and `MODULES.md` table organized by IDF/app/unknown layer
 - **Headless analysis** — `AnalyzeESP32P4Headless.py` pre-script for
   CI/batch workflows
 
@@ -153,9 +161,59 @@ at addresses in the ROM region.
 
 ### `GenerateESP32P4FIDB.java`
 
-Guidance script for generating a Ghidra Function ID database from an
-ESP-IDF build tree. Run this against a compiled IDF SDK to produce a
-`.fidb` file that identifies library functions automatically.
+Generates a Ghidra Function ID database from an ESP-IDF build tree.
+Run this against a compiled IDF SDK to produce a `.fidb` file that
+identifies library functions automatically via hash matching.
+
+### `ExportFirmwareHeader.java`
+
+Exports a compilable `firmware.h` containing:
+- Topologically-sorted user-defined type definitions (structs, enums,
+  typedefs via DFS post-order to handle forward references)
+- `extern` function prototypes for all named functions
+- `volatile` global variable declarations for peripheral-mapped globals
+
+Include this header when recompiling the output of `ExportDecompiledC.java`.
+
+### `ExportCallGraph.java`
+
+Analyzes the full firmware call graph and exports two artifacts:
+
+- **`firmware.dot`** — Graphviz call graph with nodes colored by layer:
+  IDF layer (green), application layer (yellow), unknown (grey)
+- **`MODULES.md`** — markdown table mapping each weakly-connected
+  component to its estimated purpose and layer
+
+Useful for understanding firmware architecture before diving into
+individual function decompilation.
+
+### `DetectSemanticPatterns.java`
+
+Scans all decompiled function bodies for known algorithmic patterns and
+exports `semantic_hints.json` with rename suggestions. Detects 20
+pattern families including:
+
+`crc32` · `crc16` · `popcount` · `bit_reverse` · `isqrt` · `ilog2` ·
+`clz` · `sort_bubble` · `sort_insertion` · `state_machine` · `parser_packet` ·
+`xor_cipher` · `aes_sbox` · `sha_schedule` · `memcpy_like` · `memset_like` ·
+`strlen_like` · `printf_like` · `rng_lfsr` · `fifo_ring`
+
+All evidence patterns must match (AND logic) to reduce false positives.
+
+```bash
+analyzeHeadless /tmp/proj MyProject \
+  -import firmware.elf \
+  -processor "RISCV:LE:32:ESP32-P4" \
+  -scriptPath ghidra_scripts \
+  -postScript DetectSemanticPatterns.java /tmp/semantic_hints.json \
+  -deleteProject
+```
+
+### `InspectClangAST.java`
+
+Prototype ClangAST walker. Walks the `ClangTokenGroup` tree for a
+function and annotates return nodes, variable references, and type tokens.
+Used as a research tool for implementing AST-level fixes in future sprints.
 
 ### `AnalyzeESP32P4Headless.py`
 
@@ -174,14 +232,27 @@ original firmware.
 
 ### Automatic artifact fixes
 
-`ExportDecompiledC.java` applies three fixes before writing the output
+`ExportDecompiledC.java` applies four fixes before writing the output
 file. No manual editing of decompiled C is required.
 
 | # | Artifact | Example | Fix |
 |---|----------|---------|-----|
 | 1 | GP register assignment | `gp = 0x4ff2d380;` | Line stripped. The RISC-V global pointer is set once by startup code; Ghidra emits it as a C variable on every function entry, which is an undeclared-identifier compile error. |
 | 2 | Void return-type mismatch | `void crc32_step(…)` called as `x = crc32_step(…)` | Signature promoted from `void` to `undefined4`. Detected by a two-pass scan: collect all void-declared names, then find any name used in an assignment RHS. |
-| 3 | Bare `return;` in promoted function | `return;` inside a function now typed `undefined4` | Rewritten to `return param_1;`. In the RISC-V ilp32 ABI, the first parameter register `a0` doubles as the return register, so a bare return is semantically `return param_1;`. |
+| 3 | Bare `return;` in promoted function | `return;` inside a function now typed `undefined4` | Rewritten to `return <lastVar>;` where `lastVar` is the last Ghidra local variable assigned before the return (backwards scan of `uVar*`/`iVar*`/`param_*` assignments). Falls back to `param_1`. |
+| 4 | Peripheral `DAT_` references | `DAT_50000000` in function body | Replaced with `static const char s_<addr>[]` string declarations when Ghidra has typed the address as a string data type. |
+
+### Semantic enrichments
+
+Beyond the four fixes, `ExportDecompiledC.java` also adds:
+
+- **Peripheral access annotations** — inline `/* ← HP_SYS */`, `/* ← UART0 */`
+  comments on lines that read/write known ESP32-P4 peripheral addresses (26
+  peripheral ranges covered from the TRM)
+- **Section organization** — when output crosses a memory region boundary
+  (IRAM/DRAM/ROM/Flash/Peripheral), a decorative section header is emitted
+- **String constant substitution** — `DAT_` references to addresses Ghidra
+  has typed as string data are replaced with named `static const char[]` declarations
 
 ### `tools/ghidra_types.h`
 
@@ -200,38 +271,28 @@ The header maps each Ghidra alias to the appropriate `<stdint.h>` type.
 
 ### Bare-metal round-trip (freestanding)
 
-The `test/roundtrip/` fixture validates the pipeline without any RTOS or
-libc dependency.
+The `test/roundtrip/` directory contains five bare-metal test fixtures
+that validate the pipeline without any RTOS or libc dependency.
+Use the automation script for a full 6-phase run:
 
 ```bash
-GCC=~/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/\
-riscv32-esp-elf/bin/riscv32-esp-elf-gcc
-
-# 1. Compile bare-metal original
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O1 -g \
-     -nostdlib -nostartfiles -ffreestanding \
-     -T test/roundtrip/hello.ld \
-     -o hello.elf test/roundtrip/hello.c
-
-# 2. Decompile with Ghidra
-analyzeHeadless /tmp/proj RoundtripTest \
-  -import hello.elf \
-  -processor "RISCV:LE:32:ESP32-P4" \
-  -scriptPath ghidra_scripts \
-  -postScript ExportDecompiledC.java /tmp/decompiled.c \
-  -deleteProject
-
-# 3. Recompile decompiled output
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 \
-     -nostdlib -nostartfiles -ffreestanding \
-     -include tools/ghidra_types.h \
-     -T test/roundtrip/hello.ld \
-     -o decompiled_rebuilt.elf /tmp/decompiled.c
+RISCV_GCC=~/.espressif/tools/riscv32-esp-elf/esp-14.2.0_20260121/\
+riscv32-esp-elf/bin/riscv32-esp-elf-gcc \
+GHIDRA_HEADLESS=/opt/ghidra_12.1.2_PUBLIC/support/analyzeHeadless \
+  ./test/roundtrip/run_roundtrip.sh
 ```
 
-Expected: both ELFs contain the same functions at the same load
-addresses. The rebuilt binary is larger (decompiled C compiled at -O0)
-but functionally identical.
+| Fixture | Algorithm exercises | `g_result` |
+|---------|---------------------|------------|
+| `hello.c` | CRC-32 accumulator | `0xBE34BDFC` |
+| `test_sorting.c` | Bubble + insertion sort | `0x00000029` |
+| `test_math.c` | Popcount / isqrt / bit-reverse / ilog2 / clz | `0x000000F9` |
+| `test_state_machine.c` | 4-state packet parser FSM | `0x00000244` |
+| `test_crypto.c` | XOR stream cipher + key schedule + CRC-8 | `0xABCD65DD` |
+
+The automation script compares disassembled instruction mnemonics
+between the original and reconstructed ELFs — a perfect round-trip
+produces a zero-line diff.
 
 ### ESP-IDF round-trip (on real hardware)
 

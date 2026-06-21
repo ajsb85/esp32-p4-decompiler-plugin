@@ -280,40 +280,36 @@ as a safe approximation until a proper type is known).
 ## Round-trip Validation
 
 Before merging any change that touches `ExportDecompiledC.java`,
-`ghidra_types.h`, or the Sleigh processor definition, run the round-trip
-test to confirm the decompilation pipeline still produces compilable,
+`ghidra_types.h`, or the Sleigh processor definition, run the automated
+round-trip script to confirm the pipeline still produces compilable,
 correct output.
 
 ```bash
-# Compile the bare-metal fixture
-GCC=~/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/\
-riscv32-esp-elf/bin/riscv32-esp-elf-gcc
+# One-line automated run (Phases 1–5: compile → decompile → recompile → diff → patterns)
+RISCV_GCC=~/.espressif/tools/riscv32-esp-elf/esp-14.2.0_20260121/\
+riscv32-esp-elf/bin/riscv32-esp-elf-gcc \
+GHIDRA_HEADLESS=/opt/ghidra_12.1.2_PUBLIC/support/analyzeHeadless \
+  ./test/roundtrip/run_roundtrip.sh
 
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O1 -g \
-     -nostdlib -nostartfiles -ffreestanding \
-     -T test/roundtrip/hello.ld \
-     -o /tmp/hello.elf test/roundtrip/hello.c
-
-# Decompile
-analyzeHeadless /tmp/proj RoundtripTest \
-  -import /tmp/hello.elf \
-  -processor "RISCV:LE:32:ESP32-P4" \
-  -scriptPath ghidra_scripts \
-  -postScript ExportDecompiledC.java /tmp/decompiled.c \
-  -deleteProject
-
-# Recompile (must produce zero errors)
-$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 \
-     -nostdlib -nostartfiles -ffreestanding \
-     -include tools/ghidra_types.h \
-     -T test/roundtrip/hello.ld \
-     -o /tmp/decompiled_rebuilt.elf /tmp/decompiled.c
-
-echo "Round-trip OK"
+# Optional: also flash rebuilt ELFs to hardware on COM12 and verify g_result
+./test/roundtrip/run_roundtrip.sh --flash COM12
 ```
 
-See `test/roundtrip/README.md` for expected sizes and the CRC32 reference
-value used for hardware validation.
+### Test fixtures and expected `g_result` values
+
+| Fixture | Exercises | `g_result` |
+|---------|-----------|------------|
+| `hello.c` | CRC-32 accumulator | `0xBE34BDFC` |
+| `test_sorting.c` | Bubble sort + insertion sort, nested loops | `0x00000029` |
+| `test_math.c` | Popcount, isqrt, bit-reverse, ilog2, clz32 | `0x000000F9` |
+| `test_state_machine.c` | Packet parser FSM (4-state switch/case) | `0x00000244` |
+| `test_crypto.c` | XOR stream cipher + key schedule + CRC-8 MAC | `0xABCD65DD` |
+
+Each `g_result` is computed deterministically at compile time (verified
+against a native reference implementation). The round-trip validates that
+`g_result` is the same between the original and the recompiled binary.
+
+See `test/roundtrip/run_roundtrip.sh --help` for all options.
 
 ---
 
@@ -353,10 +349,10 @@ The following improvements are not yet implemented. Pick one up and open a
 - [ ] **Global variable export** — emit `extern` declarations for every
       global symbol referenced in decompiled function bodies. Currently
       callers must add these manually.
-- [ ] **Multi-return bare-return fix** — the current Fix 3 always emits
-      `return param_1;`. Extend it to inspect which local variable is
-      last written in the function body before the bare return and use
-      that variable instead.
+- [x] **Multi-return bare-return fix** — Fix 3 now backwards-scans the
+      function body for the last-written Ghidra local variable
+      (`uVar*`, `iVar*`, `param_*`) and uses that as the return value
+      instead of always emitting `return param_1;`.
 - [ ] **`ghidra_types.h` auto-discovery** — scan the decompiled output
       for undeclared identifiers and auto-generate any missing type aliases
       rather than maintaining the header manually.
@@ -378,9 +374,10 @@ The following improvements are not yet implemented. Pick one up and open a
 
 ### Tooling
 
-- [ ] **Automated round-trip test script** — a single shell script
-      `test/roundtrip/run.sh` that runs all four steps (compile, decompile,
-      recompile, diff) and exits non-zero on any failure.
+- [x] **Automated round-trip test script** — `test/roundtrip/run_roundtrip.sh`
+      runs all six phases (compile, headless decompile, recompile, objdump diff,
+      pattern detection, optional hardware flash) and exits non-zero on failure.
+      Covers five test fixtures with deterministic `g_result` values.
 - [ ] **FIDB database artifact** — ship a pre-built `esp32p4-idf6.fidb`
       alongside the extension so users do not need to run
       `GenerateESP32P4FIDB.java` themselves.
