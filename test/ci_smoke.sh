@@ -140,6 +140,9 @@ static const int dijk_w[5][5]={{0,2,6,0,0},{0,0,3,8,0},{0,0,0,2,5},{0,0,0,0,1},{
 static int egcd2(int a,int b,int *x,int *y){if(b==0){*x=1;*y=0;return a;}int x1,y1;int g=egcd2(b,a%b,&x1,&y1);*x=y1;*y=x1-(a/b)*y1;return g;}
 static int ci_tmp2[8];
 static int merge_inv2(int *a,int lo,int hi){if(hi-lo<=1)return 0;int mid=(lo+hi)/2,cnt=merge_inv2(a,lo,mid)+merge_inv2(a,mid,hi);int i=lo,j=mid,k=lo;while(i<mid&&j<hi){if(a[i]<=a[j])ci_tmp2[k++]=a[i++];else{cnt+=mid-i;ci_tmp2[k++]=a[j++];}}while(i<mid)ci_tmp2[k++]=a[i++];while(j<hi)ci_tmp2[k++]=a[j++];for(int x=lo;x<hi;x++)a[x]=ci_tmp2[x];return cnt;}
+static int nq_col2[8],nq_d1_2[16],nq_d2_2[16],nq_cnt2,nq_nn2;
+static void nq_solve2(int row){if(row==nq_nn2){nq_cnt2++;return;}for(int c=0;c<nq_nn2;c++){int d1=row+c,d2=row-c+nq_nn2-1;if(!nq_col2[c]&&!nq_d1_2[d1]&&!nq_d2_2[d2]){nq_col2[c]=nq_d1_2[d1]=nq_d2_2[d2]=1;nq_solve2(row+1);nq_col2[c]=nq_d1_2[d1]=nq_d2_2[d2]=0;}}}
+static int nqueens2(int n){nq_nn2=n;nq_cnt2=0;for(int i=0;i<n;i++)nq_col2[i]=0;for(int i=0;i<2*n;i++)nq_d1_2[i]=nq_d2_2[i]=0;nq_solve2(0);return nq_cnt2;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -510,6 +513,17 @@ int main(void){
   {int sha[]={8,3,7,1,5,2,9,4};for(int gap=4;gap>0;gap/=2)for(int i=gap;i<8;i++){int tmp=sha[i],j=i;while(j>=gap&&sha[j-gap]>tmp){sha[j]=sha[j-gap];j-=gap;}sha[j]=tmp;}
    uint32_t shx=0;for(int i=0;i<8;i++)shx^=(uint32_t)sha[i];
    CHECK("test_shell_sort",(8u<<16)|((uint32_t)sha[7]<<8)|(shx&0xFFu),0x00080907u);}
+  /* test_interpolation_search: arr={1,3,5,...,15} n=8; find7->3 find13->6; count=2 xor=5 */
+  {const int isarr[]={1,3,5,7,9,11,13,15};int isqs[]={7,13};uint32_t iscnt=0,isxor=0;
+   for(int q=0;q<2;q++){int lo=0,hi=7,key=isqs[q],pos=-1;
+     while(lo<=hi&&key>=isarr[lo]&&key<=isarr[hi]){if(lo==hi){if(isarr[lo]==key)pos=lo;break;}
+       int p2=lo+(key-isarr[lo])*(hi-lo)/(isarr[hi]-isarr[lo]);
+       if(isarr[p2]==key){pos=p2;break;}else if(isarr[p2]<key)lo=p2+1;else hi=p2-1;}
+     if(pos>=0){iscnt++;isxor^=(uint32_t)pos;}}
+   CHECK("test_interpolation_search",(8u<<16)|(iscnt<<8)|(isxor&0xFFu),0x00080205u);}
+  /* test_n_queens: N=4:2 N=5:10 N=6:4; sum=16 xor=12 */
+  {int s4=nqueens2(4),s5=nqueens2(5),s6=nqueens2(6);
+   CHECK("test_n_queens",(6u<<16)|((uint32_t)(s4+s5+s6)<<8)|((uint32_t)(s4^s5^s6)&0xFFu),0x0006100Cu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

@@ -963,6 +963,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "arr.*j.*=.*arr.*j.*-.*gap.*j.*-=.*gap",         // shift + stride back
             "shell_sort|gap.*insert|j.*gap"                  // naming
         ),
+
+        // ── Sprint 50: Interpolation Search ─────────────────────────────────
+        new PatternDef("interp_search_probe", "interpolation_search", "high",
+            "pos.*=.*lo.*\\+.*key.*-.*arr.*lo.*\\*.*hi.*-.*lo.*\\/.*arr.*hi.*-.*arr.*lo", // value-weighted probe
+            "lo.*<=.*hi.*&&.*key.*>=.*arr.*lo.*&&.*key.*<=.*arr.*hi", // range guard
+            "interp_search|interpolation|interp.*probe"      // naming
+        ),
+
+        // ── Sprint 50: N-Queens Backtracking ────────────────────────────────
+        new PatternDef("n_queens_backtrack", "n_queens_backtracking", "high",
+            "nq_col.*nq_d1.*nq_d2|col_used.*diag1.*diag2",  // three-array marking
+            "nq_col.*=.*1.*nq_d|col_used.*=.*1.*diag.*=.*1", // triple simultaneous set
+            "n_queens|nq_solve|nq_col"                       // naming
+        ),
+        new PatternDef("n_queens_diagonal", "queens_diagonal_index", "medium",
+            "row.*-.*c.*\\+.*n.*-.*1|row.*-.*col.*\\+.*n.*-.*1", // anti-diagonal index shift
+            "d2.*=.*row.*-.*c|diag2.*=.*row.*-",             // anti-diag assignment
+            "nq_d2|diag2|anti_diag"                          // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
