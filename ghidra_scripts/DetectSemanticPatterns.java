@@ -1395,6 +1395,22 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cost.*s1.*i.*!=.*s2.*j.*dp.*i.*j.*min.*substitution",
             "char_match|substitution_cost|edit_match"
         ),
+        // ── Sprint 75: max rect sum + fenwick tree ────────────────────────────
+        new PatternDef("max_rect_sum_compress", "max_rectangle_sum_2d", "high",
+            "for.*l.*=.*0.*MR_COLS.*for.*r.*=.*l.*MR_COLS.*for.*i.*=.*0.*MR_ROWS.*temp.*i.*\\+=",
+            "kadane1d.*temp.*MR_ROWS|max_here.*a.*i.*max_so_far",
+            "max_rect_sum|2d_kadane|col_compress"
+        ),
+        new PatternDef("fenwick_update", "binary_indexed_tree", "high",
+            "for.*i\\+\\+.*i.*<=.*FW_N.*i.*\\+=.*i.*&.*-i.*fw_bit.*i.*\\+=.*delta",
+            "fw_bit.*i.*\\+=.*delta.*i.*\\+=.*i.*&.*\\(-i\\)",
+            "fenwick|bit.*update|binary_indexed"
+        ),
+        new PatternDef("fenwick_query", "bit_prefix_sum", "medium",
+            "for.*i\\+\\+.*i.*>.*0.*i.*-=.*i.*&.*-i.*s.*\\+=.*fw_bit",
+            "fw_query.*i.*-.*1|range.*query.*fw_range",
+            "bit_query|fenwick_query|prefix_sum_bit"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

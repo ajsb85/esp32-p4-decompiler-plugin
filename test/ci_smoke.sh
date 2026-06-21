@@ -883,6 +883,24 @@ int main(void){
      ed_sum+=(uint32_t)edp[m][n];ed_xor^=(uint32_t)edp[m][n];
    }
    CHECK("test_edit_distance",(3u<<16)|((ed_sum&0xFFu)<<8)|(ed_xor&0xFFu),0x00030802u);}
+  /* test_max_rect_sum: 3x4 matrix; kadane on col-compressed rows; max=21 */
+  {int mr_mat[3][4]={{1,2,-1,-4},{-8,-3,4,2},{3,8,10,-8}};
+   int mr_max=-0x7fffffff;
+   for(int l=0;l<4;l++){int tmp[3]={0,0,0};for(int r=l;r<4;r++){for(int i=0;i<3;i++)tmp[i]+=mr_mat[i][r];
+     int mh=tmp[0],ms=tmp[0];for(int i=1;i<3;i++){int nx=mh+tmp[i];mh=nx>tmp[i]?nx:tmp[i];if(mh>ms)ms=mh;}
+     if(ms>mr_max)mr_max=ms;}}
+   CHECK("test_max_rect_sum",(12u<<16)|((uint32_t)(mr_max&0xFF)<<8)|1u,0x000C1501u);}
+  /* test_fenwick_tree: arr={2,1,1,3,2,3,4,5}; p[0..4]=9; update[3]+=3; range[2..5]=12 */
+  {static int fw2[9]={0,0,0,0,0,0,0,0,0};
+   int fw2_n=8;
+   int fw2a[]={2,1,1,3,2,3,4,5};
+   for(int i=0;i<fw2_n;i++){for(int k=i+1;k<=fw2_n;k+=k&(-k))fw2[k]+=fw2a[i];}
+   int fwq1=0;for(int k=5;k>0;k-=k&(-k))fwq1+=fw2[k];  /* query(4)=prefix[0..4]=9 */
+   for(int k=4;k<=fw2_n;k+=k&(-k))fw2[k]+=3;            /* update(3,+3) */
+   int fwq2=0;for(int k=6;k>0;k-=k&(-k))fwq2+=fw2[k];  /* query(5) */
+   int fwq3=0;for(int k=2;k>0;k-=k&(-k))fwq3+=fw2[k];  /* query(1) */
+   int rng=fwq2-fwq3;  /* range[2..5]=12 */
+   CHECK("test_fenwick_tree",(8u<<16)|((uint32_t)(fwq1&0xFF)<<8)|(uint32_t)(rng&0xFF),0x0008090Cu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
