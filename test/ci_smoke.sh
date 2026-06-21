@@ -209,6 +209,16 @@ int main(void){
   {int ma[10]={9,2,7,1,5,3,8,4,6,0};ms_sort(ma,0,9);
    uint32_t mx=0,ms2=0;for(int i=0;i<10;i++){mx^=(uint32_t)ma[i];ms2+=(uint32_t)ma[i];}
    CHECK("test_mergesort",(10u<<16)|(ms2<<8)|(mx&0xFFu),0x000A2D01u);}
+  /* test_bfs: tree graph 7 nodes, BFS from 0: dist={0,1,1,2,2,2,3}, sum=11, xor=1 */
+  {static const int gadj2[7][7]={{0,1,1,0,0,0,0},{1,0,0,1,1,0,0},{1,0,0,0,0,1,0},{0,1,0,0,0,0,1},{0,1,0,0,0,0,0},{0,0,1,0,0,0,0},{0,0,0,1,0,0,0}};
+   int bd[7],bq[7],bh=0,bt=0;for(int i=0;i<7;i++)bd[i]=-1;bd[0]=0;bq[bt++]=0;
+   while(bh<bt){int v=bq[bh++];for(int u=0;u<7;u++)if(gadj2[v][u]&&bd[u]<0){bd[u]=bd[v]+1;bq[bt++]=u;}}
+   int nv=0;uint32_t sd=0,xd=0;for(int i=0;i<7;i++)if(bd[i]>=0){nv++;sd+=(uint32_t)bd[i];xd^=(uint32_t)bd[i];}
+   CHECK("test_bfs",((uint32_t)nv<<16)|(sd<<8)|(xd&0xFFu),0x00070B01u);}
+  /* test_knapsack: items {(2,3),(3,4),(4,5),(5,6)}, W=8, optimal=10 */
+  {static const int kw[4]={2,3,4,5},kv[4]={3,4,5,6};static int kdp[9];for(int i=0;i<9;i++)kdp[i]=0;
+   for(int i=0;i<4;i++)for(int j=8;j>=kw[i];j--){int nv2=kdp[j-kw[i]]+kv[i];if(nv2>kdp[j])kdp[j]=nv2;}
+   CHECK("test_knapsack",(4u<<16)|(8u<<8)|(uint32_t)kdp[8],0x0004080Au);}
   /* test_union_find: 8 nodes, 7 unions, sum_rank=7, xor_roots=0 */
   {int ufp[8],ufrk[8];for(int i=0;i<8;i++){ufp[i]=i;ufrk[i]=0;}
    static const int uops[7][2]={{0,1},{2,3},{4,5},{6,7},{1,2},{5,6},{3,4}};

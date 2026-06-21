@@ -446,6 +446,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "rank\\[a\\]\\s*==\\s*rank\\[b\\]|rank.*==.*rank", // equal-rank bump condition
             "uf_union|union_sets|dsu_union"                    // union function name
         ),
+
+        // ── BFS (63, 64) ──────────────────────────────────────────────────────
+        new PatternDef("bfs_queue", "bfs_enqueue", "high",
+            "queue\\[tail\\+\\+\\]|bfs_queue|q\\[.*\\+\\+\\]", // enqueue into BFS queue
+            "head\\s*<\\s*tail|qh\\s*<\\s*qt",                 // queue-not-empty check
+            "v\\s*=\\s*queue\\[head\\+\\+\\]|v=q\\[qh\\+\\+\\]" // dequeue from BFS queue
+        ),
+        new PatternDef("bfs_visited", "bfs_relax", "high",
+            "dist\\[u\\]\\s*<\\s*0|visited\\[u\\]\\s*==\\s*0", // unvisited check
+            "dist\\[u\\]\\s*=\\s*dist\\[v\\]\\s*\\+\\s*1",    // BFS distance relaxation
+            "gadj|adj\\[v\\]\\[u\\]|adj_matrix"               // adjacency matrix access
+        ),
+
+        // ── 0/1 Knapsack DP (65, 66) ─────────────────────────────────────────
+        new PatternDef("knapsack_reverse", "knapsack_inner", "high",
+            "for.*j.*=.*cap.*j.*>=.*w|j.*downto|j.*>=.*weight", // reverse inner loop
+            "dp\\[j.*-.*w|ks_dp.*j.*-.*weight",                 // backward table access
+            "with_item|dp\\[j\\].*<.*dp\\[j.*-"               // max comparison
+        ),
+        new PatternDef("knapsack_0_1", "knapsack", "high",
+            "knapsack|0.1.*knapsack|01.*knapsack",             // function/comment name
+            "dp\\[j.*-.*w\\[i\\]\\].*\\+.*v\\[i\\]",          // dp[j-w[i]] + v[i]
+            "if.*with_item.*>.*dp|dp\\[j\\].*=.*with_item"    // value update condition
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
