@@ -3249,6 +3249,125 @@ public class DetectSemanticPatterns extends GhidraScript {
             "total_flow.*\\+=.*f.*total_cost.*\\+=.*f.*\\*.*mcf_dist.*t|mcf_run.*augment.*path",
             "mcf_run|mcf_augment|min_cost_flow_main_loop"
         ),
+
+        // ── Euler circuit (Hierholzer's algorithm) ───────────────────────────
+        new PatternDef("hierholzer_stack_push", "euler_circuit_hierholzer_stack_based_dfs", "high",
+            "eu_stk.*eu_sp\\+\\+.*=.*start.*while.*eu_sp.*>.*0.*u.*=.*eu_stk.*eu_sp.*-.*1",
+            "euler_stk.*push.*start.*while.*stack.*not.*empty.*peek.*top|hierholzer_main_loop",
+            "hierholzer|euler_stk|euler_circuit_hierholzer"
+        ),
+        new PatternDef("hierholzer_edge_mark", "euler_circuit_xor_mark_both_edge_directions", "high",
+            "eu_used.*e.*=.*eu_used.*e.*\\^.*1.*=.*1|used.*edge.*xor.*reverse.*both.*marked",
+            "eu_used.*e.*=.*eu_used.*e\\^1.*=.*1|mark.*both_directed_halves.*used",
+            "hierholzer_edge_xor|eu_mark|euler_edge_both"
+        ),
+        new PatternDef("hierholzer_circuit_pop", "euler_circuit_pop_exhausted_vertex_to_circuit", "high",
+            "eu_circuit.*eu_clen\\+\\+.*=.*eu_stk.*--eu_sp|circuit.*\\[clen\\+\\+\\].*=.*stk.*\\[--sp\\]",
+            "pop.*exhausted.*vertex.*push.*to.*circuit|if.*done.*circuit.*append.*pop",
+            "hierholzer_pop|euler_circuit_pop|euler_clen"
+        ),
+
+        // ── Bipartite matching (Kuhn's DFS augmenting path) ──────────────────
+        new PatternDef("kuhn_match_update", "kuhn_bipartite_match_assign_on_augment", "high",
+            "bm_match_r.*v.*=.*u.*return.*1|match_r.*v.*=.*u.*return.*true.*augment.*success",
+            "if.*match_r.*v.*==-1.*||.*dfs.*match_r.*v.*match_r.*v.*=.*u|kuhn_augment",
+            "kuhn_match|bm_match_r|kuhn_augment_assign"
+        ),
+        new PatternDef("kuhn_visit_dfs", "kuhn_bipartite_visited_right_skip", "high",
+            "if.*!bm_adj.*u.*v.*||.*bm_vis.*v.*continue.*bm_vis.*v.*=.*1",
+            "skip_non_edge_or_visited.*mark_visited.*right_node|kuhn_dfs_visit",
+            "kuhn_dfs|bm_vis|kuhn_skip_visited"
+        ),
+        new PatternDef("kuhn_vis_reset", "kuhn_bipartite_visited_reset_per_left_node", "medium",
+            "for.*v.*=.*0.*v.*<.*BM_R.*v\\+\\+.*bm_vis.*v.*=.*0.*if.*bm_dfs.*u.*match\\+\\+",
+            "for.*j.*=.*0.*j.*<.*R.*bm_vis.*j.*=.*0.*before.*each.*augmentation|kuhn_outer",
+            "kuhn_reset_vis|bm_vis_reset|kuhn_outer_loop"
+        ),
+
+        // ── Andrew's monotone chain convex hull ────────────────────────────
+        new PatternDef("hull_cross_product", "convex_hull_2d_cross_product", "high",
+            "A\\.x.*-.*O\\.x.*\\*.*B\\.y.*-.*O\\.y.*-.*A\\.y.*-.*O\\.y.*\\*.*B\\.x.*-.*O\\.x",
+            "long.*long.*cross.*O.*A.*B.*=.*A\\.x.*-.*O\\.x.*B\\.y.*-.*O\\.y.*-.*A\\.y.*O\\.y|cross_2d",
+            "ch_cross|hull_cross|convex_hull_2d"
+        ),
+        new PatternDef("hull_right_turn_pop", "convex_hull_right_turn_pop_lower_hull", "high",
+            "while.*k.*>=.*2.*&&.*ch_cross.*ch_hull.*k.*-.*2.*ch_hull.*k.*-.*1.*ch_pts.*i.*<=.*0.*k--",
+            "while.*k.*>=.*2.*cross.*hull.*k-2.*hull.*k-1.*pt.*<=.*0.*pop|monotone_chain_pop",
+            "hull_pop|ch_pop|hull_right_turn"
+        ),
+        new PatternDef("hull_upper_sentinel", "convex_hull_upper_hull_sentinel_t_variable", "medium",
+            "for.*i.*=.*CH_N.*-.*2.*t.*=.*k.*\\+.*1.*i.*>=.*0.*i--.*while.*k.*>=.*t.*cross",
+            "upper_hull.*t.*=.*k.*\\+.*1.*i.*from.*n-2.*downto.*0|sentinel_upper_hull",
+            "hull_upper|ch_upper|hull_sentinel"
+        ),
+
+        // ── Rabin-Karp rolling hash string matching ──────────────────────────
+        new PatternDef("rk_rolling_remove", "rabin_karp_rolling_hash_remove_leftmost", "high",
+            "th.*=.*th.*\\+.*RK_MOD.*-.*rk_t.*i.*\\*.*pw.*%.*RK_MOD.*\\*.*RK_BASE.*%.*RK_MOD",
+            "th.*=.*th.*-.*T.*i.*\\*.*pw.*%.*mod.*\\*.*base.*%.*mod|rolling_hash_remove",
+            "rk_rolling|rk_remove|rabin_karp_roll"
+        ),
+        new PatternDef("rk_hash_add", "rabin_karp_rolling_hash_add_rightmost", "high",
+            "th.*=.*th.*\\+.*rk_t.*i.*\\+.*RK_M.*%.*RK_MOD|th.*=.*th.*\\+.*T.*i.*\\+.*m.*%.*mod",
+            "rolling_hash_add.*new_rightmost_char|rk_extend.*new_char",
+            "rk_add|rk_extend|rabin_karp_add"
+        ),
+        new PatternDef("rk_collision_verify", "rabin_karp_hash_collision_char_verify", "medium",
+            "if.*ph.*==.*th.*int.*ok.*=.*1.*for.*j.*=.*0.*j.*<.*RK_M.*j\\+\\+.*if.*rk_p.*j.*!=.*rk_t",
+            "if.*pattern_hash.*==.*text_hash.*verify.*char.*by.*char|spurious_hit_check",
+            "rk_verify|rk_collision|rabin_karp_verify"
+        ),
+
+        // ── Linear (Euler's) Sieve ───────────────────────────────────────────
+        new PatternDef("ls_spf_mark", "linear_sieve_smallest_prime_factor_mark", "high",
+            "ls_spf.*i.*\\*.*p.*=.*p|spf.*i.*\\*.*primes.*j.*=.*primes.*j",
+            "if.*ls_spf.*i.*==.*p.*break|if.*spf.*i.*==.*primes.*j.*break",
+            "ls_spf|spf_linear|linear_sieve_spf"
+        ),
+        new PatternDef("ls_prime_collect", "linear_sieve_prime_collection", "high",
+            "if.*ls_spf.*i.*==.*0.*ls_spf.*i.*=.*i.*ls_primes.*ls_pcnt\\+\\+.*=.*i",
+            "if.*spf.*i.*==.*0.*primes.*pcnt\\+\\+.*=.*i|sieve_prime_collect",
+            "ls_primes|ls_pcnt|linear_sieve_primes"
+        ),
+        new PatternDef("ls_factorize", "linear_sieve_factorize_via_spf", "high",
+            "while.*n.*>.*1.*factor.*=.*ls_spf.*n.*n.*\\/=.*factor|factorize.*spf",
+            "spf.*n.*!=.*n|smallest_prime_factor.*divide",
+            "ls_factorize|spf_factorize|linear_sieve_factor"
+        ),
+
+        // ── Sprague-Grundy (combinatorial game theory) ───────────────────────
+        new PatternDef("sg_mex_compute", "sprague_grundy_mex_calculation", "high",
+            "while.*seen.*&.*1.*<<.*mex.*mex\\+\\+|mex.*=.*0.*while.*seen.*>>.*mex.*&.*1",
+            "seen.*\\|=.*1.*<<.*sg_grundy|seen.*\\|=.*1.*<<.*grundy.*n.*sub",
+            "sg_grundy|grundy_mex|sprague_grundy_mex"
+        ),
+        new PatternDef("sg_subtraction_game", "sprague_grundy_subtraction_game_dp", "high",
+            "sg_grundy.*0.*=.*0.*for.*n.*=.*1.*sg_grundy.*n.*=.*mex|grundy.*n.*sub.*1.*sub.*<=.*3",
+            "for.*sub.*=.*1.*sub.*<=.*3.*sub.*<=.*n.*seen.*\\|=.*1.*<<.*sg_grundy.*n.*sub",
+            "sg_compute|grundy_compute|sprague_grundy_dp"
+        ),
+        new PatternDef("sg_pile_xor", "sprague_grundy_multi_pile_nim_xor", "high",
+            "g_xor.*\\^=.*sg_grundy.*piles.*i|g_xor.*\\^=.*grundy.*pile",
+            "total_g.*\\+=.*sg_grundy.*piles|total_grundy.*\\+=.*grundy.*pile",
+            "sg_pile_xor|grundy_xor|sprague_grundy_game_value"
+        ),
+
+        // ── Bitmask DP — Travelling Salesman (Held-Karp) ─────────────────────
+        new PatternDef("tsp_bitmask_init", "bitmask_dp_tsp_held_karp_init", "high",
+            "tsp_dp.*1.*\\[0\\].*=.*0|dp.*1.*0.*=.*0.*start.*city.*0.*mask.*1",
+            "for.*m.*=.*0.*m.*<.*full.*for.*v.*=.*0.*tsp_dp.*m.*v.*=.*TSP_INF",
+            "tsp_dp|held_karp_init|bitmask_dp_tsp_init"
+        ),
+        new PatternDef("tsp_transition", "bitmask_dp_tsp_state_transition", "high",
+            "nmask.*=.*mask.*\\|.*1.*<<.*v.*ncost.*=.*tsp_dp.*mask.*u.*\\+.*tsp_dist.*u.*v",
+            "if.*ncost.*<.*tsp_dp.*nmask.*v.*tsp_dp.*nmask.*v.*=.*ncost|tsp_relax",
+            "tsp_transition|held_karp_relax|bitmask_dp_tsp_expand"
+        ),
+        new PatternDef("tsp_final_tour", "bitmask_dp_tsp_return_to_origin", "high",
+            "for.*v.*=.*1.*v.*<.*TSP_N.*c.*=.*tsp_dp.*full_mask.*v.*\\+.*tsp_dist.*v.*0",
+            "if.*c.*<.*min_cost.*min_cost.*=.*c|tsp_final.*full_mask.*return.*origin",
+            "tsp_final|held_karp_return|bitmask_dp_tsp_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
