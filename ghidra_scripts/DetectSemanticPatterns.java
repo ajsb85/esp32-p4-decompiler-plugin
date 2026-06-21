@@ -662,6 +662,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "lo.*=.*m.*\\+.*1|lo=m\\+1",                       // lower bound advance
             "lis.*lo.*hi|int lo.*=.*0.*hi.*=.*np"             // lo/hi init with np
         ),
+
+        // ── Z-function (99, 100) ─────────────────────────────────────────────
+        new PatternDef("zfunc_window", "zfunc_lr_window", "high",
+            "if.*i.*<.*r.*z|if.*i\\s*<\\s*r",                 // [l,r) window branch
+            "s\\[z\\[i\\]\\].*==.*s\\[i.*\\+.*z|s.*z.*==.*s.*i.*z",  // extend compare
+            "z_function|z_func|zfunc"                         // naming
+        ),
+        new PatternDef("zfunc_extend", "zfunc_extloop", "high",
+            "i.*\\+.*z\\[i\\].*>.*r|i\\+z.*>.*r",             // extend: update [l,r)
+            "l\\s*=\\s*i|l=i",                                 // l=i; r=i+z[i] window update
+            "z\\[i\\]\\+\\+|z.*extend|z_function"            // z[i]++ in extend loop
+        ),
+
+        // ── LSD radix sort (101, 102) ─────────────────────────────────────────
+        new PatternDef("radix_sort_nibble", "radix_nibble_pass", "high",
+            "arr.*\\[i\\].*&.*0xF|&\\s*0xf|&\\s*0xF",        // low-nibble key
+            "radix_tmp.*>>.*4|tmp.*>>.*4|>>\\s*4",            // high-nibble key
+            "radix_sort|radix_tmp|radix_out"                 // naming
+        ),
+        new PatternDef("radix_sort_stable", "radix_stable_pass", "high",
+            "for.*i.*=.*n.*-.*1.*i.*>=.*0|i.*=.*n.*-.*1",    // right-to-left stable scan
+            "out\\[--cnt|tmp\\[--cnt|--cnt\\[",               // stable output: --cnt[key]
+            "cnt\\[i\\].*\\+=.*cnt\\[i.*-.*1\\]|cnt.*\\+=.*cnt"  // prefix sum
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

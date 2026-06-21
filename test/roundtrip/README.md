@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 42 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 44 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -54,6 +54,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_segment_tree.c` | Segment tree range sum n=8; queries [0..7]=72,[2..5]=36,[1..4]=28; xor=112 | `0x00084870` | |
 | `test_fenwick.c` | Fenwick/BIT prefix sums n=6 {1,3,5,7,9,11}; prefix(1)=1,prefix(3)=9,prefix(6)=36, xor=44 | `0x0006242C` | |
 | `test_lis.c` | LIS patience sort {3,1,4,1,5,9,2,6,5,3,5}; length=4, pile-tops={1,2,3,5}, xor=5 | `0x000B0405` | |
+| `test_zfunc.c` | Z-function on "AABAAB" n=6; z={0,1,0,3,1,0}, sum=5, xor=3 | `0x00060503` | |
+| `test_radix_sort.c` | LSD radix sort base-16 2-pass; {45,12,78,23,56,89,34,67}→sorted; last=89, xor=120 | `0x00085978` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -136,7 +138,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-97 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+101 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -185,6 +187,8 @@ Pattern families currently covered (51 patterns):
 | Segment tree | Bottom-up build (2i/2i+1 formula), l/r odd-boundary query halving |
 | Fenwick tree | i+=i&(-i) update / i-=i&(-i) prefix-sum (lowest-set-bit trick) |
 | LIS patience sort | Patience sort: binary search in piles + piles[lo]=v + if(lo==np)np++ |
+| Z-function | [l,r) window + if(i<r)min(r-i,z[i-l]) init + s[z[i]]==s[i+z[i]] extend loop |
+| LSD radix sort | Low/high nibble key (arr&0xF, arr>>4) + stable right-to-left --cnt[key] output |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

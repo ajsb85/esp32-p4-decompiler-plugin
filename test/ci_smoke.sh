@@ -330,6 +330,24 @@ int main(void){
      lpiles[lo]=v;if(lo==lnp)lnp++;}
    uint32_t lx=0;for(int i=0;i<lnp;i++)lx^=(uint32_t)lpiles[i];
    CHECK("test_lis",(11u<<16)|((uint32_t)lnp<<8)|(lx&0xFFu),0x000B0405u);}
+  /* test_zfunc: "AABAAB" n=6, z={0,1,0,3,1,0}, sum=5, xor=3 */
+  {static const char zs[]="AABAAB";int zv[6]={0};int zl=0,zr=0;
+   for(int i=1;i<6;i++){zv[i]=(i<zr)?(zr-i<zv[i-zl]?zr-i:zv[i-zl]):0;
+     while(i+zv[i]<6&&zs[zv[i]]==zs[i+zv[i]])zv[i]++;
+     if(i+zv[i]>zr){zl=i;zr=i+zv[i];}}
+   uint32_t zsum=0,zxor=0;for(int i=0;i<6;i++){zsum+=zv[i];zxor^=zv[i];}
+   CHECK("test_zfunc",(6u<<16)|(zsum<<8)|(zxor&0xFFu),0x00060503u);}
+  /* test_radix_sort: {45,12,78,23,56,89,34,67} -> sorted, last=89, xor=120 */
+  {static const uint8_t rsa[]={45,12,78,23,56,89,34,67};uint8_t rtp[8],rto[8];
+   uint8_t rct[16];
+   for(int j=0;j<16;j++)rct[j]=0;for(int j=0;j<8;j++)rct[rsa[j]&0xF]++;
+   for(int j=1;j<16;j++)rct[j]=(uint8_t)(rct[j]+rct[j-1]);
+   for(int j=7;j>=0;j--)rtp[--rct[rsa[j]&0xF]]=rsa[j];
+   for(int j=0;j<16;j++)rct[j]=0;for(int j=0;j<8;j++)rct[rtp[j]>>4]++;
+   for(int j=1;j<16;j++)rct[j]=(uint8_t)(rct[j]+rct[j-1]);
+   for(int j=7;j>=0;j--)rto[--rct[rtp[j]>>4]]=rtp[j];
+   uint32_t rrx=0;for(int j=0;j<8;j++)rrx^=rto[j];
+   CHECK("test_radix_sort",(8u<<16)|((uint32_t)rto[7]<<8)|(rrx&0xFFu),0x00085978u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
