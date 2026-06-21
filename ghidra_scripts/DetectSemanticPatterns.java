@@ -4773,6 +4773,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "tot_primes.*tot_pcnt\\+\\+.*=.*i|totient_prime_list_append",
             "for.*j.*<.*tot_pcnt.*i.*\\*.*tot_primes.*j.*<.*TOT_MAX|totient_inner_sieve_loop"
         ),
+
+        // ── Sprint 155: Josephus Problem ─────────────────────────────────────
+        new PatternDef("josephus_iterative", "josephus_survivor_pos", "high",
+            "pos.*=.*pos.*\\+.*k.*%.*i|josephus_recurrence_step",
+            "for.*i.*=.*2u.*i.*<=.*n.*i\\+\\+.*pos.*=.*pos.*\\+.*k.*%.*i|josephus_loop_n",
+            "pos.*=.*0u.*for.*i.*=.*2u|josephus_init_and_loop"
+        ),
+        new PatternDef("josephus_k2", "josephus_step2_formula", "high",
+            "pos.*=.*pos.*\\+.*2u.*%.*i|josephus_k2_recurrence",
+            "j10.*=.*josephus.*10u.*2u|josephus_n10_k2_call",
+            "j7.*=.*josephus_k.*7u.*3u|josephus_n7_k3_call"
+        ),
+        new PatternDef("josephus_metric", "josephus_result_encode", "medium",
+            "metric_a.*=.*j10.*\\+.*1u|josephus_metric_a_offset",
+            "metric_b.*=.*j7.*\\+.*1u|josephus_metric_b_offset",
+            "g_result.*=.*n_tests.*<<.*16u.*|.*metric_a.*<<.*8u.*|.*metric_b|josephus_result_pack"
+        ),
+
+        // ── Sprint 155: Wilson's Theorem ──────────────────────────────────────
+        new PatternDef("wilson_primality", "wilson_is_prime_test", "high",
+            "fact.*==.*p.*-.*1u.*\\?.*1u.*:.*0u|wilson_congruence_check",
+            "factorial_mod.*p.*-.*1u.*p|wilson_factorial_call",
+            "wilson_is_prime.*p.*<.*2u.*return.*0u|wilson_base_case"
+        ),
+        new PatternDef("wilson_factorial_mod", "wilson_factorial_mod_loop", "high",
+            "f.*=.*uint32_t.*f.*\\*.*uint32_t.*i.*%.*m|wilson_mod_multiply",
+            "for.*i.*=.*2u.*i.*<=.*n.*i\\+\\+.*f.*=.*f.*\\*.*i.*%.*m|wilson_factorial_loop",
+            "f.*=.*1u.*for.*i.*=.*2u|wilson_factorial_init"
+        ),
+        new PatternDef("wilson_count_primes", "wilson_count_primes_range", "medium",
+            "cnt20.*=.*count_wilson_primes.*20u|wilson_count_to_20",
+            "for.*p.*=.*2u.*p.*<=.*limit.*p\\+\\+.*wilson_is_prime.*p|wilson_sieve_loop",
+            "cnt.*\\+\\+.*wilson_is_prime.*p|wilson_prime_counter"
+        ),
+
+        // ── Sprint 155: Grid Path Count ───────────────────────────────────────
+        new PatternDef("grid_path_dp", "grid_path_count_fill", "high",
+            "dp.*i.*j.*=.*grid_obs.*i.*j.*\\?.*0u.*:.*dp.*i.*-.*1u.*j.*\\+.*dp.*i.*j.*-.*1u|grid_path_recurrence",
+            "for.*i.*=.*1u.*i.*<.*rows.*for.*j.*=.*1u.*j.*<.*cols|grid_path_inner_loops",
+            "dp.*rows.*-.*1u.*cols.*-.*1u|grid_path_bottom_right"
+        ),
+        new PatternDef("grid_path_init", "grid_path_boundary_init", "high",
+            "dp.*0.*j.*=.*grid_obs.*0.*j.*\\?.*0u.*:.*dp.*0.*j.*-.*1u|grid_path_first_row",
+            "dp.*i.*0.*=.*grid_obs.*i.*0.*\\?.*0u.*:.*dp.*i.*-.*1u.*0|grid_path_first_col",
+            "dp.*0.*0.*=.*1u|grid_path_start_cell"
+        ),
+        new PatternDef("grid_path_metric", "grid_path_result_encode", "medium",
+            "paths3x3.*=.*count_paths_3x3|grid_path_3x3_call",
+            "metric_a.*=.*paths3x3|grid_path_metric_a",
+            "metric_b.*=.*paths5x5.*%.*200u.*\\+.*5u|grid_path_metric_b_clamp"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
