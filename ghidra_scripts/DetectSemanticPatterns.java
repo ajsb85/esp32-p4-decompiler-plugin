@@ -3419,6 +3419,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "pt_pool\\[nl\\]\\.right.*=.*pt_merge.*pt_pool\\[l\\]\\.right.*r.*pt_upd\\(nl\\)|treap_merge_cow",
             "pt_merge|treap_persistent_merge|persistent_treap_combine|functional_treap_merge"
         ),
+
+        // ── Suffix Array SA-IS ────────────────────────────────────────────────
+        new PatternDef("sais_classify", "sais_classify_suffix_types", "high",
+            "sais_type\\[n-1\\].*=.*1.*sentinel.*S-type|suffix_type_classify.*lms",
+            "sais_type\\[i\\].*=.*1.*s\\[i\\].*<.*s\\[i\\+1\\]|classify_sl_suffix_array",
+            "sais_classify|suffix_type_sl|sa_is_classify|sais_type_array"
+        ),
+        new PatternDef("sais_is_lms", "sais_is_leftmost_s_suffix", "high",
+            "sais_type\\[i\\].*==.*1.*&&.*sais_type\\[i-1\\].*==.*0|leftmost_s_type_suffix",
+            "is_lms.*i.*>.*0.*type.*S.*prev.*L|lms_suffix_check_boundary",
+            "sais_is_lms|is_lms_suffix|leftmost_s_type|sa_is_lms_detect"
+        ),
+        new PatternDef("sais_sort", "sais_suffix_array_build", "high",
+            "sais_sa\\[i\\].*=.*i.*insertion_sort.*suffix|suffix_array_sa_is_build",
+            "sais_cmp.*sais_sa\\[j\\].*key.*>.*0.*sais_sa\\[j\\+1\\]|sa_is_induced_sort",
+            "sais_sort|suffix_array_induced_sort|sa_is_construct|sais_build_sa"
+        ),
+
+        // ── Hopcroft-Karp Bipartite Matching ──────────────────────────────────
+        new PatternDef("hk_bfs", "hopcroft_karp_bfs_layered", "high",
+            "hk_dist\\[u\\].*=.*0.*queue.*match_l.*==.*-1|hopcroft_karp_bfs_layer",
+            "hk_match_r\\[v\\].*==.*-1.*found.*=.*1.*dist.*HK_INF|bipartite_bfs_augment",
+            "hk_bfs|hopcroft_karp_bfs|bipartite_layered_graph|hk_layer_build"
+        ),
+        new PatternDef("hk_dfs", "hopcroft_karp_dfs_augment", "high",
+            "hk_match_r\\[v\\].*==.*-1.*hk_dist\\[w\\].*==.*hk_dist\\[u\\].*\\+.*1|hopcroft_dfs_path",
+            "hk_match_l\\[u\\].*=.*v.*hk_match_r\\[v\\].*=.*u.*return.*1|bipartite_dfs_augment",
+            "hk_dfs|hopcroft_karp_dfs|bipartite_augmenting_path|hk_augment"
+        ),
+        new PatternDef("hk_max_matching", "hopcroft_karp_maximum_matching", "high",
+            "hk_match_l\\[u\\].*=.*-1.*hk_match_r\\[v\\].*=.*-1.*matching.*=.*0|hopcroft_karp_init",
+            "hk_bfs.*hk_dfs.*matching\\+\\+|bipartite_max_matching_hopcroft",
+            "hk_max_matching|hopcroft_karp_matching|bipartite_matching_hk|max_bipartite_match"
+        ),
+
+        // ── Count Inversions Merge Sort ───────────────────────────────────────
+        new PatternDef("inv_merge_sort", "count_inversions_merge_sort", "high",
+            "inv_count.*\\+=.*mid.*-.*i.*a\\[i\\].*>.*a\\[j\\]|merge_sort_inversion_count",
+            "inv_merge_sort.*mid.*=.*n.*\\/.*2.*inv_merge_sort.*a.*mid|merge_inversion_recurse",
+            "inv_merge_sort|count_inversions_merge|merge_sort_inversions|inversion_count_merge"
+        ),
+        new PatternDef("inv_merge_step", "inversion_merge_combine", "high",
+            "inv_tmp\\[k\\+\\+\\].*=.*a\\[j\\+\\+\\].*inv_count.*\\+=.*mid.*-.*i|inversion_count_merge_step",
+            "while.*i.*<.*mid.*j.*<.*n.*a\\[i\\].*<=.*a\\[j\\].*inv_tmp|merge_inversion_combine",
+            "inv_merge_step|inversion_merge_combine|merge_count_step|inv_count_merge"
+        ),
+        new PatternDef("inv_count_result", "inversion_count_total", "high",
+            "inv_orig_first.*=.*inv_arr\\[0\\].*inv_orig_last.*inv_arr\\[INV_N.*-.*1\\]|inversion_bookend",
+            "inv_count.*=.*0.*inv_merge_sort.*INV_N.*checksum.*inv_orig_first|inversion_tally",
+            "inv_count_result|inversion_count_total|count_inversions_result|inv_total_count"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
