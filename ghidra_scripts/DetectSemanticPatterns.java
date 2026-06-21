@@ -4379,6 +4379,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "monotone_ok.*=.*0|monotone_property_violated|mono_check_fail",
             "mm_argmin|monotone_ok|monotone_minima_verify"
         ),
+        new PatternDef("smawk_cost_fn", "smawk_totally_monotone_cost", "high",
+            "sm_cost.*r.*c.*d.*r.*-.*c.*d.*d.*2.*c|totally_monotone_cost_fn",
+            "sm_col_buf|sm_reduce|smawk_brute|smawk_row_minima",
+            "argmin_brute|sm_argmin|monotone_matrix_min"
+        ),
+        new PatternDef("smawk_reduce_step", "smawk_column_reduction", "high",
+            "survivor_row.*=.*out.*-.*1|sm_cost.*survivor_row.*cols.*out|dominated_col_remove",
+            "if.*out.*<.*n_rows.*cols.*out.*=.*cols.*j|smawk_reduce_output",
+            "sm_reduce|n_rows.*n_cols.*out|smawk_column_elim"
+        ),
+        new PatternDef("smawk_nondec_verify", "smawk_argmin_nondecreasing_check", "high",
+            "argmin_brute.*i.*<.*argmin_brute.*i.*-.*1|nondec.*=.*0|smawk_monotone_fail",
+            "smawk_brute.*SM_ROWS.*SM_COLS|run_smawk_tests|smawk_verify_property",
+            "nondec.*nondec.*\\+.*3|smawk_result_pack|totally_monotone_verify"
+        ),
+        new PatternDef("lc_cht_bad_line", "line_container_cht_redundancy_check", "high",
+            "lc_bad.*a.*b.*c.*c\\.b.*-.*a\\.b.*a\\.m.*-.*b\\.m|cht_line_redundant",
+            "c\\.b.*-.*a\\.b.*a\\.m.*-.*b\\.m.*<=.*b\\.b.*-.*a\\.b.*a\\.m.*-.*c\\.m|lower_envelope_bad",
+            "lc_bad|lc_hull|lc_sz|convex_hull_trick_check"
+        ),
+        new PatternDef("lc_cht_add_line", "line_container_cht_insert", "high",
+            "while.*lc_sz.*>=.*2.*lc_bad.*lc_hull.*lc_sz.*-.*2|cht_remove_dominated",
+            "lc_hull.*lc_sz\\+\\+|lc_add.*m.*b|line_container_push",
+            "lc_add|lc_sz--|lc_hull|cht_insert_line"
+        ),
+        new PatternDef("lc_cht_query_min", "line_container_cht_binary_search", "high",
+            "lc_hull.*mid.*\\.m.*x.*\\+.*lc_hull.*mid.*\\.b.*>.*lc_hull.*mid.*1.*\\.m|cht_bsearch",
+            "lo.*=.*mid.*\\+.*1|hi.*=.*mid|lc_query_min|cht_lower_envelope_query",
+            "lc_hull.*lo.*\\.m.*x.*\\+.*lc_hull.*lo.*\\.b|lc_query_result"
+        ),
+        new PatternDef("bw_modular_arith", "berlekamp_welch_field_arithmetic", "high",
+            "bw_mod|bw_inv.*a.*p.*-.*2|bw_mul.*bw_add.*bw_sub|field_arith_fp",
+            "a.*%.*BW_P.*if.*a.*<.*0.*a.*\\+.*BW_P|mod_reduce_prime",
+            "bw_inv|bw_eval|bw_mod|fermat_little_theorem_inverse"
+        ),
+        new PatternDef("bw_system_build", "berlekamp_welch_linear_system", "high",
+            "bw_mat.*i.*j.*=.*xpow.*xpow.*=.*bw_mul.*xpow.*xi|rs_equation_coeffs",
+            "bw_mat.*i.*BW_K.*BW_E.*=.*bw_mod.*-.*yi|error_locator_coeff",
+            "bw_mat.*i.*BW_UNK.*=.*bw_mul.*yi.*xi|berlekamp_welch_rhs"
+        ),
+        new PatternDef("bw_recovery", "berlekamp_welch_polynomial_recovery", "high",
+            "bw_eval.*Q.*3.*.*bw_inv.*bw_eval.*E.*1|rs_polynomial_division",
+            "E_at_err.*=.*bw_eval.*E.*1.*2|error_locator_root_check",
+            "bw_gauss|bw_mat.*j.*BW_UNK|berlekamp_welch_decode"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
