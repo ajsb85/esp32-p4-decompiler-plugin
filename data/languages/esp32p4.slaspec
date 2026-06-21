@@ -33,4 +33,5 @@ define endian=little;
 # ESP32-P4 custom extensions (replaces riscv.custom.sinc to avoid conflicts
 # with xesploop hardware-loop instructions in the custom-1 opcode space)
 @include "esp32p4_hwlp.sinc"
+@include "esp32p4_qreg.sinc"
 @include "esp32p4_pie.sinc"

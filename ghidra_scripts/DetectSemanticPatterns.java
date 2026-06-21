@@ -57,6 +57,10 @@
 //  gcd_euclid      while(b) + modulo + swap pattern     gcd_euclid
 //  sat_arith       0xFFFFFFFF + overflow check           sat_add_or_sub
 //  endian_swap     0xFF000000 byte masks + <<24 / >>24  bswap
+//  pie_vld_vst     q? = *ptr / *ptr = q? pcode output   pie_vld_vst
+//  pie_zero_q      q? = 0 (zero.q real pcode output)    pie_zero_q
+//  pie_bitwise     q? &|^ + andq/orq/xorq pcodeop name  pie_bitwise_q
+//  pie_simd_loop   Q register + for loop + ld/st        pie_simd_loop
 //
 // ── Output format ────────────────────────────────────────────────────────────
 //
@@ -247,6 +251,28 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0xFF000000",                     // byte-swap masks
             "0x00FF0000",
             "<<\\s*24|>>\\s*24"              // extreme byte shift
+        ),
+
+        // ── PIE (xespv2p2) SIMD patterns ─────────────────────────────────────
+        // Detected after Ghidra decompiles firmware with real Q-register pcode.
+        // The decompiler emits pseudo-C using q0-q7 as 16-byte lvalues.
+        new PatternDef("pie_vld_vst", "pie_vld_vst", "high",
+            "q[0-7]\\s*=\\s*\\*",            // q? = *ptr (128-bit load pcode output)
+            "\\*.*=\\s*q[0-7]"               // *ptr = q? (128-bit store pcode output)
+        ),
+        new PatternDef("pie_zero_q", "pie_zero_q", "high",
+            "q[0-7]\\s*=\\s*0",              // q? = 0 (zero.q pcode output)
+            "q[0-7]"                          // at least one Q register reference
+        ),
+        new PatternDef("pie_bitwise", "pie_bitwise_q", "medium",
+            "q[0-7]\\s*[&|^]",               // q? & / q? | / q? ^
+            "q[0-7]",                         // at least one Q register reference
+            "esp_(?:andq|orq|xorq|notq)"     // pcodeop name in decompiled output
+        ),
+        new PatternDef("pie_simd_loop", "pie_simd_loop", "medium",
+            "q[0-7]",                         // Q register use
+            "for\\s*\\(",                     // vectorised loop
+            "\\*\\s*q[0-7]|q[0-7]\\s*=\\s*\\*" // vector ld/st in loop body
         ),
     };
 

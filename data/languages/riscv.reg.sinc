@@ -1264,6 +1264,9 @@ define token instr (32)
   op3031=(30,31)
   op3131=(31,31)
   sop3131=(31,31) signed
+  # PIE (xespv2p2) register field aliases — used only by esp32p4_qreg.sinc
+  qu1013=(10,13)    # Q register destination/source (4-bit, q0-q7)
+  clrs1517=(15,17)  # CL-compressed base register (3-bit, x8-x15)
 ;
 
 define token cinstr (16)

@@ -165,12 +165,13 @@ define pcodeop esp_vcmulas_qacc_ld_ip;
 define pcodeop esp_vcmulas_qacc_ld_xp;
 define pcodeop esp_vsmulas_qacc_ld_incp;
 
-# Q-register bitwise (confirmed working on P4 eco2)
+# Q-register bitwise multi-source operand pcodeops (source encoding TBD)
+# Source Q register positions in the encoding are not yet confirmed from hardware;
+# keeping these as pcodeops until reference encodings for non-trivial source combos
+# are captured. zero.q and notq are modeled with real pcode (single-register ops).
 define pcodeop esp_andq;
 define pcodeop esp_orq;
 define pcodeop esp_xorq;
-define pcodeop esp_notq;
-define pcodeop esp_zero_q;
 define pcodeop esp_movi_32_q;
 
 # Catch-all for unrecognised PIE encodings in each opcode space
@@ -198,9 +199,19 @@ define pcodeop esp_pie_op7f;   # xesppie legacy 0x7F
 
 with : op0001=0x3 & op0204=0x7 & op0506=0x0 {
 
-    # --- 128-bit Q-register load/store (CONFIRMED xespv2p2) ---
-    :esp.vld.128.ip  is op2531=0x01 & op1214=0x0  { esp_vld_128_ip(); }
-    :esp.vst.128.ip  is op2531=0x41 & op1214=0x0  { esp_vst_128_ip(); }
+    # --- 128-bit Q-register load/store (CONFIRMED xespv2p2, real pcode) ---
+    # Encoding: bits[13:10]=Q register, bits[17:15]=CL base register (x8-x15).
+    # Post-increment immediate at bits[30:26] (6-bit signed, units=16) is not yet
+    # modelled because the bit[24:18] fixed-encoding region overlaps unresolved
+    # sub-fields; the base register pointer update is emitted as a pcodeop call.
+    :esp.vld.128.ip qu1013, clrs1517  is op2531=0x01 & op1214=0x0 & qu1013 & clrs1517  {
+        qu1013 = *:16 clrs1517;
+        clrs1517 = esp_vld_128_ip(clrs1517);  # pointer updated by immediate post-increment
+    }
+    :esp.vst.128.ip qu1013, clrs1517  is op2531=0x41 & op1214=0x0 & qu1013 & clrs1517  {
+        *:16 clrs1517 = qu1013;
+        clrs1517 = esp_vst_128_ip(clrs1517);  # pointer updated by immediate post-increment
+    }
 
     # --- 64-bit half-Q load/store (estimated sub-encodings; to be refined) ---
     :esp.vld.h.64.ip is op2531=0x11 & op1214=0x0  { esp_vld_h64_ip(); }
@@ -259,13 +270,16 @@ with : op0001=0x3 & op0204=0x7 & op0506=0x0 {
 with : op0001=0x3 & op0204=0x6 & op0506=0x0 {
 
     # --- Q-register bitwise operations (confirmed working on P4 eco2) ---
-    # Sub-encodings estimated; to be refined from on-device measurement.
-    :esp.andq      is op2531=0x20 & op1214=0x0  { esp_andq(); }
-    :esp.orq       is op2531=0x20 & op1214=0x1  { esp_orq(); }
-    :esp.xorq      is op2531=0x20 & op1214=0x2  { esp_xorq(); }
-    :esp.notq      is op2531=0x20 & op1214=0x3  { esp_notq(); }
-    :esp.zero.q    is op2531=0x22 & op1214=0x0  { esp_zero_q(); }
-    :esp.movi.32.q is op2531=0x22 & op1214=0x1  { esp_movi_32_q(); }
+    # Destination Q register shown via qu1013 (bits[13:10]) — CONFIRMED field.
+    # Source Q register positions (qx, qy for 3-operand ops) are not yet confirmed;
+    # andq/orq/xorq retain pcodeops until source encoding is verified on hardware.
+    # notq and zero.q are single-destination ops — real pcode implemented.
+    :esp.andq      qu1013  is op2531=0x20 & op1214=0x0 & qu1013  { esp_andq(); }
+    :esp.orq       qu1013  is op2531=0x20 & op1214=0x1 & qu1013  { esp_orq(); }
+    :esp.xorq      qu1013  is op2531=0x20 & op1214=0x2 & qu1013  { esp_xorq(); }
+    :esp.notq      qu1013  is op2531=0x20 & op1214=0x3 & qu1013  { qu1013 = ~qu1013; }
+    :esp.zero.q    qu1013  is op2531=0x22 & op1214=0x0 & qu1013  { qu1013 = qu1013 ^ qu1013; }
+    :esp.movi.32.q qu1013  is op2531=0x22 & op1214=0x1 & qu1013  { esp_movi_32_q(); }
 
     # --- Vector add/sub (all share op2531=0x03 in xespv2p2) ---
     # Specific op0711 sub-type discriminator estimated from pattern analysis.

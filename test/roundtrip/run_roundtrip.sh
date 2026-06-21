@@ -46,9 +46,18 @@ CFLAGS_DECOMPILED="$CFLAGS -O0 -include $TYPES_H"
 
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
-pass() { echo -e "${GREEN}  PASS${NC} $*"; }
-fail() { echo -e "${RED}   FAIL${NC} $*"; FAILURES=$((FAILURES+1)); }
-info() { echo -e "${YELLOW}  ....${NC} $*"; }
+pass()   { echo -e "${GREEN}  PASS${NC} $*"; }
+fail()   { echo -e "${RED}   FAIL${NC} $*"; FAILURES=$((FAILURES+1)); }
+info()   { echo -e "${YELLOW}  ....${NC} $*"; }
+
+# is_hardware_only <test_name> — returns 0 (true) if test needs real hardware
+is_hardware_only() {
+    local t="$1"
+    for hw in "${HARDWARE_ONLY_TESTS[@]}"; do
+        [[ "$hw" == "$t" ]] && return 0
+    done
+    return 1
+}
 
 FAILURES=0
 
@@ -80,10 +89,16 @@ declare -A EXPECTED_RESULT=(
     [test_lfsr]=0x2F34BC35
     [test_fifo_queue]=0x00000000
     [test_bitops]=0x87A97826
+    [test_pie_simd]=0x0000109A
 )
 
+# test_pie_simd requires real ESP32-P4 ECO2 hardware to execute PIE instructions.
+# It compiles fine but the result can only be verified by flashing with --flash.
+HARDWARE_ONLY_TESTS=(test_pie_simd)
+
 TESTS=(hello test_sorting test_math test_state_machine test_crypto \
-       test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops)
+       test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops \
+       test_pie_simd)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
@@ -204,7 +219,11 @@ if [ "$FLASH_ENABLED" -eq 1 ] && [ -n "$FLASH_PORT" ]; then
         elf="$OUT_DIR/${t}_recompiled.elf"
         [ -f "$elf" ] || continue
         expected="${EXPECTED_RESULT[$t]:-UNKNOWN}"
-        info "flashing $t to $FLASH_PORT..."
+        if is_hardware_only "$t"; then
+            info "hardware-only (PIE): flashing $t (expected $expected)"
+        else
+            info "flashing $t to $FLASH_PORT..."
+        fi
         "$ESPTOOL" --port "$FLASH_PORT" --baud 921600 \
             write_flash -z 0x0 "$elf" > /dev/null 2>&1 || { fail "flash: $t"; continue; }
         # Capture g_result from serial (assumes read_serial2.py is available).
