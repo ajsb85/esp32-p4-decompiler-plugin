@@ -2049,6 +2049,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*root.*left.*&&.*root.*left.*priority.*>.*root.*priority.*right_rotate",
             "treap_insert|treap_priority|bst_heap_insert"
         ),
+
+        // ── Kosaraju's two-pass SCC ─────────────────────────────────────────
+        new PatternDef("kosaraju_finish_push", "kosaraju_dfs1_finish_order", "high",
+            "stk.*stk_top\\+\\+.*=.*u|finish_stack.*push.*node.*post.order",
+            "visited.*u.*=.*1.*for.*v.*g\\[u\\]\\[v\\].*dfs1|dfs1.*post.order",
+            "kosaraju|scc_dfs1|finish_order_push"
+        ),
+        new PatternDef("kosaraju_transpose_dfs", "kosaraju_dfs2_transposed_graph", "high",
+            "gt\\[v\\]\\[u\\].*=.*1|transposed.*adjacency.*for.*u.*for.*v.*g\\[u\\]\\[v\\]",
+            "dfs2.*u.*id.*scc_sizes.*id\\+\\+|scc_label.*transposed",
+            "kosaraju_dfs2|scc_transpose|gt_adj"
+        ),
+        new PatternDef("kosaraju_reverse_stack", "kosaraju_reverse_finish_order_scan", "medium",
+            "u.*=.*stk.*--stk_top|u.*=.*stack.*--top.*reverse.finish.order",
+            "while.*stk_top.*>.*0.*pop.*scc_count\\+\\+",
+            "scc_reverse_stack|kosaraju_pass2|stk_top_decrement"
+        ),
+
+        // ── Point-in-Polygon (ray casting) ─────────────────────────────────
+        new PatternDef("pip_crossing_test", "point_in_polygon_ray_cast", "high",
+            "yi.*>.*py.*!=.*yj.*>.*py|vy.*i.*>.*py.*!=.*vy.*j.*>.*py",
+            "inside.*\\^=.*1|crossing_count.*toggle.*parity",
+            "point_in_polygon|ray_cast|pip_crossing"
+        ),
+        new PatternDef("pip_division_free", "pip_division_free_cross_check", "high",
+            "dy.*>.*0.*lhs.*>.*rhs.*lhs.*<.*rhs|dy.*yi.*yj.*lhs.*xi.*xj.*py.*yj",
+            "xi.*xj.*py.*yj.*px.*xj.*dy|division.free.*x.intersect",
+            "pip_no_div|ray_cast_int|lhs_rhs_dy"
+        ),
+        new PatternDef("pip_vertex_pair_loop", "point_polygon_consecutive_vertex_loop", "medium",
+            "for.*i.*=.*0.*j.*=.*n.*-.*1.*i.*<.*n.*j.*=.*i\\+\\+",
+            "vx.*i.*vy.*i.*vx.*j.*vy.*j.*consecutive.*vertices",
+            "vertex_pair_loop|j_follows_i|polygon_edge_iterate"
+        ),
+
+        // ── Möbius function via linear sieve ────────────────────────────────
+        new PatternDef("mobius_sieve_init", "mobius_linear_sieve_init", "high",
+            "mu.*1.*=.*1.*mu.*i.*=.*-1.*prime|mu\\[1\\].*=.*1.*primes.*cnt",
+            "is_composite.*primes.*cnt.*mu.*-1.*for.*i.*2.*<=.*N",
+            "mobius_mu|linear_sieve_mu|mu_init"
+        ),
+        new PatternDef("mobius_squared_factor", "mobius_squared_prime_factor_zero", "high",
+            "if.*i.*%.*primes.*j.*==.*0.*mu.*x.*=.*0.*break|squared.prime.*mu.*=.*0",
+            "i.*%.*primes.*j.*==.*0.*mu.*ip.*=.*0|p_squared_divides.*mobius_zero",
+            "mu_zero_squared|mobius_break|squarefull_zero"
+        ),
+        new PatternDef("mobius_negate_parent", "mobius_negate_parent_parity", "high",
+            "mu.*x.*=.*-mu.*i|mu.*ip.*=.*-mu.*i.*one.more.prime",
+            "else.*mu.*x.*=.*-mu.*i.*distinct.prime|mobius_parity_flip",
+            "mu_negate|mobius_alternating|distinct_prime_mu"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
