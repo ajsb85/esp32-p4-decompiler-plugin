@@ -6105,6 +6105,52 @@ public class DetectSemanticPatterns extends GhidraScript {
             "sp_count.*0xFF.*last_sp.*0xFF|super_primes_mask",
             "g_result.*sp_count.*metric_a.*metric_b|super_primes_g_result"
         ),
+        // ── Sprint 184: primorial_primes, fortunate_numbers, pierpont_primes ──
+        new PatternDef("primorial_primes_build", "primorial_primes_build", "high",
+            "primorial\\s*[*]=\\s*prim_bases|primorial_primes_multiply",
+            "cand_plus.*primorial.*[+].*1u|cand_minus.*primorial.*-.*1u|primorial_cands",
+            "is_prime_pp.*cand_plus.*count[+][+]|is_prime_pp.*cand_minus.*count[+][+]|primorial_prime_check"
+        ),
+        new PatternDef("primorial_primes_collect", "primorial_primes_collect", "high",
+            "count[+][+].*last_pp.*cand|primorial_prime_collect_last",
+            "PRIM_BASE_COUNT.*4|prim_bases.*2.*3.*5.*7|primorial_prime_bases",
+            "last_pp.*>.*last_pp.*cand|primorial_prime_max_update"
+        ),
+        new PatternDef("primorial_primes_pack", "primorial_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|primorial_primes_pack",
+            "count.*0xFF.*last_pp.*0xFF|primorial_primes_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|primorial_primes_g_result"
+        ),
+        new PatternDef("fortunate_numbers_find", "fortunate_numbers_find", "high",
+            "fortunate_find.*primorial|for.*m.*2.*is_prime_fn.*primorial.*[+].*m|fortunate_search_m",
+            "primorial.*[*]=.*fn_primes|fn_primes.*2.*3.*5.*7.*11|fortunate_primorial_build",
+            "fn_sum.*[+]=.*fn.*last_fn.*=.*fn|fortunate_accumulate"
+        ),
+        new PatternDef("fortunate_numbers_loop", "fortunate_numbers_loop", "high",
+            "for.*i.*FN_COUNT.*fortunate_find|fortunate_outer_loop",
+            "fn.*fortunate_find.*primorial|fortunate_call_find",
+            "FN_COUNT.*5|fn_primes\\[FN_COUNT\\]|fortunate_fn_count"
+        ),
+        new PatternDef("fortunate_numbers_pack", "fortunate_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|fortunate_numbers_pack",
+            "fn_sum.*0xFF.*last_fn.*0xFF|fortunate_numbers_mask",
+            "g_result.*fn_sum.*last_fn|fortunate_numbers_g_result"
+        ),
+        new PatternDef("pierpont_primes_smooth", "pierpont_primes_smooth", "high",
+            "for.*pw2.*PP_LIMIT.*pw2\\s*<<=\\s*1|for.*pw3.*pw3.*[*]=.*3|pierpont_smooth_enumerate",
+            "smooth\\[scnt[+][+]\\]\\s*=\\s*pw3|pierpont_smooth_store",
+            "sort_u32.*smooth.*scnt|pierpont_sort_smooth"
+        ),
+        new PatternDef("pierpont_primes_check", "pierpont_primes_check", "high",
+            "cand.*smooth\\[i\\].*[+].*1|is_prime_pp1.*cand.*pp_count[+][+]|pierpont_check_cand",
+            "pp_count[+][+].*last_pp.*=.*cand|pierpont_collect_prime",
+            "PP_LIMIT.*512|PP_SLOTS.*32|pierpont_limits"
+        ),
+        new PatternDef("pierpont_primes_pack", "pierpont_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|pierpont_primes_pack",
+            "pp_count.*0xFF.*last_pp.*0xFF|pierpont_primes_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|pierpont_primes_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
