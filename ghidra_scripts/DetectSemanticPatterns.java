@@ -5463,6 +5463,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xor_idx\\s*\\^=\\s*i.*paperfolding|pf_xor_accum",
             "count.*17.*xor.*40|pf_expected_vals"
         ),
+        // ── Kolakoski sequence ────────────────────────────────────────────────
+        new PatternDef("kolakoski_self_ref_fill", "kol_self_ref_run", "high",
+            "buf\\[len\\+\\+\\]\\s*=\\s*sym.*buf\\[i\\]|kol_self_ref_emit",
+            "for.*j.*<.*buf\\[i\\].*buf\\[len\\+\\+\\]\\s*=\\s*sym|kol_run_fill_loop",
+            "kolakoski.*run.*buf\\[i\\]|kol_run_len_read"
+        ),
+        new PatternDef("kolakoski_sym_toggle", "kol_sym_toggle", "high",
+            "sym\\s*=\\s*3u?\\s*-\\s*sym|kol_toggle_1_2",
+            "sym\\s*==\\s*1u?.*sym\\s*==\\s*2u?|kol_sym_alt",
+            "kolakoski.*3\\s*-\\s*sym|kol_toggle_expr"
+        ),
+        new PatternDef("kolakoski_count_pack", "kol_count_pack", "medium",
+            "count_ones\\+\\+.*xor_ones\\s*\\^=.*i.*1u?|kol_accum",
+            "KOL_N\\s*<<\\s*16.*count_ones\\s*<<\\s*8.*xor_ones|kol_pack_result",
+            "kolakoski.*count.*20.*xor.*18|kol_expected_vals"
+        ),
+        // ── Gijswijt's sequence ───────────────────────────────────────────────
+        new PatternDef("gijswijt_tail_rep", "gij_tail_rep_scan", "high",
+            "tail_rep.*seq.*m.*L|gij_rep_count_fn",
+            "base\\s*=\\s*m\\s*-\\s*needed.*ref\\s*=\\s*m\\s*-\\s*L|gij_block_ptrs",
+            "gijswijt.*rep\\+\\+.*match|gij_rep_loop"
+        ),
+        new PatternDef("gijswijt_next_term", "gij_next_term", "high",
+            "gijswijt_next.*seq.*m|gij_next_fn",
+            "for.*L\\s*=\\s*m.*L\\s*>=\\s*1u?.*L--|gij_outer_scan",
+            "best\\s*<\\s*r.*best\\s*=\\s*r|gij_best_update"
+        ),
+        new PatternDef("gijswijt_count_pack", "gij_count_pack", "medium",
+            "count_ones\\+\\+.*xor_ones\\s*\\^=.*i.*1u?.*gij|gij_accum",
+            "GIJ_N\\s*<<\\s*16.*count_ones\\s*<<\\s*8.*xor_ones|gij_pack_result",
+            "gijswijt.*count.*14.*xor.*13|gij_expected_vals"
+        ),
+        // ── Sierpinski triangle (Pascal mod 2) ────────────────────────────────
+        new PatternDef("sierpinski_lucas_test", "sier_lucas_bitmask", "high",
+            "k\\s*&\\s*n\\s*\\)\\s*==\\s*k|sier_submask_check",
+            "for.*n.*<=.*SIER_N.*for.*k.*<=.*n.*k\\s*&\\s*n|sier_nested_loop",
+            "sierpinski.*lucas.*mod.*2|sier_lucas_theorem"
+        ),
+        new PatternDef("sierpinski_odd_accum", "sier_odd_count_xor", "high",
+            "total_odd\\+\\+.*xor_k\\s*\\^=\\s*k|sier_odd_accum",
+            "if.*k.*&.*n.*==.*k.*total_odd|sier_accum_branch",
+            "sierpinski.*total_odd.*xor_k|sier_dual_accum"
+        ),
+        new PatternDef("sierpinski_result_pack", "sier_result_pack", "medium",
+            "SIER_N\\s*<<\\s*16.*total_odd\\s*<<\\s*8.*xor_k|sier_pack_result",
+            "total_odd.*65.*xor_k.*15|sier_expected_vals",
+            "sierpinski.*0x41.*0x0f|sier_byte_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
