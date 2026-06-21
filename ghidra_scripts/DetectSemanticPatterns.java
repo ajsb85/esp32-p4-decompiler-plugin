@@ -5604,6 +5604,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "sum_bits.*25.*max_bits.*3|zeck_expected_vals",
             "0x0F1903|zeckendorf.*0x0F.*0x19.*0x03|zeck_byte_check"
         ),
+        new PatternDef("copeland_erdos_digit_scan", "copeland_erdos_digit_scanner", "high",
+            "digit_count.*prime|ce_primes.*digit|get_digit.*nd",
+            "for.*di.*<.*nd.*get_digit|copeland_digit_loop",
+            "even.*digit|d.*&.*1.*even_count|ce_even_digit_check"
+        ),
+        new PatternDef("copeland_erdos_prime_concat", "copeland_erdos_prime_concat", "high",
+            "ce_primes|copeland.*prime.*concat|prime_digit_sequence",
+            "total_digits.*\\+.*nd|total_digits.*digit_count|ce_total_accumulate",
+            "even_count.*\\+\\+|copeland.*even.*inc|ce_even_increment"
+        ),
+        new PatternDef("copeland_erdos_result_pack", "copeland_erdos_result_pack", "medium",
+            "n_primes\\s*<<\\s*16.*total_digits\\s*<<\\s*8.*even_count|ce_pack_result",
+            "total_digits.*16.*even_count.*3|ce_expected_vals",
+            "0x0A1003|copeland.*0x0A.*0x10.*0x03|ce_byte_check"
+        ),
+        new PatternDef("moser_de_bruijn_base4_check", "moser_de_bruijn_base4_check", "high",
+            "n\\s*&\\s*3.*>\\s*1|base4_digit.*>.*1|mdb_base4_test",
+            "while.*n.*>.*0.*n.*>>=.*2|mdb_base4_scan",
+            "is_mdb|moser.*de.*bruijn.*check|mdb_membership"
+        ),
+        new PatternDef("moser_de_bruijn_generate", "moser_de_bruijn_generator", "high",
+            "found.*<.*n_terms.*is_mdb|mdb_collect_terms",
+            "sum_terms.*\\+.*i.*xor_terms.*\\^.*i|mdb_accumulate",
+            "xor_terms|moser.*xor.*terms|mdb_xor_track"
+        ),
+        new PatternDef("moser_de_bruijn_result_pack", "moser_de_bruijn_result_pack", "medium",
+            "n_terms\\s*<<\\s*16.*sum_terms.*0xFF.*<<\\s*8.*xor_terms|mdb_pack_result",
+            "sum_terms.*430.*xor_terms.*80|mdb_expected_vals",
+            "0x0CAE50|moser.*0x0C.*0xAE.*0x50|mdb_byte_check"
+        ),
+        new PatternDef("sum_of_squares_legendre", "sum_of_squares_legendre_check", "high",
+            "n.*%.*8.*==.*7|needs_four_squares|legendre.*8b.*7",
+            "while.*n.*%.*4.*==.*0.*n.*>>=.*2|four_square_strip",
+            "n.*%.*8.*7.*return.*4|sum_sq_four_path"
+        ),
+        new PatternDef("sum_of_squares_min_classify", "sum_of_squares_classifier", "high",
+            "is_perfect_square|min_squares|sum_of_two_squares",
+            "if.*ms.*==.*1.*c1|if.*ms.*==.*4.*c4|sum_sq_count",
+            "is_sum_of_two_squares|sum_sq_two_check|a.*\\*.*a.*<=.*n"
+        ),
+        new PatternDef("sum_of_squares_result_pack", "sum_of_squares_result_pack", "medium",
+            "n_tests\\s*<<\\s*16.*c1\\s*<<\\s*8.*c4|sum_sq_pack_result",
+            "c1.*4.*c4.*2|sum_sq_expected_vals",
+            "0x140402|sum_of_squares.*0x14.*0x04.*0x02|sum_sq_byte_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
