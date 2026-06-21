@@ -411,6 +411,17 @@ int main(void){
    static const int sst[]={10,12,11};uint32_t sscnt=0,ssxor=0;
    for(int k=0;k<3;k++)if(ssdp[sst[k]]){sscnt++;ssxor^=(uint32_t)sst[k];}
    CHECK("test_subset_sum",(5u<<16)|(sscnt<<8)|(ssxor&0xFFu),0x0005030Du);}
+  /* test_next_greater: {4,5,2,10,8,3,6,1} NGE={5,10,10,-1,-1,6,-1,-1} count=4 xor=3 */
+  {static const int nga[]={4,5,2,10,8,3,6,1};int nge2[8],ngs[8],ngt=-1;
+   for(int i=0;i<8;i++)nge2[i]=-1;
+   for(int i=0;i<8;i++){while(ngt>=0&&nga[ngs[ngt]]<nga[i])nge2[ngs[ngt--]]=nga[i];ngs[++ngt]=i;}
+   uint32_t ngcnt=0,ngx=0;for(int i=0;i<8;i++)if(nge2[i]!=-1){ngcnt++;ngx^=(uint32_t)nge2[i];}
+   CHECK("test_next_greater",(8u<<16)|(ngcnt<<8)|(ngx&0xFFu),0x00080403u);}
+  /* test_josephus: (n=10,k=3)→4 (n=7,k=2)→7 (n=12,k=4)→1; sum=12, xor=2 */
+  {static const int jns[]={10,7,12},jks[]={3,2,4};uint32_t jsum=0,jxor=0;
+   for(int t=0;t<3;t++){int p=0;for(int i=2;i<=jns[t];i++)p=(p+jks[t])%i;p++;
+     jsum+=(uint32_t)p;jxor^=(uint32_t)p;}
+   CHECK("test_josephus",(10u<<16)|(jsum<<8)|(jxor&0xFFu),0x000A0C02u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

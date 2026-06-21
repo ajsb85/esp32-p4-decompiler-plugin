@@ -806,6 +806,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count_found\\+\\+|xor_found.*\\^=",               // found accumulation
             "subset_sum_build|ss_dp|targets.*dp"              // naming
         ),
+
+        // ── Sprint 42: Next Greater Element (monotonic stack) ───────────────
+        new PatternDef("nge_mono_stack", "next_greater_element", "high",
+            "while.*top.*>=.*0.*arr.*stack.*<.*arr",           // monotone pop condition
+            "nge.*stack.*top--|stack.*top--.*=.*arr",          // pop + assign NGE
+            "stack.*\\+\\+top|nge_result|next_greater"        // index-stack push / naming
+        ),
+        new PatternDef("nge_index_push", "mono_stack_push", "medium",
+            "stack\\[\\+\\+top\\].*=.*i|nge_stack.*=.*i",    // push index onto stack
+            "top.*>=.*0|nge_result.*\\[.*\\].*=",             // top guard / assign
+            "nge_stack|mono.*stack|next.*greater"             // naming
+        ),
+
+        // ── Sprint 42: Josephus recurrence ──────────────────────────────────
+        new PatternDef("josephus_recurrence", "josephus_problem", "high",
+            "pos.*=.*\\(.*pos.*\\+.*k.*\\).*%.*i",            // pos=(pos+k)%i recurrence
+            "for.*i.*=.*2.*i.*<=.*n|for.*i.*<.*=.*n.*pos",   // i from 2 to n loop
+            "josephus|survivor|pos.*\\+.*1"                  // naming / +1 adjustment
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

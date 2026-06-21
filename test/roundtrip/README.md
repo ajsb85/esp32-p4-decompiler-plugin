@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 54 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 56 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -66,6 +66,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_dutch_flag.c` | Dutch National Flag 3-way partition {2,0,2,1,1,0} pivot=1; lo=2, mid=4 | `0x00060204` | |
 | `test_prim_mst.c` | Prim's MST n=5 dense O(n²); edges 0-1(2),1-2(3),1-4(5),0-3(6); weight=16 | `0x00051004` | |
 | `test_subset_sum.c` | Subset sum boolean DP {3,5,2,8,7}; targets {10,12,11} all reachable; xor=13 | `0x0005030D` | |
+| `test_next_greater.c` | Next Greater Element monotonic stack {4,5,2,10,8,3,6,1}; count=4, xor=3 | `0x00080403` | |
+| `test_josephus.c` | Josephus recurrence pos=(pos+k)%i; (n=10,k=3)→4, (n=7,k=2)→7, (n=12,k=4)→1 | `0x000A0C02` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -148,7 +150,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-121 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+124 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -209,6 +211,8 @@ Pattern families currently covered (51 patterns):
 | Dutch National Flag | while(mid≤hi) 3-branch: <pivot swap+lo++mid++; ==pivot mid++; >pivot swap+hi-- |
 | Prim's MST | min-key scan (!in_mst && key<best); relax adj[u][v] < key[v] |
 | Subset sum DP | dp[0]=1; for each v: for j=limit..v: dp[j]\|=dp[j-v] (boolean 0/1) |
+| Next Greater Element | while(top>=0 && arr[stack[top]]<arr[i]) nge[stack[top--]]=arr[i]; stack[++top]=i |
+| Josephus recurrence | pos=0; for i=2..n: pos=(pos+k)%i; survivor=pos+1 |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
