@@ -6151,6 +6151,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "pp_count.*0xFF.*last_pp.*0xFF|pierpont_primes_mask",
             "g_result.*n_tests.*metric_a.*metric_b|pierpont_primes_g_result"
         ),
+        new PatternDef("wagstaff_primes_exp", "wagstaff_primes_exp", "high",
+            "pow2\\s*=\\s*1u\\s*<<\\s*p|wagstaff_shift_p",
+            "num\\s*=\\s*pow2\\s*[+]\\s*1u|wagstaff_num_plus1",
+            "cand\\s*=\\s*num\\s*/\\s*3u|wagstaff_div3"
+        ),
+        new PatternDef("wagstaff_primes_loop", "wagstaff_primes_loop", "high",
+            "for.*p\\s*=\\s*3u.*p\\s*<=\\s*WP_PMAX|wagstaff_outer_loop",
+            "is_prime_wp.*p.*is_prime_wp.*cand|wagstaff_double_prime",
+            "wp_count[+][+].*last_wp\\s*=\\s*cand|wagstaff_collect"
+        ),
+        new PatternDef("wagstaff_primes_pack", "wagstaff_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|wagstaff_primes_pack",
+            "wp_count.*0xFF.*last_wp.*0xFF|wagstaff_primes_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|wagstaff_primes_g_result"
+        ),
+        new PatternDef("carol_numbers_compute", "carol_numbers_compute", "high",
+            "m\\s*=\\s*[(]1u\\s*<<\\s*n[)]\\s*-\\s*1u|carol_m_shift",
+            "cand\\s*=\\s*m\\s*[*]\\s*m\\s*-\\s*2u|carol_square_minus2",
+            "is_prime_cn.*cand|carol_primality_check"
+        ),
+        new PatternDef("carol_numbers_loop", "carol_numbers_loop", "high",
+            "for.*n\\s*=\\s*2u.*n\\s*<=\\s*CN_NMAX|carol_outer_loop",
+            "cn_count[+][+].*last_cn\\s*=\\s*cand|carol_collect",
+            "CN_NMAX.*15u|CN_SLOTS.*16u|carol_limits"
+        ),
+        new PatternDef("carol_numbers_pack", "carol_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|carol_numbers_pack",
+            "cn_count.*0xFF.*last_cn.*0xFF|carol_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|carol_numbers_g_result"
+        ),
+        new PatternDef("thabit_numbers_compute", "thabit_numbers_compute", "high",
+            "cand\\s*=\\s*3u\\s*[*]\\s*[(]1u\\s*<<\\s*n[)]\\s*-\\s*1u|thabit_formula",
+            "is_prime_tn.*cand|thabit_primality_check",
+            "TN_NMAX.*28u|TN_SLOTS.*16u|thabit_limits"
+        ),
+        new PatternDef("thabit_numbers_loop", "thabit_numbers_loop", "high",
+            "for.*n\\s*=\\s*0u.*n\\s*<=\\s*TN_NMAX|thabit_outer_loop",
+            "tn_count[+][+].*last_tn\\s*=\\s*cand|thabit_collect",
+            "tn_count.*TN_SLOTS|thabit_slot_guard"
+        ),
+        new PatternDef("thabit_numbers_pack", "thabit_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|thabit_numbers_pack",
+            "tn_count.*0xFF.*last_tn.*0xFF|thabit_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|thabit_numbers_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
