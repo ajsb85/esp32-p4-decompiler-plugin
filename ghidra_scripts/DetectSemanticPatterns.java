@@ -3782,6 +3782,81 @@ public class DetectSemanticPatterns extends GhidraScript {
             "seg_sieve.*i.*count\\+\\+.*if.*!first_prime.*first_prime.*=.*L.*\\+.*i.*last.*=.*L.*\\+.*i|count_range_primes",
             "seg_count|first_prime|last_prime|segmented_sieve_result"
         ),
+
+        // ── Booth's algorithm (lexicographically smallest rotation) ───────────
+        new PatternDef("booth_failure_func", "booth_kmp_style_failure_function_rotated", "high",
+            "i.*=.*br_f.*j.*-.*1.*-.*k.*while.*i.*!=.*-1.*s.*j.*%.*n.*!=.*s.*k.*\\+.*i.*\\+.*1.*%.*n",
+            "while.*i.*!=.*-1.*s.*j.*%.*n.*!=.*s.*k.*i.*1.*%.*n.*booth_kmp_failure|booth_rotation",
+            "booth_rotation|br_f|booth_kmp|smallest_rotation_failure"
+        ),
+        new PatternDef("booth_shift_k", "booth_candidate_k_shift_on_improvement", "high",
+            "if.*s.*j.*%.*n.*<.*s.*k.*\\+.*i.*\\+.*1.*%.*n.*k.*=.*j.*-.*i.*-.*1|if.*s.*j_mod_n.*<.*s.*candidate.*shift_k",
+            "k.*=.*j.*-.*i.*-.*1.*booth.*lex_smaller.*rotation.*update|booth_k_update",
+            "booth_k|booth_candidate|booth_lex_shift|smallest_rotation_k"
+        ),
+
+        // ── Closest pair of points (divide & conquer) ────────────────────────
+        new PatternDef("closest_pair_strip_filter", "closest_pair_strip_width_dx_squared_filter", "high",
+            "dx.*=.*arr.*i.*\\.x.*-.*mx.*if.*dx.*\\*.*dx.*<.*d.*strip.*m\\+\\+",
+            "if.*dx.*\\*.*dx.*<.*d.*strip_candidate.*add.*strip_filter.*x_distance|cp_strip",
+            "cp_strip|cp_strip_min|closest_pair_strip|strip_width_filter"
+        ),
+        new PatternDef("closest_pair_strip_inner", "closest_pair_strip_early_termination_by_dy", "high",
+            "for.*j.*=.*i.*\\+.*1.*j.*<.*m.*dy.*=.*strip.*j.*\\.y.*-.*strip.*i.*\\.y.*dy.*\\*.*dy.*>=.*best.*break",
+            "strip_inner.*dy.*sq.*>=.*d.*break.*closest_pair.*O7_comparisons|cp_strip_dy",
+            "cp_strip_min|strip_inner_loop|closest_pair_dy_break|O7_strip"
+        ),
+
+        // ── Longest Increasing Subsequence — patience sort (O(n log n)) ──────
+        new PatternDef("lis_patience_tails", "lis_patience_tails_binary_search", "high",
+            "tails.*\\[.*pos.*\\].*=.*arr.*\\[.*i.*\\]|tails.*\\[.*pos.*\\].*=.*val",
+            "pos.*==.*len.*len\\+\\+|if.*pos.*==.*len.*\\+\\+",
+            "lis_patience|patience_sort_lis|lis_tails"
+        ),
+        new PatternDef("lis_patience_lower_bound", "lis_patience_lower_bound_bisect", "high",
+            "lo.*=.*0.*hi.*=.*len|lo.*hi.*=.*len.*while.*lo.*<.*hi.*mid.*=.*lo.*\\+.*hi.*>>.*1",
+            "tails.*\\[.*mid.*\\].*<.*val.*lo.*=.*mid.*\\+.*1|if.*tails.*mid.*<.*val.*lo",
+            "lis_lower_bound|patience_bisect|lis_binary_search"
+        ),
+        new PatternDef("lis_patience_result", "lis_patience_length_accumulator", "medium",
+            "for.*i.*=.*0.*i.*<.*n.*i\\+\\+.*pos.*=.*lis_lower_bound|for.*n.*patience.*pos.*lower",
+            "len.*=.*0.*tails.*\\[.*MAXN.*\\]|int.*len.*=.*0.*tails.*int",
+            "lis_patience|lis_length|patience_sort_length|lis_nlogn"
+        ),
+
+        // ── Persistent Trie (XOR / versioned binary trie) ────────────────────
+        new PatternDef("persistent_trie_clone", "persistent_trie_spine_clone_on_insert", "high",
+            "clone_node.*src.*pool.*\\[.*id.*\\].*=.*pool.*\\[.*src.*\\]|clone.*pool.*id.*=.*pool.*src",
+            "pool_sz\\+\\+.*pool.*\\[.*id.*\\]\\.ch|new_node.*pool_sz.*ch.*\\[.*0.*\\].*=.*-1",
+            "ptrie_insert|persistent_trie.*insert|clone_node.*spine"
+        ),
+        new PatternDef("persistent_trie_insert", "persistent_trie_versioned_root_insert", "high",
+            "prev_root.*==.*-1.*new_node\\(\\).*clone_node.*prev_root|ptrie_insert.*prev_root.*clone",
+            "for.*b.*=.*BITS.*-.*1.*b.*>=.*0.*b--.*bit.*=.*val.*>>.*b.*&.*1",
+            "ptrie_insert|persistent_trie_insert|versioned_root.*spine"
+        ),
+        new PatternDef("persistent_trie_max_xor", "persistent_trie_max_xor_greedy_descent", "high",
+            "want.*=.*val.*>>.*b.*&.*1.*\\^.*1.*prefer.*opposite|want.*xor.*1.*bit.*prefer",
+            "res.*\\|=.*1u.*<<.*b.*cur.*=.*pool.*\\[.*cur.*\\]\\.ch.*\\[.*want.*\\]|res.*bit.*cur.*ch.*want",
+            "ptrie_max_xor|persistent_trie.*xor|max_xor_trie"
+        ),
+
+        // ── Half-plane intersection — feasibility and depth query ─────────────
+        new PatternDef("hpi_contains", "halfplane_intersection_feasibility_check", "high",
+            "hp.*\\[.*i.*\\]\\.a.*\\*.*px.*\\+.*hp.*\\[.*i.*\\]\\.b.*\\*.*py|a.*px.*b.*py.*<=.*c.*halfplane",
+            "val.*>.*hp.*\\[.*i.*\\]\\.c.*return.*0|if.*val.*>.*c.*return.*0.*hpi",
+            "hpi_contains|halfplane_contains|hp_feasible"
+        ),
+        new PatternDef("hpi_depth", "halfplane_intersection_depth_counter", "high",
+            "for.*i.*=.*0.*i.*<.*n.*i\\+\\+.*if.*hp.*\\[.*i.*\\]\\.a.*\\*.*px.*\\+.*hp.*\\[.*i.*\\]\\.b.*\\*.*py.*<=.*hp.*\\[.*i.*\\]\\.c.*cnt\\+\\+",
+            "int.*cnt.*=.*0.*for.*n.*hpi.*depth|cnt.*\\+\\+.*half.*plane.*satisfy",
+            "hpi_depth|halfplane_depth|hp_constraint_count"
+        ),
+        new PatternDef("hpi_grid_scan", "halfplane_intersection_grid_point_scan", "medium",
+            "for.*x.*=.*x0.*x.*<=.*x1.*x.*\\+=.*dx.*for.*y.*=.*y0.*y.*<=.*y1.*y.*\\+=.*dy",
+            "hpi_contains.*hp.*n.*x.*y.*cnt\\+\\+|if.*hpi_contains.*cnt\\+\\+.*grid",
+            "hpi_grid_count|halfplane_grid_scan|hp_grid_intersect"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
