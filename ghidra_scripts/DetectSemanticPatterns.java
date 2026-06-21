@@ -4569,6 +4569,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "k.*\\*.*k.*<=.*n.*cnt.*\\+=.*mfs_mu.*k|moebius_squarefree_loop",
             "mfs_squarefree_count|moebius_inclusion_exclusion|squarefree_count_mu"
         ),
+
+        // ── Sprint 151: cycle_detection_floyd ────────────────────────────────
+        new PatternDef("cdf_phase1_meet", "floyd_tortoise_hare_meet", "high",
+            "slow.*=.*fn.*slow.*fast.*=.*fn.*fn.*fast|floyd_phase1_advance",
+            "slow.*!=.*fast.*slow.*=.*fn.*slow.*fast.*=.*fn.*fn|tortoise_hare_loop",
+            "floyd_cycle_detect|tortoise_hare|cycle_detection_floyd"
+        ),
+        new PatternDef("cdf_phase2_mu", "floyd_cycle_start_mu", "high",
+            "slow.*=.*x0.*slow.*!=.*fast.*mu\\+\\+|floyd_mu_phase2",
+            "mu.*=.*0.*slow.*=.*x0.*while.*slow.*!=.*fast|floyd_find_cycle_start",
+            "cycle_start_mu|floyd_phase2|mu_cycle_start"
+        ),
+        new PatternDef("cdf_phase3_lambda", "floyd_cycle_length_lambda", "medium",
+            "lam.*=.*1.*fast.*=.*fn.*slow.*slow.*!=.*fast.*lam\\+\\+|floyd_lambda_phase3",
+            "cycle_length.*lam|lambda_cycle_length|floyd_phase3_length",
+            "out_lambda|cycle_len_floyd|floyd_lambda"
+        ),
+
+        // ── Sprint 151: cycle_detection_brent ────────────────────────────────
+        new PatternDef("bcdf_power_teleport", "brent_power_teleport", "high",
+            "power.*==.*lam.*tortoise.*=.*hare.*power.*\\*=.*2|brent_teleport_step",
+            "if.*power.*==.*lam.*tortoise.*hare.*power.*\\*.*2.*lam.*=.*0|brent_power_doubling",
+            "brent_cycle_detect|power_teleport|brent_phase1"
+        ),
+        new PatternDef("bcdf_lambda_find", "brent_cycle_length_direct", "high",
+            "hare.*=.*fn.*hare.*lam\\+\\+.*while.*tortoise.*!=.*hare|brent_lambda_count",
+            "out_lambda.*=.*lam.*lam.*=.*1.*power.*=.*1|brent_find_lambda",
+            "brent_lambda|cycle_len_brent|lam_brent"
+        ),
+        new PatternDef("bcdf_mu_find", "brent_cycle_start_mu", "medium",
+            "for.*i.*<.*lam.*hare.*=.*fn.*hare.*mu.*=.*0|brent_advance_lambda_steps",
+            "tortoise.*!=.*hare.*tortoise.*=.*fn.*hare.*=.*fn.*mu\\+\\+|brent_mu_phase2",
+            "brent_mu|brent_phase2|mu_brent_start"
+        ),
+
+        // ── Sprint 151: derangement_dp ───────────────────────────────────────
+        new PatternDef("dera_recurrence", "derangement_dp_recurrence", "high",
+            "dera_D.*n.*=.*n.*-.*1.*\\*.*dera_D.*n.*-.*1.*\\+.*dera_D.*n.*-.*2|derangement_recurrence",
+            "D.*n.*=.*n-1.*D.*n-1.*\\+.*D.*n-2|derangement_dp_formula",
+            "derangement_dp|dera_build|derangement_recurrence_dp"
+        ),
+        new PatternDef("dera_inclusion_excl", "derangement_inclusion_exclusion", "high",
+            "binom.*\\*.*fact.*n.*-.*k.*k.*%.*2.*==.*0.*result.*\\+=|derangement_ie_even",
+            "k.*%.*2.*!=.*0.*result.*-=.*binom.*\\*.*fact|derangement_ie_odd",
+            "dera_inclusion_exclusion|derangement_ie|inclusion_exclusion_derangement"
+        ),
+        new PatternDef("dera_count", "derangement_count_lookup", "medium",
+            "dera_count|dera_D.*k|derangement_count_table",
+            "return.*dera_D.*k|derangement_table_lookup|dera_count_fn",
+            "dera_MAXN|derangement_maxn|dera_count_limit"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
