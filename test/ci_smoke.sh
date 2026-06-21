@@ -372,6 +372,20 @@ int main(void){
   {static const int epa[]={35,48,100},epb[]={15,18,75};uint32_t egs=0,egx=0;
    for(int k=0;k<3;k++){int ex,ey;uint32_t eg=(uint32_t)egcd2(epa[k],epb[k],&ex,&ey);egs+=eg;egx^=eg;}
    CHECK("test_ext_gcd",(3u<<16)|(egs<<8)|(egx&0xFFu),0x0003241Au);}
+  /* test_sparse_table: arr={3,7,1,9,2,8,5,4}, RMQ(0,1)=3,RMQ(1,4)=1,RMQ(5,7)=4, sum=8,xor=6 */
+  {static const int sra[]={3,7,1,9,2,8,5,4};int srt[4][8]={0};
+   for(int i=0;i<8;i++)srt[0][i]=sra[i];
+   for(int j=1;j<=3;j++)for(int i=0;i+(1<<j)-1<8;i++){int a=srt[j-1][i],b=srt[j-1][i+(1<<(j-1))];srt[j][i]=a<b?a:b;}
+   int sqlo2[]={0,1,5},sqhi2[]={1,4,7};int srq[3];
+   for(int q=0;q<3;q++){int l=sqlo2[q],r=sqhi2[q],k=0;while((1<<(k+1))<=r-l+1)k++;srq[q]=srt[k][l]<srt[k][r-(1<<k)+1]?srt[k][l]:srt[k][r-(1<<k)+1];}
+   uint32_t sqs=0,sqx=0;for(int q=0;q<3;q++){sqs+=srq[q];sqx^=srq[q];}
+   CHECK("test_sparse_table",(8u<<16)|(sqs<<8)|(sqx&0xFFu),0x00080806u);}
+  /* test_activity_sel: {[1,2],[3,4],[0,6],[5,7],[8,9],[5,9]} → count=4, sum_end=22 */
+  {typedef struct{int s,e;}A2;static const A2 asrc[]={{1,2},{3,4},{0,6},{5,7},{8,9},{5,9}};
+   A2 aa[6];for(int i=0;i<6;i++)aa[i]=asrc[i];
+   for(int i=1;i<6;i++){A2 k=aa[i];int j=i-1;while(j>=0&&aa[j].e>k.e){aa[j+1]=aa[j];j--;}aa[j+1]=k;}
+   int acnt=0,ale=-1,ase=0;for(int i=0;i<6;i++)if(aa[i].s>=ale){acnt++;ale=aa[i].e;ase+=aa[i].e;}
+   CHECK("test_activity_sel",(6u<<16)|((uint32_t)acnt<<8)|((uint32_t)ase&0xFFu),0x00060416u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

@@ -127,6 +127,8 @@ declare -A EXPECTED_RESULT=(
     [test_coin_change]=0x00040802
     [test_kadane]=0x00090636
     [test_ext_gcd]=0x0003241A
+    [test_sparse_table]=0x00080806
+    [test_activity_sel]=0x00060416
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -148,7 +150,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_fenwick test_lis \
        test_zfunc test_radix_sort \
        test_manacher test_coin_change \
-       test_kadane test_ext_gcd)
+       test_kadane test_ext_gcd \
+       test_sparse_table test_activity_sel)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

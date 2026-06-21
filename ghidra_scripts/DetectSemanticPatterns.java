@@ -734,6 +734,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "a.*%.*b.*&.*x1.*&.*y1|a.*%.*b.*x1.*y1",         // a%b passed
             "g.*=.*ext_gcd|g.*=.*egcd"                      // result capture
         ),
+
+        // ── Sparse table RMQ (111, 112) ───────────────────────────────────────
+        new PatternDef("sparse_table_build", "sparse_build", "high",
+            "st.*j.*-.*1.*i.*st.*j.*-.*1.*i.*1.*<<|1.*<<.*j.*-.*1",  // st[j-1][i+(1<<(j-1))]
+            "for.*j.*=.*1.*j.*<=.*LOG|for.*j.*<=.*ST_LOG",    // outer j loop
+            "sparse_build|sparse_table|rmq_build"            // naming
+        ),
+        new PatternDef("sparse_table_query", "sparse_query", "high",
+            "ilog2.*r.*-.*l|k.*=.*ilog2|k.*=.*log2",          // k = ilog2(r-l+1)
+            "r.*-.*1.*<<.*k.*\\+.*1|r.*-.*\\(1.*<<.*k\\).*\\+.*1",  // r-(1<<k)+1 index
+            "sparse_query|rmq_query|sparse_table"            // naming
+        ),
+
+        // ── Activity selection greedy (113, 114) ─────────────────────────────
+        new PatternDef("activity_sel_sort", "acts_end_sort", "high",
+            "acts.*j.*\\.end.*>.*key\\.end|acts.*\\.end.*>.*acts.*\\.end",  // sort by .end
+            "acts.*j.*\\+.*1.*=.*acts.*j|acts.*swap.*end",    // element swap
+            "acts_sort|activity.*sort|acts_sort_by_end"      // naming
+        ),
+        new PatternDef("activity_sel_greedy", "acts_greedy", "high",
+            "acts.*i.*\\.start.*>=.*last_end|start.*>=.*last_end",  // feasibility: start≥last_end
+            "count\\+\\+.*last_end.*=.*acts.*\\.end|last_end.*=.*acts.*end",  // pick + advance
+            "activity_select|acts_select|count.*last_end"   // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
