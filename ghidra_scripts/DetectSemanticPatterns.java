@@ -3902,6 +3902,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cp_find_odd.*cp_min_matching.*total.*\\+.*extra|cp_solve.*total.*extra",
             "cp_solve|chinese_postman_solve|route_inspection_cost"
         ),
+
+        // ── bidirectional_bfs ─────────────────────────────────────────────────
+        new PatternDef("bb_frontier_expand", "bidirectional_bfs_frontier_alternating_expand", "high",
+            "bb_dist_fwd\\[v\\].*==.*BB_INF.*bb_dist_fwd\\[v\\].*=.*bb_dist_fwd\\[u\\].*\\+.*1|dist_fwd.*=.*dist_fwd.*\\+.*1",
+            "bb_dist_bwd\\[v\\].*==.*BB_INF.*bb_dist_bwd\\[v\\].*=.*bb_dist_bwd\\[u\\].*\\+.*1|dist_bwd.*=.*dist_bwd.*\\+.*1",
+            "bb_bfs|bidirectional_bfs_search|bidir_bfs_path_length"
+        ),
+        new PatternDef("bb_meet_check", "bidirectional_bfs_meet_in_middle_check", "high",
+            "bb_dist_bwd\\[v\\].*!=.*BB_INF.*bb_dist_fwd\\[v\\].*\\+.*bb_dist_bwd\\[v\\]|dist_fwd.*\\+.*dist_bwd.*<.*best",
+            "bb_dist_fwd\\[v\\].*!=.*BB_INF.*d.*=.*dist_fwd.*\\+.*dist_bwd|meet.*middle.*best.*update",
+            "bb_meet|bidir_bfs_meet_node|bidirectional_frontier_intersection"
+        ),
+        new PatternDef("bb_two_queues", "bidirectional_bfs_dual_queue_interleave", "medium",
+            "fq_head.*<.*fq_tail.*bq_head.*<.*bq_tail|forward_queue.*backward_queue.*interleave",
+            "bb_queue\\[fq_tail\\+\\+\\].*=.*src.*bb_queue\\[bq_tail\\+\\+\\].*=.*dst|fwd_q.*src.*bwd_q.*dst",
+            "run_bidirectional_bfs_tests|bb_bfs.*src.*dst|bidir_shortest_path"
+        ),
+
+        // ── a_star_search ─────────────────────────────────────────────────────
+        new PatternDef("as_heuristic_manhattan", "a_star_manhattan_heuristic_grid", "high",
+            "as_heuristic.*node.*goal.*nr.*nc.*gr.*gc|manhattan.*dr.*\\+.*dc.*heuristic",
+            "as_f\\[nb\\].*=.*ng.*\\+.*as_heuristic\\(nb.*goal\\)|f_score.*g_score.*heuristic_cost",
+            "as_heuristic|astar_heuristic|manhattan_distance_heuristic"
+        ),
+        new PatternDef("as_heap_priority", "a_star_min_heap_open_set_priority", "high",
+            "as_f\\[as_heap\\[p\\]\\].*<=.*as_f\\[as_heap\\[i\\]\\]|heap_push.*sift_up.*f_score_order",
+            "as_heap_pop.*as_heap\\[0\\].*as_heap_sz--|open_set_pop.*best_f_score",
+            "as_heap_push|as_heap_pop|astar_open_set_heap"
+        ),
+        new PatternDef("as_grid_expand", "a_star_grid_neighbor_expand_with_wall_check", "medium",
+            "as_grid\\[nr\\]\\[nc\\].*continue.*as_closed\\[nb\\].*continue|wall_check.*closed_check.*skip",
+            "ng.*<.*as_g\\[nb\\].*as_g\\[nb\\].*=.*ng.*as_f\\[nb\\].*=.*ng.*\\+|g_score_improve.*update_f",
+            "as_astar|run_a_star_tests|astar_grid_search"
+        ),
+
+        // ── ford_fulkerson_dfs ────────────────────────────────────────────────
+        new PatternDef("ff_residual_edges", "ford_fulkerson_residual_graph_edge_pair", "high",
+            "ff_cap\\[e\\].*-=.*f.*ff_cap\\[e.*\\^.*1\\].*\\+=.*f|residual.*cap.*back_edge.*augment",
+            "ff_to\\[ff_ecnt\\].*=.*v.*ff_cap\\[ff_ecnt\\].*=.*c.*ff_nxt|forward_back_edge_pair_add",
+            "ff_add_edge|ford_fulkerson_add_edge|residual_graph_build"
+        ),
+        new PatternDef("ff_dfs_augment", "ford_fulkerson_dfs_augmenting_path", "high",
+            "ff_vis\\[u\\].*=.*1.*ff_cap\\[e\\].*<=.*0.*continue|dfs_augment.*visited.*capacity_check",
+            "ff_dfs.*u.*t.*pushed.*ff_cap\\[e\\].*<.*pushed|bottleneck_dfs_path_find",
+            "ff_dfs|ford_fulkerson_dfs_find_path|augmenting_path_dfs"
+        ),
+        new PatternDef("ff_maxflow_loop", "ford_fulkerson_maxflow_outer_loop", "high",
+            "ff_vis\\[i\\].*=.*0.*ff_dfs.*s.*t.*FF_INF.*f.*<=.*0.*break|reset_visited_augment_loop",
+            "flow.*\\+=.*f.*while.*ff_dfs.*s.*t|total_flow_accumulate_augment",
+            "ff_maxflow|ford_fulkerson_max_flow|run_ford_fulkerson_tests"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
