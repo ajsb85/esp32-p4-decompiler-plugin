@@ -2677,6 +2677,45 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cost.*i.*j",
             "len.*=.*2"
         ),
+
+        // ── Li Chao tree (minimum linear functions) ─────────────────────────
+        new PatternDef("lichao_mid_dominance", "lichao_midpoint_dominance_test_and_swap", "high",
+            "mid_new.*=.*m.*mid.*b.*<.*lc_eval.*nd.*mid|m.*mid.*\\+.*b.*<.*lc_m.*nd.*mid.*\\+.*lc_b.*nd",
+            "if.*mid_new.*\\{.*tm.*=.*lc_m.*nd.*tb.*=.*lc_b|swap.*stored.*new.*lichao",
+            "lichao_mid|lichao_swap|lichao_dominance"
+        ),
+        new PatternDef("lichao_loser_recurse", "lichao_recurse_loser_to_correct_half", "high",
+            "if.*lo_new.*!=.*mid_new.*lc_add.*2.*nd.*lo.*mid|if.*left.*!=.*med.*recurse.*left",
+            "else.*lc_add.*2.*nd.*\\+.*1.*mid.*\\+.*1.*hi|loser_goes_right_half",
+            "lichao_loser|lichao_recurse|lichao_half"
+        ),
+        new PatternDef("lichao_first_insert", "lichao_first_line_direct_store", "medium",
+            "if.*!lc_has.*nd.*lc_m.*nd.*=.*m.*lc_b.*nd.*=.*b.*lc_has.*nd.*=.*1.*return",
+            "if.*!has.*nd.*store.*line.*return|lichao_first_insert",
+            "lichao_empty|lichao_init|lichao_first_store"
+        ),
+        new PatternDef("lichao_query_min", "lichao_query_minimum_over_ancestors", "high",
+            "res.*=.*lc_has.*nd.*?.*lc_eval.*nd.*x.*:.*0x7FFFFFFF|res.*lc_m.*nd.*\\*.*x.*\\+.*lc_b.*nd",
+            "return.*res.*<.*child.*?.*res.*:.*child|min.*ancestor.*line.*query",
+            "lichao_query|lichao_min|lichao_traverse"
+        ),
+
+        // ── Meet-in-the-middle ───────────────────────────────────────────────
+        new PatternDef("mitm_mask_enum", "mitm_bitmask_subset_enumeration", "high",
+            "for.*mask.*=.*0.*mask.*<.*1.*<<.*HALF.*mask\\+\\+|for.*mask.*<.*1.*<<.*MITM_H",
+            "for.*b.*=.*0.*b.*<.*HALF.*b\\+\\+.*if.*mask.*>>.*b.*&.*1.*s.*\\+=|bitmask_subset_sum",
+            "mitm_enum|subset_bitmask|mask_sum_enum"
+        ),
+        new PatternDef("mitm_sort_search", "mitm_sort_left_binary_search_right", "high",
+            "mitm_isort.*mitm_lsums.*half|isort.*left_sums.*1.*<<.*HALF",
+            "need.*=.*MITM_T.*-.*mitm_rsums.*i.*if.*need.*>=.*0.*cnt.*\\+=.*mitm_count",
+            "mitm_sort|mitm_search|mitm_binary_search"
+        ),
+        new PatternDef("mitm_count_occurrences", "mitm_lower_upper_bound_count", "high",
+            "while.*lo.*<.*hi.*m.*=.*lo.*\\+.*hi.*\\/.*2.*if.*a.*m.*<.*v.*lo.*=.*m.*\\+.*1.*else.*hi",
+            "lo.*-.*lb|upper_bound.*-.*lower_bound.*count.*occurrences",
+            "mitm_count|lb_ub_count|binary_range_count"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
