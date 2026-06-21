@@ -5559,6 +5559,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count_nonzero.*117.*xor_nk.*26|ptm_expected_vals",
             "pascal_triangle_mod.*0x14.*0x75.*0x1a|ptm_byte_check"
         ),
+        new PatternDef("isqrt_newton_iterate", "isqrt_newton_heron_step", "high",
+            "isqrt_newton|heron.*iter|newton.*sqrt.*convergence",
+            "x\\s*=\\s*y.*y\\s*=.*x\\s*\\+.*n\\s*/\\s*x.*>>\\s*1|newton_sqrt_loop",
+            "while.*y\\s*<\\s*x.*x\\s*=\\s*y|isqrt_converge_check"
+        ),
+        new PatternDef("isqrt_perfect_square_check", "isqrt_perfect_square_detector", "high",
+            "r\\s*\\*\\s*r\\s*==\\s*i|count_perfect.*isqrt|perfect_square_count",
+            "isqrt_newton.*count_perfect|sum_roots.*count_perfect",
+            "isqrt.*for.*i.*n_tests.*r.*r.*==.*i|isqrt_scan_loop"
+        ),
+        new PatternDef("isqrt_result_pack", "isqrt_result_pack", "medium",
+            "n_tests\\s*<<\\s*16.*count_perfect\\s*<<\\s*8.*sum_roots|isqrt_pack_result",
+            "count_perfect.*4.*sum_roots.*54|isqrt_expected_vals",
+            "0x140436|isqrt_newton.*0x14.*0x04.*0x36|isqrt_byte_check"
+        ),
+        new PatternDef("champernowne_digit_extract", "champernowne_digit_extractor", "high",
+            "champernowne_fill|champ_buf|tmp.*%\\s*10.*v\\s*/=\\s*10",
+            "do.*tmp.*len.*v\\s*%\\s*10.*v\\s*/=\\s*10.*while.*v.*>.*0|champ_digit_loop",
+            "champernowne.*reverse.*tmp.*most_significant|champ_reverse_step"
+        ),
+        new PatternDef("champernowne_count_ones", "champernowne_ones_counter", "high",
+            "count_ones|champ_buf.*==\\s*1.*count_ones|champernowne.*digit.*one",
+            "sum_digits.*count_ones.*champ_buf|champernowne_accum",
+            "for.*CHAMP_N.*champ_buf.*==\\s*1|champ_scan_loop"
+        ),
+        new PatternDef("champernowne_result_pack", "champernowne_result_pack", "medium",
+            "CHAMP_N\\s*<<\\s*16.*count_ones\\s*<<\\s*8.*sum_digits|champ_pack_result",
+            "count_ones.*8.*sum_digits.*61|champ_expected_vals",
+            "0x14083D|champernowne.*0x14.*0x08.*0x3D|champ_byte_check"
+        ),
+        new PatternDef("zeckendorf_greedy_subtract", "zeckendorf_greedy_step", "high",
+            "zeckendorf_count|zeck_fibs|zeckendorf.*greedy.*fibonacci",
+            "while.*n.*>.*0.*i.*>=.*0.*zeck_fibs.*i.*>.*n.*i--|zeck_greedy_loop",
+            "n\\s*-=\\s*zeck_fibs.*count\\+\\+.*i--|zeckendorf_term_subtract"
+        ),
+        new PatternDef("zeckendorf_bits_scan", "zeckendorf_bits_scanner", "high",
+            "sum_bits.*max_bits.*zeckendorf|zeckendorf_count.*sum_bits",
+            "for.*n_tests.*b.*=.*zeckendorf_count.*sum_bits.*\\+=.*b|zeck_scan_loop",
+            "b.*>.*max_bits.*max_bits.*=.*b|zeck_max_update"
+        ),
+        new PatternDef("zeckendorf_result_pack", "zeckendorf_result_pack", "medium",
+            "n_tests\\s*<<\\s*16.*sum_bits\\s*<<\\s*8.*max_bits|zeck_pack_result",
+            "sum_bits.*25.*max_bits.*3|zeck_expected_vals",
+            "0x0F1903|zeckendorf.*0x0F.*0x19.*0x03|zeck_byte_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
