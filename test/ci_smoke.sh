@@ -145,6 +145,8 @@ static void nq_solve2(int row){if(row==nq_nn2){nq_cnt2++;return;}for(int c=0;c<n
 static int nqueens2(int n){nq_nn2=n;nq_cnt2=0;for(int i=0;i<n;i++)nq_col2[i]=0;for(int i=0;i<2*n;i++)nq_d1_2[i]=nq_d2_2[i]=0;nq_solve2(0);return nq_cnt2;}
 static int mr_pow2(int a,int e,int m){int r=1;a%=m;while(e>0){if(e&1)r=r*a%m;a=a*a%m;e>>=1;}return r;}
 static int miller_rabin2(int n){if(n<2)return 0;if(n==2)return 1;if(n%2==0)return 0;int d=n-1,s=0;while(d%2==0){d>>=1;s++;}int ws[]={2,3,5,7};for(int wi=0;wi<4;wi++){int a=ws[wi];if(a>=n)continue;int x=mr_pow2(a,d,n);if(x==1||x==n-1)continue;int r;for(r=1;r<s;r++){x=x*x%n;if(x==n-1)break;}if(r==s)return 0;}return 1;}
+static int cp2_adj[6][3],cp2_deg[6],cp2_memo[6];
+static int count_paths2(int u,int dst){if(u==dst)return 1;if(cp2_memo[u]>=0)return cp2_memo[u];int t=0;for(int i=0;i<cp2_deg[u];i++)t+=count_paths2(cp2_adj[u][i],dst);return cp2_memo[u]=t;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -612,6 +614,34 @@ int main(void){
    for(int i=0;i<6;i++)if(kti[i]==0){ktq[b++]=i;nz++;}
    while(f<b){int u=ktq[f++];ktord[proc++]=u;last=u;for(int i=0;i<kto[u];i++){int v=ktadj[u][i];if(--kti[v]==0)ktq[b++]=v;}}
    CHECK("test_kahn_toposort",(6u<<16)|((uint32_t)nz<<8)|((uint32_t)last&0xFFu),0x00060201u);}
+  /* test_word_break: s1="leetcode"(len=8,r=1),s2="applepenapple"(len=13,r=1),s3="catsandog"(len=9,r=0)
+   * count=2 xor_val=(8^1)^(13^1)^(9^0)=9^12^9=12 g_result=0x0003020C */
+  {char wb_s1[]="leetcode";char wb_d1[][10]={"leet","code"};
+   char wb_s2[]="applepenapple";char wb_d2[][10]={"apple","pen"};
+   char wb_s3[]="catsandog";char wb_d3[][10]={"cats","dog","and","cat","sand"};
+   /* word_break inline: dp[0]=1; for i: for each word: if dp[i-wlen] && match: dp[i]=1 */
+   uint32_t wb_cnt=0,wb_xv=0;
+   #define WB_BREAK(s,slen,dict,nd,res) do{ \
+     int dp[20+1]={0};dp[0]=1; \
+     for(int i=1;i<=slen;i++){for(int d=0;d<nd;d++){int wl=(int)strlen(dict[d]); \
+       if(i>=wl&&dp[i-wl]&&strncmp(s+i-wl,dict[d],wl)==0){dp[i]=1;break;}}} \
+     res=dp[slen]; }while(0)
+   int r1,r2,r3;
+   WB_BREAK(wb_s1,(int)strlen(wb_s1),wb_d1,2,r1);
+   WB_BREAK(wb_s2,(int)strlen(wb_s2),wb_d2,2,r2);
+   WB_BREAK(wb_s3,(int)strlen(wb_s3),wb_d3,5,r3);
+   #undef WB_BREAK
+   wb_cnt=(uint32_t)(r1+r2+r3);
+   wb_xv=(uint32_t)(((int)strlen(wb_s1)^r1)^((int)strlen(wb_s2)^r2)^((int)strlen(wb_s3)^r3));
+   CHECK("test_word_break",(3u<<16)|(wb_cnt<<8)|(wb_xv&0xFFu),0x0003020Cu);}
+  /* test_count_paths_dag: edges 0->1,0->2,1->3,2->3,3->4,3->5,4->5; paths(0,5)=4 xor_all=6 */
+  {int cpe[][2]={{0,1},{0,2},{1,3},{2,3},{3,4},{3,5},{4,5}};
+   for(int i=0;i<6;i++){cp2_deg[i]=0;cp2_memo[i]=-1;for(int j=0;j<3;j++)cp2_adj[i][j]=0;}
+   for(int i=0;i<7;i++){int u=cpe[i][0],v=cpe[i][1];cp2_adj[u][cp2_deg[u]++]=v;}
+   uint32_t cpa=0;
+   for(int i=0;i<6;i++)cpa^=(uint32_t)count_paths2(i,5);
+   uint32_t cpp=(uint32_t)cp2_memo[0]; /* paths(0,5)=4 */
+   CHECK("test_count_paths_dag",(6u<<16)|(cpp<<8)|(cpa&0xFFu),0x00060406u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

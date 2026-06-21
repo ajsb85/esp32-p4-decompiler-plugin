@@ -1096,6 +1096,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "processed\\+\\+|order.*processed",              // process counter
             "kahn_sort|kt_order|processed"                   // naming
         ),
+
+        // ── Sprint 57: Word Break DP ─────────────────────────────────────────
+        new PatternDef("word_break_dp", "word_break_segmentation", "high",
+            "dp\\[0\\].*=.*1|dp.*0.*=.*1.*empty.*prefix",    // empty-prefix seed
+            "dp.*i.*wlen.*&&|if.*dp.*i.*wlen.*match",        // backward dp access
+            "word_break|wb_dp|dp.*slen"                      // naming
+        ),
+
+        // ── Sprint 57: Counting Paths in DAG ────────────────────────────────
+        new PatternDef("dag_paths_memoized", "dag_path_count_dp", "high",
+            "if.*u.*==.*dst.*return.*1|u.*==.*dst.*return",  // base case: at destination
+            "if.*memo.*>=.*0.*return|memo.*=.*total",        // cache hit + memoize-before-return
+            "count_paths|cp_memo|dag.*path"                  // naming
+        ),
+        new PatternDef("dag_paths_accumulate", "dag_edge_accumulate", "medium",
+            "total.*\\+=.*count_paths|total.*\\+=.*adj",     // accumulate over out-edges
+            "for.*outdeg.*count_paths|cp_adj.*cp_outdeg",    // iterate adjacency
+            "cp_adj|cp_outdeg|count_paths"                   // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

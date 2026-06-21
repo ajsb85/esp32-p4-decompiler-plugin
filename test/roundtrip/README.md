@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 84 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 86 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -96,6 +96,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_gas_station.c` | Gas station greedy; 3 tests; valid starts=2 xor=7 | `0x00030207` | |
 | `test_bipartite_check.c` | Bipartite BFS 2-coloring; triangle/square/pentagon; bipartite count=1 xor=1 | `0x00030101` | |
 | `test_kahn_toposort.c` | Kahn toposort BFS in-degree; 6-node DAG; n_init_zero=2 last=1 | `0x00060201` | |
+| `test_word_break.c` | Word break DP; "leetcode"/"applepenapple"/"catsandog"; count_yes=2 xor=12 | `0x0003020C` | |
+| `test_count_paths_dag.c` | DAG path count memoized; 6-node DAG; paths(0,5)=4 xor_all=6 | `0x00060406` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -190,7 +192,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (54 patterns):
+Pattern families currently covered (57 patterns):
 
 | Family | Patterns |
 |--------|---------|
@@ -269,6 +271,8 @@ Pattern families currently covered (54 patterns):
 | Gas station (greedy) | tank+=gas-cost; if(tank<0){start=i+1;tank=0}; feasibility via total |
 | Bipartite check (BFS 2-coloring) | color[v]=3-color[u] swap; if(color[v]==color[u]) conflict; outer loop for disconnected components |
 | Kahn's topological sort | pre-compute in_deg[v]++; seed queue with in_deg==0; --in_deg[v]==0 enqueue; cycle check processed<n |
+| Word break DP | dp[0]=1 seed; dp[i-wlen]&&strncmp match; return dp[slen] |
+| Counting paths in DAG | if(u==dst) return 1; memo cache-hit check; accumulate over adj; memoize before return |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
