@@ -104,6 +104,14 @@ public class ExportDecompiledC extends GhidraScript {
     private static final Pattern DAT_REF =
             Pattern.compile("\\bDAT_([0-9A-Fa-f]{8})\\b");
 
+    // ── Sprint 23: hardware-feature annotation ────────────────────────────────
+    // Detect xesploop virtual register references (visible post-callotherfixup).
+    private static final Pattern HWLP_REF =
+            Pattern.compile("\\bHWLP[01]_(?:COUNT|START|END)\\b");
+    // Detect PIE Q-register references or PIE load/store intrinsic names.
+    private static final Pattern PIE_QREF =
+            Pattern.compile("\\bq[0-7]\\b|esp_vld|esp_vst|esp_zero_q|esp_vsub|esp_vadd");
+
     // ── Sprint 8: peripheral address ranges (ESP32-P4) ───────────────────────
     // [start, end_inclusive, name]
     private static final Object[][] PERIPH_RANGES = {
@@ -319,6 +327,11 @@ public class ExportDecompiledC extends GhidraScript {
                 }
                 if (!periphs.isEmpty())
                     pw.println(" * periph  : " + String.join(", ", periphs));
+                // Sprint 23: annotate ESP32-P4 hardware features visible in decompiled text.
+                if (raw != null && HWLP_REF.matcher(raw).find())
+                    pw.println(" * hw_feat  : xesploop — hardware loop; back-edge NOT in decompiler CFG");
+                if (raw != null && PIE_QREF.matcher(raw).find())
+                    pw.println(" * hw_feat  : xespv2p2-PIE — 128-bit Q-register SIMD");
                 pw.println(" */");
 
                 // ── ROM short-circuit ─────────────────────────────────────────

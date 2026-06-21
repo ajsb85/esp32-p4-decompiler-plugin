@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 13 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 19 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -30,6 +30,7 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_heap.c` | Min-heap: array-based insert + extract-min × 8, sift-up / sift-down | `0x00002707` | |
 | `test_rle.c` | Run-length encoding: encode {1,1,2,2,2,3,1,1,1,1,4,4} + decode | `0x000A0C01` | |
 | `test_base64.c` | Base64 encoding: "Hello!" → "SGVsbG8h", 6-bit extraction + table lookup | `0x00000844` | |
+| `test_avl.c` | AVL tree: LL/RR/LR/RL rotations; insert {3,1,4,5,9,2,6}; in-order XOR+sum | `0x00071E0E` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -112,7 +113,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-49 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+51 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -124,7 +125,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (39 patterns):
+Pattern families currently covered (51 patterns):
 
 | Family | Patterns |
 |--------|---------|
@@ -141,7 +142,7 @@ Pattern families currently covered (39 patterns):
 | String | `strlen` loop, `memcmp`, substring search |
 | PIE SIMD | `vld/vst.128.ip` loops, `zero.q`, bitwise Q ops, SIMD loop |
 | xesploop | HWLP setup detection (`hwlp_setup`), counted loop reconstruction (`hwlp_counted_loop`) |
-| Data structures | BST insert / in-order traverse, min-heap insert / extract-min |
+| Data structures | BST insert / in-order traverse, min-heap insert / extract-min, AVL rotate / balance |
 | Codecs | RLE encode/decode run scanning, Base64 6-bit extraction + table |
 
 ---

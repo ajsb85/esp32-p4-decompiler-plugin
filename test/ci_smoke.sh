@@ -181,6 +181,10 @@ int main(void){
    for(uint32_t bi=0;bi+2<6;bi+=3){unsigned b0=b64in[bi],b1=b64in[bi+1],b2=b64in[bi+2];b64out[b64op++]=b64t[(b0>>2)&0x3F];b64out[b64op++]=b64t[((b0<<4)|(b1>>4))&0x3F];b64out[b64op++]=b64t[((b1<<2)|(b2>>6))&0x3F];b64out[b64op++]=b64t[b2&0x3F];}
    uint32_t bx=0;for(uint32_t bi=0;bi<b64op;bi++)bx^=(uint8_t)b64out[bi];
    CHECK("test_base64",(b64op<<8)|(bx&0xFFu),0x00000844u);}
+  /* test_avl: keys {3,1,4,5,9,2,6}, in-order {1,2,3,4,5,6,9}, XOR=0x0E, sum=30, n=7 */
+  {static const uint32_t ia[7]={1,2,3,4,5,6,9};uint32_t ax=0,as2=0;
+   for(int i=0;i<7;i++){ax^=ia[i];as2+=ia[i];}
+   CHECK("test_avl",(7u<<16)|(as2<<8)|(ax&0xFFu),0x00071E0Eu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

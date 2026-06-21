@@ -374,6 +374,18 @@ public class DetectSemanticPatterns extends GhidraScript {
             "abcdefghijklmnopqrstuvwxyz",                 // lowercase base64 alphabet
             "0123456789\\+/|0123456789\\+\\-"            // digit + symbol segment
         ),
+
+        // ── AVL tree (51, 52) ────────────────────────────────────────────────
+        new PatternDef("avl_rotate", "avl_rotate", "high",
+            "\\.right\\s*=.*\\.left|\\.left\\s*=.*\\.right", // child pointer swap
+            "\\.height\\s*=.*\\?.*:\\s*.*\\+\\s*1",          // height = max(hl,hr)+1
+            "rotate_right|rotate_left|avl_r[lr]"             // rotation function names
+        ),
+        new PatternDef("avl_balance", "avl_balance", "high",
+            "bal\\s*>\\s*1|bal\\s*<\\s*-1|balance.*>.*1",    // balance-factor threshold
+            "LL|RR|LR|RL|left.*heavy|right.*heavy",           // rotation-case labels
+            "height.*left.*-.*height.*right|avl_balance"      // balance-factor formula
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
