@@ -2199,6 +2199,47 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_primes.*\\+\\+.*sum_phi.*\\+=.*phi\\[i\\]|count_primes.*phi.*p.*minus.*1",
             "euler_phi|prime_count|phi_prime"
         ),
+
+        // ── 2-SAT via Tarjan SCC ────────────────────────────────────────────
+        new PatternDef("twosat_implication", "2sat_clause_to_implication_pair", "high",
+            "ts_g.*a.*\\^.*1.*b.*=.*1.*ts_g.*b.*\\^.*1.*a.*=.*1|add_clause.*a.*b.*not_a.*b",
+            "g.*na.*b.*=.*1.*g.*nb.*a.*=.*1|implication.*clause.*a.*xor.*1",
+            "2sat_clause|implication_graph|not_a_implies_b"
+        ),
+        new PatternDef("twosat_sat_check", "2sat_scc_satisfiability_check", "high",
+            "ts_comp.*2.*k.*==.*ts_comp.*2.*k.*\\+.*1|comp.*2k.*==.*comp.*2k1.*unsat",
+            "if.*comp.*2k.*==.*comp.*2k1.*is_sat.*=.*0|scc_containment",
+            "2sat_unsat|scc_same_comp|comp_equality"
+        ),
+        new PatternDef("twosat_assignment", "2sat_assignment_from_scc_order", "medium",
+            "comp.*2.*k.*<.*comp.*2.*k.*\\+.*1.*assignment.*\\|=.*1.*<<.*k",
+            "ts_comp.*2.*k.*<.*ts_comp.*2.*k.*\\+.*1|xk_true_lower_comp",
+            "2sat_assign|scc_order_assign|comp_lt_true"
+        ),
+
+        // ── Huffman encoding (min-heap greedy) ─────────────────────────────
+        new PatternDef("huffman_heap_merge", "huffman_min_heap_merge_step", "high",
+            "huf_w.*merged.*=.*huf_w.*a.*\\+.*huf_w.*b|weight.*merged.*=.*weight.*a.*weight.*b",
+            "a.*=.*heap_pop.*b.*=.*heap_pop.*node_cnt\\+\\+|two_min_merge",
+            "huffman_merge|huf_merge|min_heap_huffman"
+        ),
+        new PatternDef("huffman_total_cost", "huffman_optimal_code_length", "high",
+            "total_cost.*\\+=.*huf_w.*merged|total.*\\+=.*weight.*merged.*internal",
+            "while.*huf_hsz.*>.*1.*heap_pop.*heap_push.*total_cost",
+            "huffman_cost|prefix_code_length|total_merged_weight"
+        ),
+
+        // ── 2D Binary Indexed Tree (Fenwick) ────────────────────────────────
+        new PatternDef("bit2d_update", "2d_fenwick_point_update", "high",
+            "for.*i.*=.*x.*i.*<=.*N.*i.*\\+=.*i.*&.*-i.*for.*j.*=.*y.*j.*\\+=.*j.*&.*-j",
+            "bit2.*i.*j.*\\+=.*v.*doubly.nested.fenwick|2d_point_update_fenwick",
+            "bit2d_update|fenwick_2d|2d_point_add"
+        ),
+        new PatternDef("bit2d_query", "2d_fenwick_prefix_rect_query", "high",
+            "for.*i.*=.*x.*i.*>.*0.*i.*-=.*i.*&.*-i.*for.*j.*=.*y.*j.*-=.*j.*&.*-j",
+            "s.*\\+=.*bit2.*i.*j.*nested.prefix.query|2d_fenwick_rect_sum",
+            "bit2d_query|fenwick_2d_sum|2d_prefix_rect"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
