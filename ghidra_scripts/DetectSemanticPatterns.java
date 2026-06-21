@@ -4914,6 +4914,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "last.*=.*i.*is_prime.*is_palindrome|palindrome_prime_last_update",
             "count.*last.*checksum.*0xFFu|palindrome_prime_checksum"
         ),
+        new PatternDef("berlekamp_massey_discrepancy", "bm_discrepancy_loop", "high",
+            "d.*=.*d.*\\+.*MOD.*-.*C.*j.*\\*.*s.*i.*-.*j.*%.*MOD.*%.*MOD|bm_discrepancy_accum",
+            "C.*j.*\\+.*delta.*=.*C.*j.*\\+.*delta.*\\+.*MOD.*-.*coeff.*\\*.*B.*j.*%.*MOD|bm_coeff_update",
+            "2.*\\*.*L.*<=.*i|bm_length_double_check"
+        ),
+        new PatternDef("berlekamp_massey_field_ops", "bm_field_arithmetic", "high",
+            "mod_pow.*base.*mod.*-.*2.*mod|bm_fermat_inverse",
+            "d.*\\*.*mod_inv.*db.*BM_MOD|bm_discrepancy_normalize",
+            "L.*=.*i.*\\+.*1.*-.*L|bm_lfsr_length_update"
+        ),
+        new PatternDef("berlekamp_massey_polynomial", "bm_recurrence_poly", "medium",
+            "B.*j.*=.*T.*j|bm_save_poly_snapshot",
+            "delta.*=.*1.*db.*=.*d|bm_reset_delta_after_grow",
+            "lfsr_len.*last_s.*checksum|bm_result_encode"
+        ),
+        new PatternDef("aho_corasick_dp_failure", "acdp_failure_link_build", "high",
+            "fail.*child.*=.*goto.*fail.*parent.*c|acdp_failure_link_assign",
+            "accept.*s.*|=.*accept.*fail.*s|acdp_accept_propagate",
+            "goto.*u.*c.*=.*goto.*fail.*u.*c|acdp_complete_automaton"
+        ),
+        new PatternDef("aho_corasick_dp_transition", "acdp_dp_step", "high",
+            "ndp.*nxt.*\\+=.*dp.*s|acdp_dp_accumulate",
+            "if.*accept.*s.*continue|acdp_skip_forbidden_state",
+            "nxt.*=.*goto.*s.*c.*if.*!accept.*nxt|acdp_valid_transition"
+        ),
+        new PatternDef("aho_corasick_dp_count", "acdp_count_valid", "medium",
+            "count.*\\+=.*dp.*s.*!accept.*s|acdp_sum_non_accepting",
+            "AC_SLEN|acdp_string_length_constant",
+            "count.*strlen_u.*checksum|acdp_result_encode"
+        ),
+        new PatternDef("two_sat_impl_graph", "tsi_implication_add", "high",
+            "impl.*u.*\\^.*1.*impl_cnt.*u.*\\^.*1|tsi_negation_edge",
+            "add_implication.*a.*\\^.*1.*b.*b.*\\^.*1.*a|tsi_clause_implications",
+            "rimpl.*v.*rimpl_cnt.*v|tsi_reverse_graph"
+        ),
+        new PatternDef("two_sat_kosaraju", "tsi_kosaraju_scc", "high",
+            "kos_ord.*kos_top\\+\\+.*=.*u|tsi_forward_order_push",
+            "kos_comp.*u.*=.*comp.*dfs_backward|tsi_backward_assign",
+            "for.*i.*=.*kos_top.*-.*1.*i.*>=.*0|tsi_reverse_order_iter"
+        ),
+        new PatternDef("two_sat_assignment", "tsi_truth_extract", "medium",
+            "kos_comp.*2.*k.*>.*kos_comp.*2.*k.*\\+.*1|tsi_comp_order_assign",
+            "assign_nib.*=.*assign_nib.*<<.*1.*|.*val|tsi_nibble_build",
+            "n_vars.*assign_nib.*checksum|tsi_result_encode"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
