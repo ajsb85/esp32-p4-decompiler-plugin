@@ -3622,6 +3622,86 @@ public class DetectSemanticPatterns extends GhidraScript {
             "path.*t.*=.*bt.*t.*\\+.*1.*path.*t.*\\+.*1.*|viterbi_retrace.*path",
             "viterbi_traceback|vt_path|viterbi_decode|hmm_decode"
         ),
+
+        // ── XOR Basis / Linear Basis over GF(2) ──────────────────────────────
+        new PatternDef("xor_basis_insert", "xor_basis_gf2_insert_reduce", "high",
+            "for.*i.*=.*XB_BITS.*-.*1.*i.*>=.*0.*i--.*if.*x.*>>.*i.*&.*1.*xb_basis.*i|linear_basis_insert.*gf2",
+            "x.*\\^=.*xb_basis.*i.*xb_basis.*i.*=.*x.*xb_sz\\+\\+|gf2_basis_reduction.*pivot",
+            "xb_insert|xb_basis|linear_basis_gf2|xor_basis_reduce"
+        ),
+        new PatternDef("xor_basis_max_xor", "xor_basis_max_xor_greedy", "high",
+            "for.*i.*=.*XB_BITS.*-.*1.*i.*>=.*0.*i--.*if.*res.*\\^.*xb_basis.*i.*>.*res.*res.*\\^=.*xb_basis.*i",
+            "res.*\\^.*xb_basis.*i.*>.*res.*greedy.*xor.*maximize|max_xor_linear_basis",
+            "xb_max_xor|xor_basis_maximize|linear_basis_max|gf2_max_xor"
+        ),
+        new PatternDef("xor_basis_span_count", "xor_basis_span_size_power2", "high",
+            "cnt.*<<=.*1.*for.*i.*=.*0.*i.*<.*xb_sz|span_count.*=.*1.*<<.*basis_size|xor_basis_span",
+            "return.*1.*<<.*xb_sz.*|return.*cnt.*power_of_2.*basis_rank|gf2_span_cardinality",
+            "xb_span_count|xb_sz|xor_basis_rank|linear_basis_span"
+        ),
+
+        // ── Subset Sum (SOS) Transform / Walsh-Hadamard ──────────────────────
+        new PatternDef("sos_or_transform", "sos_dp_or_zeta_transform", "high",
+            "for.*i.*=.*0.*i.*<.*SST_LOG.*for.*mask.*<.*SST_N.*if.*mask.*&.*1.*<<.*i.*sst_f.*mask.*\\+=.*sst_f.*mask.*\\^",
+            "sst_f.*mask.*\\+=.*sst_f.*mask.*\\^.*1.*<<.*i.*|zeta_transform.*or_subset_sum",
+            "sst_or_transform|sst_f|sos_dp_or|subset_sum_transform_or"
+        ),
+        new PatternDef("sos_mobius_invert", "sos_dp_mobius_inversion", "high",
+            "for.*i.*=.*0.*i.*<.*SST_LOG.*for.*mask.*<.*SST_N.*if.*mask.*&.*1.*<<.*i.*sst_f.*mask.*-=.*sst_f.*mask.*\\^",
+            "sst_f.*mask.*-=.*sst_f.*mask.*\\^.*1.*<<.*i.*|mobius_inversion.*subset_sum",
+            "sst_mobius_invert|sos_inverse|mobius_subset|zeta_inversion"
+        ),
+        new PatternDef("sos_wht", "sos_walsh_hadamard_transform", "high",
+            "for.*len.*=.*1.*len.*<.*SST_N.*len.*<<=.*1.*u.*=.*sst_f.*i.*\\+.*j.*v.*=.*sst_f.*i.*\\+.*j.*\\+.*len",
+            "sst_f.*i.*\\+.*j.*=.*u.*\\+.*v.*sst_f.*i.*\\+.*j.*\\+.*len.*=.*u.*-.*v.*|wht_butterfly",
+            "sst_wht|wht_butterfly|walsh_hadamard|xor_convolution_wht"
+        ),
+
+        // ── Kirchhoff Matrix-Tree Theorem (Laplacian cofactor determinant) ────
+        new PatternDef("kmt_laplacian_build", "kirchhoff_laplacian_matrix_build", "high",
+            "kmt_L.*u.*u.*\\+=.*w.*kmt_L.*v.*v.*\\+=.*w.*kmt_L.*u.*v.*-=.*w.*kmt_L.*v.*u.*-=.*w",
+            "laplacian.*degree.*on_diagonal.*weight.*off_diagonal.*negative|kmt_add_edge.*laplacian",
+            "kmt_add_edge|kmt_L|kirchhoff_laplacian|laplacian_matrix_build"
+        ),
+        new PatternDef("kmt_bareiss_det", "kirchhoff_bareiss_integer_determinant", "high",
+            "kmt_M.*row.*j.*=.*kmt_M.*col.*col.*\\*.*kmt_M.*row.*j.*-.*kmt_M.*row.*col.*\\*.*kmt_M.*col.*j.*\\/.*prev",
+            "bareiss.*num.*=.*M.*col.*col.*\\*.*M.*row.*j.*-.*M.*row.*col.*\\*.*M.*col.*j|integer_det_bareiss",
+            "kmt_det|kmt_M|bareiss_elimination|integer_gaussian_det"
+        ),
+        new PatternDef("kmt_spanning_trees", "kirchhoff_spanning_tree_count", "high",
+            "kmt_M.*i.*j.*=.*kmt_L.*i.*\\+.*1.*j.*\\+.*1.*|cofactor.*laplacian.*n_minus_1.*submatrix",
+            "return.*kmt_det.*m.*|spanning_trees.*=.*laplacian_cofactor.*kirchhoff_theorem",
+            "kmt_spanning_trees|kirchhoff_cofactor|matrix_tree_theorem|spanning_tree_count"
+        ),
+
+        // ── Johnson's All-Pairs Shortest Paths ───────────────────────────────
+        new PatternDef("johnson_bellman_ford_reweight", "johnson_bf_reweight_h_array", "high",
+            "for.*iter.*<.*JN.*for.*e.*<.*JE.*jn_h.*u.*\\+.*w.*<.*jn_h.*v.*jn_h.*v.*=.*jn_h.*u.*\\+.*w",
+            "if.*h.*u.*\\+.*w.*<.*h.*v.*h.*v.*=.*h.*u.*\\+.*w.*bellman_ford.*reweight|johnson_bf_h",
+            "johnson_bellman_ford|jn_h|johnson_reweight|bf_potential_function"
+        ),
+        new PatternDef("johnson_edge_reweight", "johnson_edge_reweighting_rw", "high",
+            "rw.*=.*jn_edges.*e.*\\.w.*\\+.*jn_h.*u.*-.*jn_h.*v.*|rw.*=.*w.*\\+.*h.*u.*-.*h.*v",
+            "reweighted.*edge.*w.*\\+.*h_u.*-.*h_v.*non_negative.*dijkstra|johnson_rw",
+            "johnson_reweight|rw_edge|johnson_nonneg|johnson_edge_transform"
+        ),
+        new PatternDef("johnson_deweight", "johnson_distance_correction_deweight", "high",
+            "d.*v.*\\+=.*jn_h.*v.*-.*jn_h.*src.*|d.*v.*\\+=.*h.*v.*-.*h.*src.*original_dist",
+            "for.*v.*<.*JN.*if.*d.*v.*<.*JN_INF.*d.*v.*\\+=.*h.*v.*-.*h.*src|apsp_deweight",
+            "johnson_deweight|jn_apsp|johnson_distance_correct|apsp_correction"
+        ),
+
+        // ── CRC-32 (ISO 3309 / Ethernet / ZIP) ──────────────────────────────
+        new PatternDef("crc32_table_gen", "crc32_lookup_table_generation_256_entries", "high",
+            "for.*i.*=.*0.*i.*<.*256.*crc.*=.*i.*for.*j.*=.*0.*j.*<.*8.*crc.*=.*crc.*&.*1.*crc.*>>.*1.*\\^.*CRC32_POLY.*:.*crc.*>>.*1",
+            "crc32_table.*i.*=.*crc.*polynomial.*0xEDB88320.*lookup_table_256|crc32_init",
+            "crc32_init|crc32_table|crc32_poly|crc_table_gen"
+        ),
+        new PatternDef("crc32_update", "crc32_table_driven_byte_update", "high",
+            "crc.*=.*crc.*>>.*8.*\\^.*crc32_table.*crc.*\\^.*buf.*i.*&.*0xFF|crc32_per_byte_update",
+            "for.*i.*<.*n.*crc.*=.*crc.*>>.*8.*\\^.*table.*crc.*\\^.*byte.*|crc32_roll",
+            "crc32_compute|crc32_update|crc32_byte|crc_table_lookup"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
