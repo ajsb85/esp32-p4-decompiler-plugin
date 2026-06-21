@@ -3857,6 +3857,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "hpi_contains.*hp.*n.*x.*y.*cnt\\+\\+|if.*hpi_contains.*cnt\\+\\+.*grid",
             "hpi_grid_count|halfplane_grid_scan|hp_grid_intersect"
         ),
+        new PatternDef("eb_trie_insert", "aho_corasick_trie_insert_goto_update", "high",
+            "ac_goto\\[cur\\]\\[c\\].*==.*-1.*ac_new_node|ac_goto\\[cur\\]\\[.*-.*'a'\\].*=.*ac_sz\\+\\+",
+            "cur.*=.*ac_goto\\[cur\\]\\[.*\\].*ac_output.*\\|=.*1.*<<.*pat_id",
+            "ac_insert|aho_corasick_insert|trie_insert_pattern"
+        ),
+        new PatternDef("eb_fail_link_bfs", "aho_corasick_bfs_failure_link_build", "high",
+            "ac_fail\\[v\\].*=.*ac_goto\\[ac_fail\\[u\\]\\]\\[c\\]|fail.*=.*ac_goto.*fail.*c",
+            "ac_output\\[v\\].*\\|=.*ac_output\\[ac_fail\\[v\\]\\]|output.*\\|=.*output.*fail",
+            "ac_build|aho_corasick_build|failure_link_bfs"
+        ),
+        new PatternDef("eb_search_popcount", "aho_corasick_search_output_popcount", "high",
+            "cur.*=.*ac_goto\\[cur\\]\\[.*-.*'a'\\].*mask.*=.*ac_output\\[cur\\]",
+            "mask.*&.*mask.*-.*1.*count\\+\\+|popcount.*output.*cur.*count",
+            "ac_search|aho_corasick_search|multi_pattern_scan"
+        ),
+        new PatternDef("zm_zeta_subset", "zeta_transform_subset_sum_over_bits", "high",
+            "for.*i.*=.*0.*i.*<.*n.*for.*mask.*1.*<<.*n.*mask.*&.*1.*<<.*i.*a\\[mask\\].*\\+=.*a\\[mask.*\\^.*1.*<<.*i\\]",
+            "a\\[mask\\].*\\+=.*a\\[mask.*\\^.*1.*<<.*i\\]|zeta.*transform.*subset.*sum",
+            "zeta_transform|sos_dp_zeta|subset_sum_transform"
+        ),
+        new PatternDef("zm_mobius_inv", "mobius_inversion_subset_difference", "high",
+            "a\\[mask\\].*-=.*a\\[mask.*\\^.*1.*<<.*i\\]|mobius.*a\\[mask\\].*-=",
+            "for.*i.*<.*n.*mask.*&.*1.*<<.*i.*a\\[mask\\].*-=.*a\\[mask.*\\^",
+            "mobius_transform|mobius_inversion|zeta_inverse"
+        ),
+        new PatternDef("zm_superset_zeta", "zeta_superset_sum_over_bits", "medium",
+            "for.*mask.*>=.*0.*!.*mask.*&.*1.*<<.*i.*a\\[mask\\].*\\+=.*a\\[mask.*\\|.*1.*<<.*i\\]",
+            "zeta_superset|superset_sum|and_convolution_zeta",
+            "a\\[mask\\].*\\+=.*a\\[mask.*\\|.*1.*<<.*i\\].*superset"
+        ),
+        new PatternDef("cp_floyd_warshall", "chinese_postman_floyd_shortest_paths", "high",
+            "cp_sp\\[i\\]\\[k\\].*!=.*CP_INF.*cp_sp\\[k\\]\\[j\\].*!=.*CP_INF.*cp_sp\\[i\\]\\[j\\]",
+            "cp_sp\\[i\\]\\[k\\].*\\+.*cp_sp\\[k\\]\\[j\\].*<.*cp_sp\\[i\\]\\[j\\]",
+            "cp_floyd|chinese_postman_floyd|route_inspection_apsp"
+        ),
+        new PatternDef("cp_odd_match", "chinese_postman_odd_degree_bitmask_matching", "high",
+            "deg\\[i\\].*&.*1.*cp_odd\\[cp_odd_n\\+\\+\\]|odd.*degree.*vertex.*collect",
+            "cp_dp\\[mask.*1.*<<.*i.*1.*<<.*j\\].*=.*cp_dp\\[mask\\].*\\+.*cp_sp\\[cp_odd\\[i\\]\\]",
+            "cp_min_matching|chinese_postman_match|odd_vertex_matching_dp"
+        ),
+        new PatternDef("cp_solve_total", "chinese_postman_total_cost_edge_sum_plus_extra", "medium",
+            "total.*\\+=.*cp_dist\\[i\\]\\[j\\].*i.*<.*j|edge.*sum.*total.*route_inspection",
+            "cp_find_odd.*cp_min_matching.*total.*\\+.*extra|cp_solve.*total.*extra",
+            "cp_solve|chinese_postman_solve|route_inspection_cost"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
