@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 94 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 101 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -106,6 +106,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_palindrome_partition.c` | Min palindrome cuts interval DP; "aab"/"abcba"/"aabbc"; cuts sum=3 xor=3 | `0x00030303` | |
 | `test_rotate_array.c` | Array rotation 3-reversal method; {1..7} right by 2→{6,7,1,2,3,4,5}; last=5 | `0x00070205` | |
 | `test_matrix_power.c` | Matrix fast exponentiation for Fibonacci; F(10)=55 F(20)=6765; sum=164 xor=90 | `0x0002A45A` | |
+| `test_tribonacci.c` | Tribonacci T(0..9)={0,1,1,2,4,7,13,24,44,81}; sum=177 xor=105 | `0x000AB169` | |
+| `test_count_bits.c` | Brian Kernighan popcount in 0..15; total=32 xor=4 | `0x00102004` | |
+| `test_stock_k_trans.c` | Stock 2-transaction state machine; prices={3,3,5,0,0,3,1,4}; profit=6 | `0x00080603` | |
+| `test_coin_ways.c` | Unbounded coin ways (coins={1,2,3}); ways(4)=4 ways(6)=7 ways(10)=14 | `0x0003190D` | |
+| `test_lca.c` | LCA depth-leveling on 7-node tree; LCA(4,5)=2 LCA(4,6)=1 LCA(2,7)=1 | `0x00030402` | |
+| `test_interval_merge.c` | Merge overlapping intervals; {[1,3],[2,6],[8,10],[15,18]}→3 merged; xor_ends=30 | `0x0004031E` | |
+| `test_num_islands.c` | DFS flood-fill island count; 3 grids; islands={1,2,2}; sum=5 xor=1 | `0x00030501` | |
+| `test_prefix_xor.c` | Prefix XOR range queries; arr={1..8}; xorRange results={4,4,8}; sum=16 xor=8 | `0x00031008` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -188,7 +196,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-188 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+200 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -200,7 +208,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (69 patterns):
+Pattern families currently covered (77 patterns):
 
 | Family | Patterns |
 |--------|---------|
@@ -290,6 +298,14 @@ Pattern families currently covered (69 patterns):
 | Palindrome partition | `is_pal[i][j]` expand-from-ends table; `dp[i]=min(dp[j-1]+1)` cuts DP |
 | Array rotation | 3-reversal: reverse(0,n-k-1), reverse(n-k,n-1), reverse(0,n-1) |
 | Matrix fast exponentiation | 2×2 multiply; `if n%2==1 result=result*base`; `base=base*base; n>>=1` square-and-halve |
+| Tribonacci sequence | `t[i]=t[i-1]+t[i-2]+t[i-3]` 3-term recurrence; seed {0,1,1} |
+| Brian Kernighan popcount | `while(x){x&=x-1;count++}` clears lowest set bit each iteration |
+| Stock 2-transaction DP | `buy1=max(buy1,-price)` → `sell1` → `buy2` → `sell2` 4-state forward pass |
+| Unbounded coin ways | `dp[0]=1; for coin: for j=coin..amt: dp[j]+=dp[j-coin]` (inner loop order preserves unbounded) |
+| LCA depth leveling | `while(depth[a]>depth[b]) a=par[a]`; then walk both up until `a==b` |
+| Interval merge | `if starts[i]<=cur_end: extend`; `else: emit+reset`; flush last after loop |
+| Number of islands DFS | `vis[r][c]=1; dfs(4 neighbors)`; `islands++` per unvisited 1-cell |
+| Prefix XOR range query | `px[i+1]=px[i]^arr[i]` build; `xorRange(l,r)=px[r+1]^px[l]` O(1) query |
 
 ---
 

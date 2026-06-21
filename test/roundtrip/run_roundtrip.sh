@@ -173,6 +173,14 @@ declare -A EXPECTED_RESULT=(
     [test_palindrome_partition]=0x00030303
     [test_rotate_array]=0x00070205
     [test_matrix_power]=0x0002A45A
+    [test_tribonacci]=0x000AB169
+    [test_count_bits]=0x00102004
+    [test_stock_k_trans]=0x00080603
+    [test_coin_ways]=0x0003190D
+    [test_lca]=0x00030402
+    [test_interval_merge]=0x0004031E
+    [test_num_islands]=0x00030501
+    [test_prefix_xor]=0x00031008
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -217,7 +225,11 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_euler_totient test_difference_array \
        test_crt test_longest_bitonic \
        test_hamming test_palindrome_partition \
-       test_rotate_array test_matrix_power)
+       test_rotate_array test_matrix_power \
+       test_tribonacci test_count_bits \
+       test_stock_k_trans test_coin_ways \
+       test_lca test_interval_merge \
+       test_num_islands test_prefix_xor)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

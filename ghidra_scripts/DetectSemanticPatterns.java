@@ -1191,6 +1191,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "A\\.v.*i.*k.*\\*.*B\\.v.*k.*j|v.*i.*k.*v.*k.*j", // A[i][k]*B[k][j]
             "mat_mul22|matmul_2x2|Mat22"                    // naming
         ),
+        // ── Sprint 62 ─────────────────────────────────────────────────────────
+        new PatternDef("tribonacci_recurrence", "tribonacci_dp", "high",
+            "t\\[i\\].*=.*t\\[i-1\\].*\\+.*t\\[i-2\\].*\\+.*t\\[i-3\\]|trib.*i-1.*i-2.*i-3",
+            "t\\[0\\].*=.*0.*t\\[1\\].*=.*1.*t\\[2\\].*=.*1|trib_vals.*seed",
+            "tribonacci|trib_|three_term_recurrence"
+        ),
+        new PatternDef("kernighan_popcount", "bit_count_kernighan", "high",
+            "x.*&=.*x.*-.*1.*count\\+\\+|while.*x.*x.*&.*x.*-.*1",
+            "count.*\\+\\+.*while.*x|cb_popcount|bit_count_loop",
+            "popcount|count_bits|bit_count|kernighan"
+        ),
+        new PatternDef("total_set_bits_range", "count_bits_range", "medium",
+            "for.*i.*<.*CB_N.*total.*\\+=.*popcount|total.*\\+=.*c.*for.*i.*<.*n",
+            "xor_counts.*\\^=.*c|for.*i.*<.*n.*bits.*i|accumulate.*bit.*count",
+            "total_bits|set_bits_range|count_all_bits|cb_total"
+        ),
+        // ── Sprint 63 ─────────────────────────────────────────────────────────
+        new PatternDef("stock_state_machine", "stock_k_transactions", "high",
+            "buy1.*=.*sk_max.*buy1.*-.*p|buy1.*max.*buy1.*-.*price",
+            "sell2.*=.*sk_max.*sell2.*buy2.*\\+.*p|sell2.*max.*sell2.*buy2.*price",
+            "buy1.*sell1.*buy2.*sell2|stock.*trans|best_profit"
+        ),
+        new PatternDef("coin_change_ways", "coin_change_count_ways", "high",
+            "cw_dp\\[0\\].*=.*1.*for.*ci.*for.*j.*=.*cw_coins|dp.*0.*=.*1.*for.*coin",
+            "cw_dp\\[j\\].*\\+=.*cw_dp\\[j.*-.*cw_coins|dp.*j.*\\+=.*dp.*j.*coin",
+            "coin_ways|ways_to_make|change_ways|cw_dp"
+        ),
+        new PatternDef("unbounded_knapsack_ways", "dp_unbounded_knapsack", "medium",
+            "for.*ci.*for.*j.*=.*coins.*ci.*j.*<=.*CW_AMT.*\\+=|for.*coin.*j.*coin.*amount.*\\+=",
+            "dp\\[j\\].*\\+=.*dp\\[j.*-.*coins|cw_dp.*j.*cw_dp.*j.*cw_coins",
+            "unbounded_knapsack|coin_count|dp_ways|cw_coins"
+        ),
+        // ── Sprint 64 ─────────────────────────────────────────────────────────
+        new PatternDef("lca_depth_leveling", "lowest_common_ancestor", "high",
+            "while.*lca_depth.*a.*>.*lca_depth.*b.*a.*=.*lca_par|while.*dep.*u.*>.*dep.*v.*parent",
+            "while.*a.*!=.*b.*a.*=.*lca_par.*a.*b.*=.*lca_par.*b|lca.*walk.*up",
+            "lca|lowest_common_ancestor|lca_par.*lca_depth"
+        ),
+        new PatternDef("interval_merge_extend", "merge_overlapping_intervals", "high",
+            "if.*im_starts.*i.*<=.*cur_e.*cur_e.*=.*im_ends|if.*starts.*i.*<=.*cur_end.*extend",
+            "else.*im_ms.*n_merged.*=.*cur_s.*im_me.*n_merged.*=.*cur_e|else.*emit.*start.*end",
+            "interval_merge|im_ms|im_me|merge_overlap"
+        ),
+        new PatternDef("interval_merge_flush", "interval_merge_final", "medium",
+            "im_ms.*n_merged.*=.*cur_s.*im_me.*n_merged.*=.*cur_e.*n_merged\\+\\+",
+            "ms.*n_merged.*cur_s.*me.*n_merged.*cur_e.*n_merged.*\\+\\+|flush.*last.*interval",
+            "n_merged.*\\+\\+|interval.*emit.*final|interval_merge_flush"
+        ),
+        // ── Sprint 65 ─────────────────────────────────────────────────────────
+        new PatternDef("flood_fill_dfs", "number_of_islands_dfs", "high",
+            "if.*r.*<.*0.*r.*>=.*ni_R.*c.*<.*0.*c.*>=.*ni_C.*return|bounds.*grid.*vis.*return",
+            "ni_vis.*r.*c.*=.*1.*ni_dfs.*r.*-.*1.*c.*ni_dfs.*r.*\\+.*1|vis.*1.*dfs.*neighbors",
+            "num_islands|flood_fill|ni_dfs|ni_count"
+        ),
+        new PatternDef("islands_count_loop", "grid_component_count", "medium",
+            "if.*ni_grid.*r.*c.*&&.*!ni_vis.*r.*c.*ni_dfs.*r.*c.*cnt\\+\\+",
+            "for.*r.*R.*for.*c.*C.*grid.*r.*c.*vis.*r.*c.*dfs.*cnt",
+            "ni_count|island_count|grid_bfs|cnt\\+\\+"
+        ),
+        new PatternDef("prefix_xor_build", "prefix_xor_query", "high",
+            "px_table.*i.*\\+.*1.*=.*px_table.*i.*\\^.*px_arr.*i|px.*i.*=.*px.*i.*\\^.*arr.*i",
+            "r.*=.*px_table.*px_qr.*i.*\\+.*1.*\\^.*px_table.*px_ql.*i|range.*xor.*px",
+            "prefix_xor|px_table|range_xor|xorRange"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

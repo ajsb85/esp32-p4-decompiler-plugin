@@ -150,6 +150,12 @@ static int count_paths2(int u,int dst){if(u==dst)return 1;if(cp2_memo[u]>=0)retu
 static int crt_inv2(int a,int m){int m0=m,x0=0,x1=1;if(m==1)return 0;while(a>1){int q=a/m,t=m;m=a%m;a=t;t=x0;x0=x1-q*x0;x1=t;}return x1<0?x1+m0:x1;}
 static void mp_mul2(long long A[2][2],long long B[2][2],long long C[2][2]){for(int i=0;i<2;i++)for(int j=0;j<2;j++){C[i][j]=0;for(int k=0;k<2;k++)C[i][j]+=A[i][k]*B[k][j];}}
 static long long mp_fib2(int n){long long R[2][2]={{1,0},{0,1}},MA[2][2]={{1,1},{1,0}},MT[2][2];while(n>0){if(n%2){mp_mul2(R,MA,MT);for(int i=0;i<2;i++)for(int j=0;j<2;j++)R[i][j]=MT[i][j];}mp_mul2(MA,MA,MT);for(int i=0;i<2;i++)for(int j=0;j<2;j++)MA[i][j]=MT[i][j];n/=2;}return R[0][1];}
+static int lca2_par[8]={0,0,1,1,2,2,3,3};
+static int lca2_dep[8]={0,0,1,1,2,2,2,2};
+static int lca2(int a,int b){while(lca2_dep[a]>lca2_dep[b])a=lca2_par[a];while(lca2_dep[b]>lca2_dep[a])b=lca2_par[b];while(a!=b){a=lca2_par[a];b=lca2_par[b];}return a;}
+static int ni_vis2[4][5],ni_g2[4][5],ni_R2,ni_C2;
+static void ni_dfs2(int r,int c){if(r<0||r>=ni_R2||c<0||c>=ni_C2||!ni_g2[r][c]||ni_vis2[r][c])return;ni_vis2[r][c]=1;ni_dfs2(r-1,c);ni_dfs2(r+1,c);ni_dfs2(r,c-1);ni_dfs2(r,c+1);}
+static int ni_count2(void){int cnt=0;for(int r=0;r<ni_R2;r++)for(int c=0;c<ni_C2;c++)ni_vis2[r][c]=0;for(int r=0;r<ni_R2;r++)for(int c=0;c<ni_C2;c++)if(ni_g2[r][c]&&!ni_vis2[r][c]){ni_dfs2(r,c);cnt++;}return cnt;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -698,6 +704,47 @@ int main(void){
    uint32_t mp_s=(uint32_t)((f10&0xFF)+(f20&0xFF));
    uint32_t mp_x=(uint32_t)((f10&0xFF)^(f20&0xFF));
    CHECK("test_matrix_power",(2u<<16)|(mp_s<<8)|(mp_x&0xFFu),0x0002A45Au);}
+  /* test_tribonacci: T(0..9)={0,1,1,2,4,7,13,24,44,81}; n=10 sum=177 xor=105 */
+  {uint32_t tv[10]={0,1,1,0,0,0,0,0,0,0};for(int i=3;i<10;i++)tv[i]=tv[i-1]+tv[i-2]+tv[i-3];
+   uint32_t ts=0,tx=0;for(int i=0;i<10;i++){ts+=tv[i];tx^=tv[i];}
+   CHECK("test_tribonacci",(10u<<16)|((ts&0xFFu)<<8)|(tx&0xFFu),0x000AB169u);}
+  /* test_count_bits: bits in 0..15; n=16 total=32 xor=4 */
+  {uint32_t cb_t=0,cb_x=0;
+   for(int i=0;i<16;i++){int x=i,c=0;while(x){x&=x-1;c++;}cb_t+=(uint32_t)c;cb_x^=(uint32_t)c;}
+   CHECK("test_count_bits",(16u<<16)|((cb_t&0xFFu)<<8)|(cb_x&0xFFu),0x00102004u);}
+  /* test_stock_k_trans: prices={3,3,5,0,0,3,1,4}; n=8 profit=6 xor_prices=3 */
+  {int sp[]={3,3,5,0,0,3,1,4};int b1=-(1<<30),s1=-(1<<30),b2=-(1<<30),s2=-(1<<30);
+   uint32_t sxp=0;for(int i=0;i<8;i++){int p=sp[i];if(-p>b1)b1=-p;if(b1+p>s1)s1=b1+p;if(s1-p>b2)b2=s1-p;if(b2+p>s2)s2=b2+p;sxp^=(uint32_t)p;}
+   CHECK("test_stock_k_trans",(8u<<16)|((uint32_t)s2<<8)|(sxp&0xFFu),0x00080603u);}
+  /* test_coin_ways: coins={1,2,3} ways(4)=4 ways(6)=7 ways(10)=14; sum=25 xor=13 */
+  {int cwdp[11]={0};cwdp[0]=1;int cwc[]={1,2,3};
+   for(int ci=0;ci<3;ci++)for(int j=cwc[ci];j<=10;j++)cwdp[j]+=cwdp[j-cwc[ci]];
+   int cwq[]={4,6,10};uint32_t cws=0,cwx=0;
+   for(int i=0;i<3;i++){cws+=(uint32_t)cwdp[cwq[i]];cwx^=(uint32_t)cwdp[cwq[i]];}
+   CHECK("test_coin_ways",(3u<<16)|((cws&0xFFu)<<8)|(cwx&0xFFu),0x0003190Du);}
+  /* test_lca: LCA(4,5)=2 LCA(4,6)=1 LCA(2,7)=1; sum=4 xor=2 */
+  {int qa[]={4,4,2},qb[]={5,6,7};uint32_t ls=0,lx=0;
+   for(int i=0;i<3;i++){uint32_t l=(uint32_t)lca2(qa[i],qb[i]);ls+=l;lx^=l;}
+   CHECK("test_lca",(3u<<16)|((ls&0xFFu)<<8)|(lx&0xFFu),0x00030402u);}
+  /* test_interval_merge: [1,3],[2,6],[8,10],[15,18] -> 3 merged; xor_ends=30 */
+  {int is[]={1,2,8,15},ie[]={3,6,10,18};int cs=is[0],ce=ie[0],nm=0;int me[4];
+   for(int i=1;i<4;i++){if(is[i]<=ce){if(ie[i]>ce)ce=ie[i];}else{me[nm++]=ce;cs=is[i];ce=ie[i];}}
+   me[nm++]=ce;uint32_t xoe=0;for(int i=0;i<nm;i++)xoe^=(uint32_t)me[i];
+   CHECK("test_interval_merge",(4u<<16)|((uint32_t)nm<<8)|(xoe&0xFFu),0x0004031Eu);}
+  /* test_num_islands: 3 grids; islands={1,2,2}; sum=5 xor=1 */
+  {int g1[4][5]={{1,1,1,1,0},{1,1,0,1,0},{1,1,0,0,0},{0,0,0,0,0}};
+   int g2[3][4]={{1,1,0,0},{0,1,1,0},{0,0,0,1}};
+   int g3[4][4]={{1,1,0,0},{1,1,0,0},{0,0,1,1},{0,0,1,1}};
+   uint32_t ns=0,nx=0;int nc;
+   ni_R2=4;ni_C2=5;for(int r=0;r<4;r++)for(int c=0;c<5;c++)ni_g2[r][c]=g1[r][c];nc=ni_count2();ns+=(uint32_t)nc;nx^=(uint32_t)nc;
+   ni_R2=3;ni_C2=4;for(int r=0;r<4;r++)for(int c=0;c<5;c++)ni_g2[r][c]=0;for(int r=0;r<3;r++)for(int c=0;c<4;c++)ni_g2[r][c]=g2[r][c];nc=ni_count2();ns+=(uint32_t)nc;nx^=(uint32_t)nc;
+   ni_R2=4;ni_C2=4;for(int r=0;r<4;r++)for(int c=0;c<5;c++)ni_g2[r][c]=0;for(int r=0;r<4;r++)for(int c=0;c<4;c++)ni_g2[r][c]=g3[r][c];nc=ni_count2();ns+=(uint32_t)nc;nx^=(uint32_t)nc;
+   CHECK("test_num_islands",(3u<<16)|((ns&0xFFu)<<8)|(nx&0xFFu),0x00030501u);}
+  /* test_prefix_xor: arr={1..8}; queries xorRange(0,3)=4 xorRange(2,5)=4 xorRange(0,7)=8; sum=16 xor=8 */
+  {int pxa[]={1,2,3,4,5,6,7,8},pxp[9];pxp[0]=0;for(int i=0;i<8;i++)pxp[i+1]=pxp[i]^pxa[i];
+   int pql[]={0,2,0},pqr[]={3,5,7};uint32_t pxs=0,pxx=0;
+   for(int i=0;i<3;i++){uint32_t r=(uint32_t)(pxp[pqr[i]+1]^pxp[pql[i]]);pxs+=r;pxx^=r;}
+   CHECK("test_prefix_xor",(3u<<16)|((pxs&0xFFu)<<8)|(pxx&0xFFu),0x00031008u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
