@@ -1181,6 +1181,82 @@ int main(void){
    while(st<=sb&&sl<=sr){for(int c=sl;c<=sr;c++)ssp[si++]=sm[st][c];st++;for(int r=st;r<=sb;r++)ssp[si++]=sm[r][sr];sr--;if(st<=sb){for(int c=sr;c>=sl;c--)ssp[si++]=sm[sb][c];sb--;}if(sl<=sr){for(int r=sb;r>=st;r--)ssp[si++]=sm[r][sl];sl++;}}
    uint32_t ssum=0,sxr=0;for(int i=0;i<si;i++){ssum+=(uint32_t)ssp[i];sxr^=(uint32_t)ssp[i];}
    CHECK("test_spiral_matrix",((uint32_t)si<<16)|((ssum&0xFFu)<<8)|(sxr&0xFFu),0x000C4E0Cu);}
+  /* Sprint 92: test_max_xor_pair — {3,10,5,25,2,8}; n=6 max_xor=28=0x1C second=27=0x1B */
+  {static const int xpa[]={3,10,5,25,2,8};int xn=6,xmx=0,xmx2=0;
+   for(int i=0;i<xn;i++)for(int j=i+1;j<xn;j++){int v=xpa[i]^xpa[j];if(v>xmx){xmx2=xmx;xmx=v;}else if(v>xmx2)xmx2=v;}
+   CHECK("test_max_xor_pair",((uint32_t)xn<<16)|((uint32_t)xmx<<8)|(uint32_t)xmx2,0x00061C1Bu);}
+  /* Sprint 92: test_rotate_image — 3x3 matrix; after 90cw diag=15=0x0F m[0][0]=7 */
+  {int rm[3][3]={{1,2,3},{4,5,6},{7,8,9}};
+   for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){int t=rm[i][j];rm[i][j]=rm[j][i];rm[j][i]=t;}
+   for(int i=0;i<3;i++){int lo=0,hi=2;while(lo<hi){int t=rm[i][lo];rm[i][lo]=rm[i][hi];rm[i][hi]=t;lo++;hi--;}}
+   uint32_t rdiag=0;for(int i=0;i<3;i++)rdiag+=(uint32_t)rm[i][i];
+   CHECK("test_rotate_image",(3u<<16)|((rdiag&0xFFu)<<8)|(uint32_t)rm[0][0],0x00030F07u);}
+  /* Sprint 93: test_meeting_rooms — 3 sets; can_attend={0,0,1}; cnt=1 sum_end=30=0x1E */
+  {static const int mrst[3][3]={{0,5,15},{7,2,6},{1,6,11}},mret[3][3]={{30,10,20},{10,4,8},{5,10,15}};
+   int mca[3]={1,1,1};
+   for(int s=0;s<3;s++){int ss[3]={mrst[s][0],mrst[s][1],mrst[s][2]},se[3]={mret[s][0],mret[s][1],mret[s][2]};
+    for(int i=1;i<3;i++){int ks=ss[i],ke=se[i],j=i-1;while(j>=0&&ss[j]>ks){ss[j+1]=ss[j];se[j+1]=se[j];j--;}ss[j+1]=ks;se[j+1]=ke;}
+    for(int i=1;i<3;i++)if(ss[i]<se[i-1])mca[s]=0;}
+   int mcnt=0;uint32_t mse=0;
+   for(int s=0;s<3;s++)if(mca[s]){mcnt++;for(int i=0;i<3;i++)mse+=(uint32_t)mret[s][i];}
+   CHECK("test_meeting_rooms",(3u<<16)|((uint32_t)mcnt<<8)|(mse&0xFFu),0x0003011Eu);}
+  /* Sprint 93: test_decode_ways — "226"->3 "12"->2 "11106"->2 "10"->1; sum=8 w[0]=3 xor_rest=1 */
+  {static const char*dws[4]={"226","12","11106","10"};static const int dns[4]={3,2,5,2};int dwdp[8],dway[4];
+   for(int s=0;s<4;s++){int n=dns[s];const char*str=dws[s];dwdp[0]=1;dwdp[1]=(str[0]!='0')?1:0;
+    for(int i=2;i<=n;i++){dwdp[i]=0;if(str[i-1]!='0')dwdp[i]+=dwdp[i-1];int t=(str[i-2]-'0')*10+(str[i-1]-'0');if(t>=10&&t<=26)dwdp[i]+=dwdp[i-2];}dway[s]=dwdp[n];}
+   int dsum=dway[0]+dway[1]+dway[2]+dway[3];
+   CHECK("test_decode_ways",((uint32_t)dsum<<16)|((uint32_t)dway[0]<<8)|(uint32_t)(dway[1]^dway[2]^dway[3]),0x00080301u);}
+  /* Sprint 94: test_two_sum_pairs — sorted {1..10} targets={10,15,7}; cnt={4,3,3} sum=10 xor=4 */
+  {static const int tsa[]={1,2,3,4,5,6,7,8,9,10};static const int tst[]={10,15,7};int tsc[3];
+   for(int t=0;t<3;t++){tsc[t]=0;int lo=0,hi=9;while(lo<hi){int s=tsa[lo]+tsa[hi];if(s==tst[t]){tsc[t]++;lo++;hi--;}else if(s<tst[t])lo++;else hi--;}}
+   int tsum=tsc[0]+tsc[1]+tsc[2],txr=tsc[0]^tsc[1]^tsc[2];
+   CHECK("test_two_sum_pairs",(3u<<16)|((uint32_t)tsum<<8)|(uint32_t)txr,0x00030A04u);}
+  /* Sprint 94: test_task_scheduler — tasks A=3 B=3 C=2 D=1; cooldown=2; total=9 result=9 maxf=3 */
+  {int tsf[4]={3,3,2,1},tsnt=4,tscool=2,tstot=0,tsmf=0,tsmc=0;
+   for(int i=0;i<tsnt;i++)tstot+=tsf[i];for(int i=0;i<tsnt;i++)if(tsf[i]>tsmf)tsmf=tsf[i];for(int i=0;i<tsnt;i++)if(tsf[i]==tsmf)tsmc++;
+   int tsslots=(tsmf-1)*(tscool+1)+tsmc,tsres=(tsslots>tstot)?tsslots:tstot;
+   CHECK("test_task_scheduler",((uint32_t)tstot<<16)|((uint32_t)tsres<<8)|(uint32_t)tsmf,0x00090903u);}
+  /* Sprint 95: test_consecutive_seq — a1 longest=4 a2 longest=9 */
+  {static const int cs1[]={100,4,200,1,3,2};static const int cs2[]={0,3,7,2,5,8,4,6,0,1};
+   int csbest[2]={0,0}; static const int *csa[2]={cs1,cs2}; static const int csn[2]={6,10};
+   for(int ai=0;ai<2;ai++){int n=csn[ai];const int*arr=csa[ai];int best=0;
+    for(int i=0;i<n;i++){int istart=1;for(int j=0;j<n;j++)if(arr[j]==arr[i]-1){istart=0;break;}if(!istart)continue;
+     int len=1,cur=arr[i]+1,go=1;while(go){go=0;for(int j=0;j<n;j++)if(arr[j]==cur){len++;cur++;go=1;break;}}if(len>best)best=len;}
+    csbest[ai]=best;}
+   CHECK("test_consecutive_seq",(2u<<16)|((uint32_t)csbest[0]<<8)|(uint32_t)csbest[1],0x00020409u);}
+  /* Sprint 95: test_dice_combinations — d=3 f=6 t=7->15; d=2 f=6 t=7->6 */
+  {static int dcdp[4][22];int dci,dcj,dck;
+   for(dci=0;dci<=3;dci++)for(dcj=0;dcj<=21;dcj++)dcdp[dci][dcj]=0;dcdp[0][0]=1;
+   for(dci=1;dci<=3;dci++)for(dcj=dci;dcj<=dci*6&&dcj<=7;dcj++)for(dck=1;dck<=6&&dck<=dcj;dck++)dcdp[dci][dcj]+=dcdp[dci-1][dcj-dck];
+   int dcw1=dcdp[3][7];
+   for(dci=0;dci<=2;dci++)for(dcj=0;dcj<=12;dcj++)dcdp[dci][dcj]=0;dcdp[0][0]=1;
+   for(dci=1;dci<=2;dci++)for(dcj=dci;dcj<=dci*6&&dcj<=7;dcj++)for(dck=1;dck<=6&&dck<=dcj;dck++)dcdp[dci][dcj]+=dcdp[dci-1][dcj-dck];
+   int dcw2=dcdp[2][7];
+   CHECK("test_dice_combinations",(2u<<16)|((uint32_t)dcw1<<8)|(uint32_t)dcw2,0x00020F06u);}
+  /* Sprint 96: test_max_points_line — 6 points; max collinear=3 */
+  {static const int mpx[]={1,2,3,1,2,3},mpy[]={1,2,3,0,0,0};int mpn=6,mpbest=0;
+   for(int i=0;i<mpn;i++){int mps=0;for(int j=0;j<mpn;j++){if(j==i)continue;int dx=mpx[j]-mpx[i],dy=mpy[j]-mpy[i],cnt=1;
+    for(int k=0;k<mpn;k++){if(k==i||k==j)continue;int dx2=mpx[k]-mpx[i],dy2=mpy[k]-mpy[i];if((long)dx*dy2==(long)dx2*dy)cnt++;}if(cnt>mps)mps=cnt;}if(mps+1>mpbest)mpbest=mps+1;}
+   CHECK("test_max_points_line",((uint32_t)mpn<<16)|((uint32_t)mpbest<<8)|(uint32_t)(mpbest*2),0x00060306u);}
+  /* Sprint 96: test_palindrome_num — {121,-121,10,0,12321,11}; count=4 xor_low=0x53 */
+  {static const int pnums[]={121,-121,10,0,12321,11};int pcnt=0;uint32_t pxr=0;
+   for(int i=0;i<6;i++){int pn=pnums[i];if(pn<0)continue;long prev=0,porig=pn,pv=pn;while(pv>0){prev=prev*10+pv%10;pv/=10;}if(porig==prev){pcnt++;pxr^=(uint32_t)pnums[i];}}
+   CHECK("test_palindrome_num",(6u<<16)|((uint32_t)pcnt<<8)|(pxr&0xFFu),0x00060453u);}
+  /* Sprint 97: test_balanced_partition — {1,5,11,5}yes {1,2,3,4,5}no {2,2,2,2}yes {3,1,1,2,2,1}yes; cnt=3 len_sum=14 */
+  {static const int bp0[]={1,5,11,5},bp1[]={1,2,3,4,5},bp2[]={2,2,2,2},bp3[]={3,1,1,2,2,1};
+   static const int *bpa[]={bp0,bp1,bp2,bp3};static const int bpln[]={4,5,4,6};
+   static int bpdp[31];int bpbal[4];
+   for(int s=0;s<4;s++){const int*arr=bpa[s];int n=bpln[s],sum=0,i;for(i=0;i<n;i++)sum+=arr[i];if(sum&1){bpbal[s]=0;continue;}int t=sum/2;for(i=0;i<=t;i++)bpdp[i]=0;bpdp[0]=1;for(i=0;i<n;i++)for(int j=t;j>=arr[i];j--)if(bpdp[j-arr[i]])bpdp[j]=1;bpbal[s]=bpdp[t];}
+   int bpcnt=0;uint32_t bpls=0;for(int s=0;s<4;s++)if(bpbal[s]){bpcnt++;bpls+=(uint32_t)bpln[s];}
+   CHECK("test_balanced_partition",(4u<<16)|((uint32_t)bpcnt<<8)|(bpls&0xFFu),0x0004030Eu);}
+  /* Sprint 97: test_anagram_groups — {eat,tea,tan,ate,nat,bat}; n_groups=3 maxg=3 xor=0 */
+  {static const char*agw[]={"eat","tea","tan","ate","nat","bat"};int agn=6,agng=0,agmx=0;
+   int aggsz[6]={0},agmat[6]={0},agfr[26];uint32_t agxr=0;
+   for(int i=0;i<agn;i++){if(agmat[i])continue;int gsz=1;agmat[i]=1;
+    for(int j=i+1;j<agn;j++){if(agmat[j])continue;int k;for(k=0;k<26;k++)agfr[k]=0;for(const char*c=agw[i];*c;c++)agfr[*c-'a']++;for(const char*c=agw[j];*c;c++)agfr[*c-'a']--;int ia=1;for(k=0;k<26;k++)if(agfr[k]){ia=0;break;}if(ia){agmat[j]=1;gsz++;}}
+    aggsz[agng++]=gsz;}
+   for(int i=0;i<agng;i++){if(aggsz[i]>agmx)agmx=aggsz[i];agxr^=(uint32_t)aggsz[i];}
+   CHECK("test_anagram_groups",((uint32_t)agng<<16)|((uint32_t)agmx<<8)|(agxr&0xFFu),0x00030300u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

@@ -1706,6 +1706,102 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*left_b.*<=.*right_b.*for.*r.*=.*bot.*r.*>=.*top.*left_b.*\\+\\+",
             "spiral_guard|inner_spiral|spiral_reverse"
         ),
+        /* Sprint 92: Max XOR Pair + Rotate Image */
+        new PatternDef("max_xor_pair_brute", "pairwise_xor_top2", "high",
+            "for.*i.*<.*n.*for.*j.*=.*i\\+1.*j.*<.*n.*v.*=.*arr.*i.*\\^.*arr.*j",
+            "if.*v.*>.*mx.*mx2.*=.*mx.*mx.*=.*v.*else.*if.*v.*>.*mx2.*mx2.*=.*v",
+            "max_xor|pairwise_xor|xor_pair"
+        ),
+        new PatternDef("rotate_image_90cw", "transpose_then_row_reverse", "high",
+            "for.*i.*<.*n.*for.*j.*=.*i\\+1.*j.*<.*n.*swap.*m.*i.*j.*m.*j.*i",
+            "for.*i.*<.*n.*lo.*=.*0.*hi.*=.*n-1.*while.*lo.*<.*hi.*swap.*m.*i.*lo.*m.*i.*hi",
+            "rotate_image|transpose_reverse|rotate_90cw"
+        ),
+        new PatternDef("rotate_diagonal_sum", "post_rotation_main_diagonal", "medium",
+            "for.*i.*<.*n.*diag.*\\+=.*m.*i.*i",
+            "g_result.*n.*<<.*16.*diag.*<<.*8.*m.*0.*0",
+            "rotate_diag|post_rotate_check|diag_sum"
+        ),
+        /* Sprint 93: Meeting Rooms + Decode Ways */
+        new PatternDef("meeting_rooms_sort_check", "interval_attend_all", "high",
+            "for.*i.*=.*1.*i.*<.*3.*if.*ss.*i.*<.*se.*i-1.*can_attend.*=.*0",
+            "insertion.*sort.*ss.*j.*>.*ks.*ss.*j\\+1.*=.*ss.*j.*se.*j\\+1.*=.*se.*j",
+            "meeting_rooms|can_attend|interval_attend"
+        ),
+        new PatternDef("decode_ways_dp", "string_digit_decode_dp", "high",
+            "dp.*0.*=.*1.*dp.*1.*=.*str.*0.*!=.*0.*?.*1.*:.*0",
+            "if.*str.*i-1.*!=.*0.*dp.*i.*\\+=.*dp.*i-1.*t.*=.*str.*i-2.*-.*0.*\\*.*10.*\\+.*str.*i-1.*-.*0",
+            "decode_ways|digit_dp|string_decode"
+        ),
+        new PatternDef("decode_ways_two_char", "two_char_decode_range", "medium",
+            "if.*t.*>=.*10.*&&.*t.*<=.*26.*dp.*i.*\\+=.*dp.*i-2",
+            "t.*=.*str.*i-2.*-.*48.*\\*.*10.*\\+.*str.*i-1.*-.*48",
+            "two_char_decode|valid_two_digit|dp_two_char"
+        ),
+        /* Sprint 94: Two Sum Pairs + Task Scheduler */
+        new PatternDef("two_sum_two_pointer", "sorted_pair_sum_scan", "high",
+            "lo.*=.*0.*hi.*=.*n.*-.*1.*while.*lo.*<.*hi.*s.*=.*arr.*lo.*\\+.*arr.*hi",
+            "if.*s.*==.*t.*cnt.*\\+\\+.*lo.*\\+\\+.*hi.*--.*else.*if.*s.*<.*t.*lo.*\\+\\+.*else.*hi.*--",
+            "two_sum_pairs|two_pointer_sum|pair_sum_count"
+        ),
+        new PatternDef("task_scheduler_idle", "cpu_task_cooldown_formula", "high",
+            "slots.*=.*maxf.*-.*1.*\\*.*cooldown.*\\+.*1.*\\+.*count_maxf",
+            "result.*=.*slots.*>.*total.*?.*slots.*:.*total",
+            "task_scheduler|idle_slots|cpu_cooldown"
+        ),
+        new PatternDef("max_freq_count", "frequency_max_and_count", "medium",
+            "for.*i.*<.*ntasks.*if.*freq.*i.*>.*maxf.*maxf.*=.*freq.*i",
+            "for.*i.*<.*ntasks.*if.*freq.*i.*==.*maxf.*count_maxf.*\\+\\+",
+            "max_freq|count_maxfreq|freq_peak"
+        ),
+        /* Sprint 95: Consecutive Seq + Dice Combinations */
+        new PatternDef("longest_consecutive_seq", "consecutive_run_scan", "high",
+            "for.*j.*<.*n.*if.*arr.*j.*==.*arr.*i.*-.*1.*is_start.*=.*0.*break",
+            "while.*go.*go.*=.*0.*for.*j.*<.*n.*if.*arr.*j.*==.*cur.*len.*\\+\\+.*cur.*\\+\\+",
+            "consecutive_seq|longest_run|lcs_scan"
+        ),
+        new PatternDef("dice_combinations_dp", "dice_target_sum_2d_dp", "high",
+            "dp.*0.*0.*=.*1.*for.*i.*=.*1.*i.*<=.*d.*for.*j.*=.*i.*j.*<=.*i\\*f",
+            "for.*k.*=.*1.*k.*<=.*f.*&&.*k.*<=.*j.*dp.*i.*j.*\\+=.*dp.*i-1.*j-k",
+            "dice_combinations|dice_dp|target_sum_dp"
+        ),
+        new PatternDef("dice_dp_bounds_guard", "dice_dp_face_upper_bound", "medium",
+            "j.*<=.*i\\*f.*&&.*j.*<=.*target.*k.*<=.*f.*&&.*k.*<=.*j",
+            "dp.*i-1.*j-k.*accumulate.*from.*previous.*dice.*count",
+            "dice_bounds|face_limit|dp_dice_guard"
+        ),
+        /* Sprint 96: Max Points on Line + Palindrome Number */
+        new PatternDef("max_points_on_line", "cross_product_collinearity", "high",
+            "long.*dx.*\\*.*dy2.*==.*long.*dx2.*\\*.*dy",
+            "dx.*=.*px.*j.*-.*px.*i.*dy.*=.*py.*j.*-.*py.*i.*for.*k.*!=.*i.*!=.*j",
+            "max_points_line|cross_product|collinear_check"
+        ),
+        new PatternDef("palindrome_number_rev", "digit_reversal_palindrome", "high",
+            "if.*n.*<.*0.*return.*0.*rev.*=.*0.*orig.*=.*n",
+            "while.*n.*>.*0.*rev.*=.*rev.*\\*.*10.*\\+.*n.*%.*10.*n.*/=.*10",
+            "palindrome_num|digit_reverse|num_palindrome"
+        ),
+        new PatternDef("palindrome_rev_compare", "reversed_digit_equality", "medium",
+            "return.*long.*orig.*==.*rev",
+            "xr.*\\^=.*uint32_t.*nums.*i.*count.*\\+\\+.*if.*is_pal_num",
+            "pal_compare|rev_equal|num_pal_check"
+        ),
+        /* Sprint 97: Balanced Partition + Anagram Groups */
+        new PatternDef("balanced_partition_dp", "equal_subset_sum_knapsack", "high",
+            "if.*sum.*&.*1.*bal.*=.*0.*continue.*t.*=.*sum.*2",
+            "for.*i.*<.*n.*for.*j.*=.*t.*j.*>=.*arr.*i.*j.*--.*if.*dp.*j.*-.*arr.*i.*dp.*j.*=.*1",
+            "balanced_partition|subset_sum_equal|partition_dp"
+        ),
+        new PatternDef("anagram_group_freq", "anagram_detection_freq_vector", "high",
+            "for.*c.*=.*words.*i.*\\*c.*freq.*\\*c.*-.*a.*\\+\\+.*for.*c.*=.*words.*j.*\\*c.*freq.*\\*c.*-.*a.*--",
+            "for.*k.*<.*26.*if.*freq.*k.*is_ana.*=.*0.*break",
+            "anagram_groups|freq_vector|anagram_detect"
+        ),
+        new PatternDef("group_size_tracking", "word_group_size_max_xor", "medium",
+            "gsz.*\\+\\+.*matched.*j.*=.*1.*group_sizes.*ng.*\\+\\+.*=.*gsz",
+            "for.*i.*<.*ng.*if.*group_sizes.*i.*>.*maxg.*maxg.*=.*group_sizes.*i",
+            "group_sizes|word_groups|anagram_cluster"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

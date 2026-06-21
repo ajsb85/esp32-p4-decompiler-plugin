@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 161 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 173 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -168,6 +168,18 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_chain_pairs.c` | Greedy longest pair chain; 5 pairs chain=3 xor_b=12 | `0x0005030C` | |
 | `test_circular_buffer.c` | Ring buffer head/tail; cap=5 pushes=6 front=4 xpush=7 | `0x00070407` | |
 | `test_spiral_matrix.c` | Spiral traversal 3×4; n=12 sum=78 xor=12 | `0x000C4E0C` | |
+| `test_max_xor_pair.c` | Brute-force max XOR pairs {3,10,5,25,2,8}; max=28 second=27 | `0x00061C1B` | |
+| `test_rotate_image.c` | Rotate 3×3 matrix 90° CW; diag_sum=15 top_left=7 | `0x00030F07` | |
+| `test_meeting_rooms.c` | Can-attend-all meetings; 3 sets, 1 valid, sum_end=30 | `0x0003011E` | |
+| `test_decode_ways.c` | Digit string decode DP; 4 strings, sum_ways=8, w0=3 | `0x00080301` | |
+| `test_two_sum_pairs.c` | Two-pointer pair-sum count; 3 targets, sum_cnts=10 xor=4 | `0x00030A04` | |
+| `test_task_scheduler.c` | CPU task cooldown formula; total=9 result=9 maxf=3 | `0x00090903` | |
+| `test_consecutive_seq.c` | Longest consecutive run; array1=4 array2=9 | `0x00020409` | |
+| `test_dice_combinations.c` | Dice-sum 2D DP; d=3→15 ways, d=2→6 ways | `0x00020F06` | |
+| `test_max_points_line.c` | Cross-product collinear check; 6 points max=3 | `0x00060306` | |
+| `test_palindrome_num.c` | Digit-reversal palindrome; 6 nums, count=4, xor_low=0x53 | `0x00060453` | |
+| `test_balanced_partition.c` | Equal subset sum DP; 4 arrays, 3 balanced, len_sum=14 | `0x0004030E` | |
+| `test_anagram_groups.c` | Freq-vector anagram grouping; 6 words, 3 groups max=3 | `0x00030300` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
