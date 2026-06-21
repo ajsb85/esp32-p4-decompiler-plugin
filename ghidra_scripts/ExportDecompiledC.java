@@ -69,6 +69,12 @@
 //    Pass a second path argument to also emit a Graphviz digraph of the full
 //    firmware call graph alongside the .c file.
 //
+//  Sprint 24: Global extern declarations.
+//    Scans all decompiled bodies for identifiers that resolve to DATA symbols
+//    in Ghidra's symbol table and emits "extern volatile <type> <name>;"
+//    declarations at the top of the output, enabling round-trip compilation
+//    without manually adding headers for g_result, HWLP_ARR, etc.
+//
 // ── Headless usage ───────────────────────────────────────────────────────────
 //   analyzeHeadless /project Prog \
 //     -postScript ExportDecompiledC.java /out/firmware.c
@@ -88,6 +94,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.*;
 
 import java.io.*;
 import java.util.*;
@@ -135,6 +142,20 @@ public class ExportDecompiledC extends GhidraScript {
     // Detect PIE Q-register references or PIE load/store intrinsic names.
     private static final Pattern PIE_QREF =
             Pattern.compile("\\bq[0-7]\\b|esp_vld|esp_vst|esp_zero_q|esp_vsub|esp_vadd");
+
+    // ── Sprint 24: global extern collection ──────────────────────────────────
+    // Matches any C identifier token; used to find undeclared global symbols.
+    private static final Pattern IDENT_TOKEN =
+            Pattern.compile("\\b([A-Za-z_][A-Za-z0-9_]*)\\b");
+    // C/Ghidra keywords and type names that should never become extern decls.
+    private static final Set<String> DECL_BLOCKLIST = new HashSet<>(Arrays.asList(
+        "if","else","for","while","do","return","break","continue","goto","switch","case",
+        "default","typedef","struct","union","enum","sizeof","void","int","char","short",
+        "long","float","double","unsigned","signed","static","extern","const","volatile",
+        "inline","true","false","NULL","undefined","undefined1","undefined2","undefined4",
+        "undefined8","uint","ulong","ushort","uchar","code","bool","byte","word","dword",
+        "WARNING","Do","nothing","block","with","infinite","loop"
+    ));
 
     // ── P6: ROM base address for node coloring ────────────────────────────────
     private static final long ROM_BASE = 0x50000000L;
@@ -271,6 +292,15 @@ public class ExportDecompiledC extends GhidraScript {
         Map<String, String> stringDecls     = new LinkedHashMap<>();
         collectStringConstants(rawByAddr.values(), stringConstants, stringDecls);
 
+        // ── Sprint 24: collect extern global declarations ──────────────────────
+        // Scan all raw bodies for identifiers that resolve to DATA symbols in
+        // Ghidra's symbol table (not functions, not already-declared strings).
+        Set<String> knownFnNames = new HashSet<>();
+        for (Function fn : fnByAddr.values()) knownFnNames.add(fn.getName());
+        // Map: symbol-name → "extern <ctype> <name>;"
+        Map<String, String> externDecls = collectGlobalExterns(
+                rawByAddr.values(), knownFnNames, stringDecls.keySet());
+
         // ── write output ──────────────────────────────────────────────────────
         int exported        = 0;
         int gpStripped      = 0;
@@ -297,6 +327,7 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" *   Sprint 8  — peripheral access annotation, region sections");
             pw.println(" *   Sprint 11 — string constants extracted from DAT_ references");
             pw.println(" *   P5        — ClangAST bare-return fallback (getCCodeMarkup walk)");
+            pw.println(" *   Sprint 24 — extern declarations for referenced global symbols");
             pw.println(" * Compile with:");
             pw.println(" *   riscv32-esp-elf-gcc -march=rv32imafc_zicsr_zifencei \\");
             pw.println(" *     -mabi=ilp32f -O0 -include ghidra_types.h -c "
@@ -304,6 +335,13 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" */");
             pw.println("#include \"ghidra_types.h\"");
             pw.println();
+
+            // ── Sprint 24: extern global declarations ─────────────────────────
+            if (!externDecls.isEmpty()) {
+                pw.println("/* ─── Global variables referenced in decompiled bodies ─── */");
+                for (String decl : externDecls.values()) pw.println(decl);
+                pw.println();
+            }
 
             // ── string constant block ─────────────────────────────────────────
             if (!stringDecls.isEmpty()) {
@@ -746,6 +784,94 @@ public class ExportDecompiledC extends GhidraScript {
     }
 
     // ── typed signature builder ────────────────────────────────────────────────
+
+    // ── Sprint 24: collect extern declarations for referenced global symbols ───
+    // Scans all raw decompiled bodies for identifier tokens.  For each one that:
+    //   (a) is not a keyword / type alias / local-variable prefix,
+    //   (b) is not an already-known function name,
+    //   (c) is not an already-emitted string constant,
+    //   (d) resolves to a DATA symbol (not a function) in Ghidra's symbol table,
+    // emits an "extern <ctype> <name>;" declaration line.
+    private Map<String, String> collectGlobalExterns(
+            Collection<String> bodies,
+            Set<String> knownFns,
+            Set<String> stringConstNames) {
+
+        Set<String> candidates = new LinkedHashSet<>();
+        for (String raw : bodies) {
+            if (raw == null) continue;
+            Matcher m = IDENT_TOKEN.matcher(raw);
+            while (m.find()) {
+                String id = m.group(1);
+                if (!DECL_BLOCKLIST.contains(id)
+                        && !AST_VAR_NAME.matcher(id).matches()
+                        && !id.startsWith("local_")
+                        && !id.startsWith("FUN_")
+                        && !id.startsWith("LAB_")
+                        && !id.startsWith("DAT_")
+                        && !id.startsWith("PTR_")
+                        && !id.startsWith("in_")
+                        && !id.equals("gp")
+                        && !knownFns.contains(id)
+                        && !stringConstNames.contains(id)) {
+                    candidates.add(id);
+                }
+            }
+        }
+
+        Map<String, String> result = new LinkedHashMap<>();
+        SymbolTable symTable = currentProgram.getSymbolTable();
+        Listing listing = currentProgram.getListing();
+
+        for (String id : candidates) {
+            SymbolIterator syms = symTable.getSymbols(id);
+            while (syms.hasNext()) {
+                Symbol sym = syms.next();
+                SymbolType st = sym.getSymbolType();
+                if (st != SymbolType.LABEL
+                        && st != SymbolType.GLOBAL
+                        && st != SymbolType.GLOBAL_VAR) continue;
+                Address addr = sym.getAddress();
+                if (addr == null || addr.isMemoryAddress() == false) continue;
+                // Skip addresses inside function bodies (would be code, not data)
+                if (currentProgram.getListing().getFunctionAt(addr) != null) continue;
+
+                // Determine C type from the listing data type, if any
+                Data data = listing.getDataAt(addr);
+                String cType = "uint";
+                if (data != null) {
+                    DataType dt = data.getDataType();
+                    if (dt != null) {
+                        int sz = dt.getLength();
+                        if (dt instanceof Array) {
+                            DataType base = ((Array) dt).getDataType();
+                            int bsz = base.getLength();
+                            String bname = (bsz == 1) ? "unsigned char"
+                                         : (bsz == 2) ? "unsigned short"
+                                         : "unsigned int";
+                            int count = ((Array) dt).getNumElements();
+                            cType = bname + "[" + count + "]";
+                        } else if (sz == 1) {
+                            cType = "unsigned char";
+                        } else if (sz == 2) {
+                            cType = "unsigned short";
+                        } else {
+                            cType = "unsigned int";
+                        }
+                    }
+                }
+
+                // Arrays cannot be declared with extern as array — use pointer form
+                boolean isArray = cType.contains("[");
+                String decl = isArray
+                    ? "extern " + cType.replaceFirst("\\[.*", "") + " " + id + cType.replaceFirst("[^\\[]*", "") + ";"
+                    : "extern volatile " + cType + " " + id + ";";
+                result.put(id, decl);
+                break; // first symbol wins
+            }
+        }
+        return result;
+    }
 
     private String buildTypedSig(Function fn) {
         DataType retType = fn.getReturnType();
