@@ -2455,6 +2455,40 @@ public class DetectSemanticPatterns extends GhidraScript {
             "res.*\\+=.*fen_range.*pos.*u.*pos.*v|ans.*range_query.*same_chain",
             "hld_lca_segment|hld_final_range|hld_same_chain"
         ),
+
+        // ── Burnside's lemma (necklace counting) ────────────────────────────
+        new PatternDef("burnside_divisor_sum", "burnside_divisor_enumeration_sum", "high",
+            "for.*d.*=.*1.*d.*<=.*n.*d\\+\\+.*if.*n.*%.*d.*==.*0.*total.*\\+=|divisor_sum_euler_phi",
+            "total.*\\+=.*bsn_euler_phi.*d.*\\*.*bsn_int_pow.*k.*n.*\\/.*d|burnside_sum",
+            "burnside_divisor|phi_pow_sum|necklace_total"
+        ),
+        new PatternDef("burnside_average", "burnside_orbit_count_division", "medium",
+            "return.*total.*\\/.*n|n_distinct.*=.*total.*\\/.*n.*burnside.*average",
+            "return.*total.*divided.*n.*orbit.counting|burnside.*necklace.*count",
+            "burnside_avg|orbit_count|necklace_averaging"
+        ),
+        new PatternDef("euler_phi_trial", "euler_totient_trial_division_reduction", "high",
+            "result.*-=.*result.*\\/.*p|if.*n.*%.*p.*==.*0.*while.*n.*%.*p.*==.*0.*n.*\\/=.*p",
+            "for.*p.*=.*2.*p.*\\*.*p.*<=.*n.*p\\+\\+.*if.*n.*%.*p.*euler.*phi",
+            "euler_phi|totient_trial|prime_reduction_phi"
+        ),
+
+        // ── Garner's algorithm (mixed-radix CRT) ────────────────────────────
+        new PatternDef("garner_mixed_radix", "garner_triangular_mixed_radix_update", "high",
+            "for.*k.*=.*0.*k.*<.*n.*k\\+\\+.*a.*k.*=.*r.*k.*for.*j.*=.*0.*j.*<.*k|garner_triangular",
+            "a.*k.*=.*gar_inv.*m.*j.*m.*k.*\\*.*a.*k.*-.*a.*j.*%.*m.*k|mixed_radix_coeff",
+            "garner|crt_mixed_radix|garner_triangular_loop"
+        ),
+        new PatternDef("garner_neg_normalize", "garner_normalize_negative_residue", "medium",
+            "if.*a.*k.*<.*0.*a.*k.*\\+=.*m.*k|normalize.*negative.*residue.*modulus",
+            "a\\[k\\].*<.*0.*\\{.*a\\[k\\].*\\+=.*m\\[k\\]|negative_mod_normalize",
+            "garner_neg|neg_residue|mod_normalize"
+        ),
+        new PatternDef("garner_reconstruct", "garner_horner_like_reconstruction", "high",
+            "x.*\\+=.*a.*k.*\\*.*prod.*prod.*\\*=.*m.*k|prod.*cumulative.*moduli.*garner",
+            "for.*k.*<.*n.*x.*\\+=.*a\\[k\\].*\\*.*prod.*prod.*\\*=.*m\\[k\\]|garner_crt",
+            "garner_reconstruct|crt_product|mixed_radix_expand"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
