@@ -1140,7 +1140,16 @@ define csreg offset=$(CSR_REG_START) size=$(XLEN) [
 
 define context CONTEXT
   reserved=(0,3)
-  MXL=(4,5)   # MXL - Machine XLEN  {1: 32, 2: 64, 3: 128}
+  MXL=(4,5)       # MXL - Machine XLEN  {1: 32, 2: 64, 3: 128}
+  # ESP32-P4 xesploop hardware-loop context fields (Sprint 20)
+  # Used with globalset() to propagate loop bounds across instruction boundaries
+  # so that Ghidra's CFG engine can detect the back-edge and reconstruct loops.
+  loop0_active=(6,6)      # 1-bit: HWLP channel 0 is armed
+  loop0_start=(7,38)      # 32-bit: loop0 body start address (= inst_next of setup)
+  loop0_end=(39,70)       # 32-bit: loop0 last-instruction address (triggers back-edge)
+  loop1_active=(71,71)    # 1-bit: HWLP channel 1 is armed
+  loop1_start=(72,103)    # 32-bit: loop1 body start address
+  loop1_end=(104,135)     # 32-bit: loop1 last-instruction address
 ;
 
 

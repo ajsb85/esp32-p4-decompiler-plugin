@@ -21,7 +21,7 @@ define endian=little;
 @define XLEN2 8
 @define FLEN 4
 
-@define CONTEXTLEN 4
+@define CONTEXTLEN 20
 
 @define ADDRSIZE "32"
 @define FPSIZE "32"

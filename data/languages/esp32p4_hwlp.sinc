@@ -140,10 +140,16 @@ define pcodeop custom3.rd.rs1.rs2;
 # funct3=4 [14:12]=100; [19:15]=count register; [31:20]=body length in halfwords
 # loop_end = inst_next + (imm * 2) - 2  (imm halfwords after next instruction, minus 2 for last instr itself)
 # Split by loop ID (op0711) so the decompiler can trace loop setup as real dataflow into
-# HWLP0/HWLP1 virtual registers.  The back-edge pcode (decrement + branch-to-start)
-# still requires a post-analysis Java Analyzer to inject synthetic pcode at lp_end.
+# HWLP0/HWLP1 virtual registers.
+# globalset() propagates context variables to target addresses so that SLEIGH can
+# match the loop-end context rule and inject the CBRANCH back-edge automatically.
 :esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & op0711=0x0 & rd & rs1 & op2031
-    [ lp_end = inst_next + (op2031 * 2) - 2; ]
+    [ lp_end = inst_next + (op2031 * 2) - 2;
+      loop0_active = 1;
+      loop0_end    = lp_end;
+      globalset(inst_next, loop0_active);
+      globalset(lp_end,    loop0_end);
+      globalset(lp_end,    loop0_active); ]
 {
     HWLP0_COUNT = rs1;
     HWLP0_START = inst_next;
@@ -151,7 +157,12 @@ define pcodeop custom3.rd.rs1.rs2;
 }
 
 :esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & op0711=0x1 & rd & rs1 & op2031
-    [ lp_end = inst_next + (op2031 * 2) - 2; ]
+    [ lp_end = inst_next + (op2031 * 2) - 2;
+      loop1_active = 1;
+      loop1_end    = lp_end;
+      globalset(inst_next, loop1_active);
+      globalset(lp_end,    loop1_end);
+      globalset(lp_end,    loop1_active); ]
 {
     HWLP1_COUNT = rs1;
     HWLP1_START = inst_next;
@@ -163,13 +174,19 @@ define pcodeop custom3.rd.rs1.rs2;
 # Count and end-offset are packed in immI (exact split unconfirmed from hardware).
 # Conservative: write HWLP_START = inst_next (loop body always starts at next instr).
 # Split by loop ID to avoid conflict with generic custom1 funct3=5.
+# For setupi, we cannot statically compute loop_end without knowing the field split,
+# so we only set the start context; the back-edge rule requires loop0_active=1 at lp_end.
 :esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & op0711=0x0 & rd & immI
+    [ loop0_active = 1;
+      globalset(inst_next, loop0_active); ]
 {
     HWLP0_START = inst_next;
     esp_lp_setupi(rd:1, immI);
 }
 
 :esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & op0711=0x1 & rd & immI
+    [ loop1_active = 1;
+      globalset(inst_next, loop1_active); ]
 {
     HWLP1_START = inst_next;
     esp_lp_setupi(rd:1, immI);
