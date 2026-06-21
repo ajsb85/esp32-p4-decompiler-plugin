@@ -1,0 +1,41 @@
+# Default: normalize line endings to LF in the repo
+* text=auto eol=lf
+
+# Sleigh / Ghidra language files — text, diff as plain text
+*.sinc    text eol=lf diff=sleigh
+*.slaspec text eol=lf diff=sleigh
+*.ldefs   text eol=lf diff=xml
+*.cspec   text eol=lf diff=xml
+*.pspec   text eol=lf diff=xml
+*.dwarf   text eol=lf
+
+# Java / Gradle source
+*.java    text eol=lf diff=java
+*.gradle  text eol=lf diff=java
+*.py      text eol=lf diff=python
+
+# Documentation / config
+*.md      text eol=lf diff=markdown
+*.xml     text eol=lf diff=xml
+*.json    text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.toml    text eol=lf
+*.properties text eol=lf
+
+# Binary — never diff or merge
+*.sla  binary
+*.jar  binary
+*.zip  binary
+*.class binary
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+
+# GitHub Linguist — count Sleigh as the primary language
+*.sinc   linguist-language=Sleigh
+*.slaspec linguist-language=Sleigh
+
+# Prevent generated/vendored Sleigh copies from inflating stats
+data/languages/riscv.*.sinc       linguist-vendored=true
+data/languages/andestar_v5.*.sinc linguist-vendored=true
