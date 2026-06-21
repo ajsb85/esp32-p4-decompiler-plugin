@@ -3198,6 +3198,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*!adj.*u.*v.*ok.*=.*0|check.*all.*pairs.*in.*subset.*clique",
             "clique_pair|adjacency_check|clique_test"
         ),
+
+        // ── Rope string (split/concat binary tree of substrings) ─────────────
+        new PatternDef("rope_weight_index", "rope_string_weight_based_char_index", "high",
+            "while.*type.*==.*ROPE_INTERNAL.*if.*k.*<.*weight.*node.*=.*left.*else.*k.*-=.*weight.*node.*=.*right",
+            "rp_index|rope_index.*weight.*left.*right|rope_char_access_via_weight",
+            "rp_index|rope_index|rope_string_access"
+        ),
+        new PatternDef("rope_split_recursive", "rope_string_recursive_split_at_position", "high",
+            "rp_split.*type.*==.*ROPE_LEAF.*out_left.*=.*rp_new_leaf.*out_right.*=.*rp_new_leaf",
+            "if.*k.*<=.*w.*rp_split.*left.*k.*sl.*sr.*out_left.*=.*sl.*out_right.*=.*rp_new_internal.*sr|rope_split",
+            "rp_split|rope_split|rope_string_split"
+        ),
+        new PatternDef("rope_concat_weight", "rope_string_concat_internal_node_weight", "high",
+            "rp_new_internal.*rrope.*lrope.*weight.*=.*rp_len.*rrope|rope_concat.*weight.*=.*len.*left",
+            "rp_pool.*weight.*=.*rp_len.*rp_pool.*left|rope_internal_weight_update",
+            "rp_new_internal|rope_concat|rope_weight_update"
+        ),
+
+        // ── Virtual tree (auxiliary tree on query-node set) ──────────────────
+        new PatternDef("vt_tin_sort_stack", "virtual_tree_tin_sorted_monotone_stack", "high",
+            "vt_sort_by_tin.*S.*stk.*stk_top.*=.*0.*stk.*stk_top\\+\\+.*=.*1.*for.*i.*=.*0.*i.*<.*3",
+            "sort.*S.*by.*tin.*push.*root.*for.*each.*v.*in.*S.*l.*=.*vt_lca.*stk.*top.*v|virtual_tree_build",
+            "vt_sort_by_tin|virtual_tree_build|tin_sorted_query"
+        ),
+        new PatternDef("vt_lca_binary_lift", "virtual_tree_lca_via_binary_lifting", "high",
+            "vt_up.*k.*v.*=.*vt_up.*k-1.*vt_up.*k-1.*v|for.*k.*VT_LOG.*1.*vt_up.*k.*u.*!=.*vt_up.*k.*v",
+            "for.*k.*=.*VT_LOG.*-.*1.*k.*>=.*0.*k--.*if.*vt_up.*k.*u.*!=.*vt_up.*k.*v.*u.*=.*vt_up.*k.*u|vt_lca",
+            "vt_lca|virtual_tree_lca|binary_lift_lca"
+        ),
+        new PatternDef("vt_edge_drain_stack", "virtual_tree_drain_stack_emit_edges", "high",
+            "while.*stk_top.*>.*1.*edge_from.*edge_cnt.*=.*stk.*stk_top.*-.*2.*edge_to.*edge_cnt.*=.*stk.*stk_top.*-.*1",
+            "while.*stk_top.*>.*1.*edge_from.*=.*stk.*stk_top.*-.*2.*edge_to.*=.*stk.*stk_top.*-.*1.*edge_cnt\\+\\+.*stk_top--",
+            "vt_drain_stack|virtual_tree_edges|drain_stk_edges"
+        ),
+
+        // ── Min-cost max-flow (SPFA augmentation, reverse-edge XOR trick) ────
+        new PatternDef("mcf_reverse_edge_xor", "min_cost_flow_reverse_edge_index_xor", "high",
+            "mcf_cap.*e.*\\^.*1.*\\+=.*f|cap.*e\\^1.*\\+=.*flow.*reverse.*edge.*xor.*index",
+            "mcf_cap.*e.*-=.*f.*mcf_cap.*e.*\\^.*1.*\\+=.*f|augment.*cap.*xor.*reverse",
+            "mcf_cap.*e.*\\^.*1|min_cost_flow_xor_reverse|mcf_reverse_xor"
+        ),
+        new PatternDef("mcf_spfa_relax", "min_cost_flow_spfa_bellman_ford_relaxation", "high",
+            "mcf_dist.*u.*\\+.*mcf_cost.*e.*<.*mcf_dist.*v.*mcf_dist.*v.*=.*mcf_dist.*u.*\\+.*mcf_cost.*e",
+            "dist.*u.*\\+.*cost.*e.*<.*dist.*v.*dist.*v.*=.*dist.*u.*\\+.*cost.*e.*prevv.*v.*=.*u|spfa_relax",
+            "mcf_spfa|spfa_relax|min_cost_flow_dist_relax"
+        ),
+        new PatternDef("mcf_augment_loop", "min_cost_flow_path_augmentation_loop", "high",
+            "while.*mcf_spfa.*s.*t.*f.*=.*MCF_INF.*for.*v.*=.*t.*v.*!=.*s.*v.*=.*mcf_prevv.*v",
+            "total_flow.*\\+=.*f.*total_cost.*\\+=.*f.*\\*.*mcf_dist.*t|mcf_run.*augment.*path",
+            "mcf_run|mcf_augment|min_cost_flow_main_loop"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
