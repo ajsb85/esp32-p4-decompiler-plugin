@@ -398,6 +398,19 @@ int main(void){
    while(dmid<=dhi){if(df2[dmid]<1){int t=df2[dlo];df2[dlo]=df2[dmid];df2[dmid]=t;dlo++;dmid++;}
      else if(df2[dmid]==1){dmid++;}else{int t=df2[dmid];df2[dmid]=df2[dhi];df2[dhi]=t;dhi--;}}
    CHECK("test_dutch_flag",(6u<<16)|((uint32_t)dlo<<8)|(uint32_t)dmid,0x00060204u);}
+  /* test_prim_mst: 5-node graph, MST weight=16, n-1=4 edges */
+  {static const int padj[5][5]={{0,2,0,6,0},{2,0,3,8,5},{0,3,0,0,7},{6,8,0,0,9},{0,5,7,9,0}};
+   int pkey[5]={9999,9999,9999,9999,9999},pmst[5]={0};pkey[0]=0;int pmw=0;
+   for(int step=0;step<5;step++){int u=-1;for(int v=0;v<5;v++)if(!pmst[v]&&(u==-1||pkey[v]<pkey[u]))u=v;
+     pmst[u]=1;if(step>0)pmw+=pkey[u];
+     for(int v=0;v<5;v++)if(padj[u][v]&&!pmst[v]&&padj[u][v]<pkey[v])pkey[v]=padj[u][v];}
+   CHECK("test_prim_mst",(5u<<16)|((uint32_t)pmw<<8)|4u,0x00051004u);}
+  /* test_subset_sum: items={3,5,2,8,7} n=5, targets={10,12,11} all reachable, xor=13 */
+  {static const int ssitems[]={3,5,2,8,7};int ssdp[13]={0};ssdp[0]=1;
+   for(int k=0;k<5;k++)for(int j=12;j>=ssitems[k];j--)ssdp[j]|=ssdp[j-ssitems[k]];
+   static const int sst[]={10,12,11};uint32_t sscnt=0,ssxor=0;
+   for(int k=0;k<3;k++)if(ssdp[sst[k]]){sscnt++;ssxor^=(uint32_t)sst[k];}
+   CHECK("test_subset_sum",(5u<<16)|(sscnt<<8)|(ssxor&0xFFu),0x0005030Du);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

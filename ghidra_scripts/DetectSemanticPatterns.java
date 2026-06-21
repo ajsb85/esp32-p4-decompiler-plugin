@@ -782,6 +782,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "swap.*mid.*hi.*hi--|hi--",                           // >pivot branch: hi--
             "else.*if.*==.*pivot|elif.*==.*pivot"               // equality branch
         ),
+
+        // ── Prim's MST (119, 120) ─────────────────────────────────────────────
+        new PatternDef("prim_min_key", "prim_mst_pick", "high",
+            "u.*==.*-1.*prim_key.*v.*<.*prim_key.*u|u.*==.*-1.*key.*v.*<.*key.*u",  // min-key selection
+            "if.*!prim_in_mst.*v|if.*!in_mst.*v",               // not-yet-in-MST guard
+            "prim_mst|prim_key|mst_weight"                     // naming
+        ),
+        new PatternDef("prim_relax", "prim_mst_relax", "high",
+            "prim_adj.*u.*v.*&&.*!prim_in_mst|adj.*u.*v.*&&.*!in_mst",  // relax: adj&&!mst
+            "prim_key.*v.*=.*prim_adj|key.*v.*=.*adj",          // key[v] = adj[u][v]
+            "prim_mst|prim.*relax|mst.*update"                 // naming
+        ),
+
+        // ── Subset sum boolean DP (121, 122) ─────────────────────────────────
+        new PatternDef("subset_sum_dp", "subset_sum_fill", "high",
+            "for.*j.*=.*SS_LIMIT.*j.*>=.*v|for.*j.*=.*limit.*j.*>=.*v",  // reverse inner loop
+            "ss_dp\\[j\\].*\\|=.*ss_dp\\[j.*-.*v\\]|dp\\[j\\].*\\|=.*dp\\[j.*-",  // DP update
+            "subset_sum|ss_dp|subset.*dp"                      // naming
+        ),
+        new PatternDef("subset_sum_query", "subset_sum_check", "high",
+            "if.*ss_dp.*targets|if.*dp.*targets|ss_dp\\[.*\\]",  // reachability check
+            "count_found\\+\\+|xor_found.*\\^=",               // found accumulation
+            "subset_sum_build|ss_dp|targets.*dp"              // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

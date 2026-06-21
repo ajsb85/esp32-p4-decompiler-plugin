@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 52 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 54 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -64,6 +64,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_activity_sel.c` | Activity selection greedy n=6; sorted by end, count=4, sum_end=22 | `0x00060416` | |
 | `test_lps.c` | Longest Palindromic Subsequence "BBABCBCAB" n=9; LPS=7, n-LPS=2 | `0x00090702` | |
 | `test_dutch_flag.c` | Dutch National Flag 3-way partition {2,0,2,1,1,0} pivot=1; lo=2, mid=4 | `0x00060204` | |
+| `test_prim_mst.c` | Prim's MST n=5 dense O(n²); edges 0-1(2),1-2(3),1-4(5),0-3(6); weight=16 | `0x00051004` | |
+| `test_subset_sum.c` | Subset sum boolean DP {3,5,2,8,7}; targets {10,12,11} all reachable; xor=13 | `0x0005030D` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -146,7 +148,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-117 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+121 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -205,6 +207,8 @@ Pattern families currently covered (51 patterns):
 | Activity selection | Sort by .end; greedy: if(start≥last_end){count++;last_end=end} |
 | LPS interval DP | for(len=2..n) j=i+len-1; if(s[i]==s[j])dp+2 else max(dp[i+1][j],dp[i][j-1]) |
 | Dutch National Flag | while(mid≤hi) 3-branch: <pivot swap+lo++mid++; ==pivot mid++; >pivot swap+hi-- |
+| Prim's MST | min-key scan (!in_mst && key<best); relax adj[u][v] < key[v] |
+| Subset sum DP | dp[0]=1; for each v: for j=limit..v: dp[j]\|=dp[j-v] (boolean 0/1) |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
