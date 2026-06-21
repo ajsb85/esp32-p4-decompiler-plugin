@@ -4235,6 +4235,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "while.*stl_par.*x.*!=.*x.*x.*=.*stl_par.*x|small_to_large_find_loop",
             "stl_freq.*rx.*e.*>.*stl_max_freq.*stl_max_freq|small_to_large_max_freq_update"
         ),
+        // ── Suffix Array DC3 (Skew Algorithm) ────────────────────────────────
+        new PatternDef("dc3_sample_sort", "suffix_array_dc3_sample_sort", "high",
+            "dc3_rank.*i.*dc3_rank.*i.*\\+.*1.*dc3_rank.*i.*\\+.*2|suffix_array_dc3_triple_rank",
+            "for.*i.*%.*3.*!=.*0|suffix_array_dc3_nonsample_skip",
+            "dc3_sa12.*dc3_n12|suffix_array_dc3_sample_index"
+        ),
+        new PatternDef("dc3_merge", "suffix_array_dc3_merge_step", "high",
+            "dc3_merge.*sa12.*sa0|suffix_array_dc3_merge_samples",
+            "dc3_rank.*dc3_sa12.*p.*\\+.*dc3_n0|suffix_array_dc3_rank_lookup",
+            "while.*p0.*<.*dc3_n0.*&&.*p12.*<.*dc3_n12|suffix_array_dc3_merge_loop"
+        ),
+        new PatternDef("dc3_leq", "suffix_array_dc3_leq_compare", "medium",
+            "dc3_leq.*a1.*b1.*a2.*b2|suffix_array_dc3_tuple_compare",
+            "dc3_rank.*a.*\\+.*1.*dc3_rank.*b.*\\+.*1|suffix_array_dc3_rank_compare",
+            "return.*a1.*<.*b1.*\\|\\|.*a1.*==.*b1|suffix_array_dc3_lex_order"
+        ),
+        // ── Longest Common Extension (LCE via sparse table) ──────────────────
+        new PatternDef("lce_sparse_build", "lce_sparse_table_build", "high",
+            "lce_sp.*i.*0.*=.*lce_lcp.*i|longest_common_extension_sparse_init",
+            "lce_sp.*i.*j.*=.*lce_min.*lce_sp.*i.*j.*-.*1.*lce_sp.*i.*\\+.*lce_pw.*j.*-.*1|lce_sparse_table_fill",
+            "lce_pw.*j.*=.*lce_pw.*j.*-.*1.*\\*.*2|lce_power_of_two_table"
+        ),
+        new PatternDef("lce_query", "lce_range_min_query", "high",
+            "lce_query.*l.*r|longest_common_extension_range_query",
+            "k.*=.*lce_log2.*r.*-.*l.*\\+.*1|lce_query_log2_span",
+            "lce_min.*lce_sp.*l.*k.*lce_sp.*r.*-.*lce_pw.*k.*\\+.*1|lce_sparse_query_formula"
+        ),
+        new PatternDef("lce_lcp_pair", "lce_lcp_pair_computation", "medium",
+            "lce_lcp.*i.*=.*lce_query.*lce_rank.*i.*lce_rank.*i.*\\+.*1|lce_lcp_via_rank",
+            "lce_rank.*lce_sa.*i.*=.*i|lce_rank_from_sa",
+            "lce_total.*\\+=.*lce_lcp.*i|lce_total_accumulate"
+        ),
+        // ── Discrete Log Pohlig-Hellman ────────────────────────────────────────
+        new PatternDef("pohlig_baby_step", "pohlig_hellman_baby_step", "high",
+            "ph_baby.*j.*=.*ph_mod_pow.*ph_g.*j.*ph_pe.*ph_p|pohlig_hellman_baby_giant_table",
+            "ph_tab.*ph_baby.*j.*=.*j|pohlig_hellman_table_store",
+            "for.*j.*=.*0.*j.*<.*ph_pe.*j\\+\\+|pohlig_hellman_baby_loop"
+        ),
+        new PatternDef("pohlig_giant_step", "pohlig_hellman_giant_step", "high",
+            "ph_giant.*=.*ph_mod_pow.*ph_g.*ph_pe.*ph_p|pohlig_hellman_giant_base",
+            "ph_gamma.*=.*ph_h.*ph_mod_pow.*ph_giant.*k.*ph_p|pohlig_hellman_gamma_update",
+            "ph_tab.*ph_gamma|pohlig_hellman_lookup_gamma"
+        ),
+        new PatternDef("pohlig_crt", "pohlig_hellman_crt_combine", "medium",
+            "ph_crt.*x.*ph_crt.*mod|pohlig_hellman_crt_accumulate",
+            "ph_x.*\\+=.*ph_dk.*ph_mod_crt|pohlig_hellman_crt_partial_log",
+            "g_result.*<<.*16.*ph_x.*&.*0xFF.*<<.*8|pohlig_hellman_result_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
