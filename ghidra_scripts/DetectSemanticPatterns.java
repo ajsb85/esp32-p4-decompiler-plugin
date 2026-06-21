@@ -4334,6 +4334,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*row.*=.*0.*row.*<.*MSR_ROWS.*msr_col_sum.*row.*=.*0|reset_col_sum",
             "msr_max_rect|left_right_scan|msr_boundary_loop"
         ),
+        new PatternDef("knuth_opt_quadrangle", "knuth_opt_quadrangle_inequality", "high",
+            "opt.*i.*j.*-.*1.*<=.*opt.*i.*j.*<=.*opt.*i.*\\+.*1.*j|kn_opt.*monotone",
+            "for.*k.*=.*kn_opt.*i.*j.*-.*1.*k.*<=.*kn_opt.*i.*\\+.*1.*j|knuth_range_k",
+            "kn_dp|knuth_opt_dp|quadrangle_inequality_dp"
+        ),
+        new PatternDef("knuth_opt_interval", "knuth_opt_interval_fill", "high",
+            "for.*len.*=.*2.*len.*<=.*KN_N|for.*length.*=.*2.*length.*<=.*n",
+            "for.*i.*\\+.*len.*-.*1.*<.*KN_N|for.*i.*\\+.*length.*-.*1.*<.*n.*j.*=.*i.*\\+.*len",
+            "kn_dp.*i.*j|interval_dp_knuth|stone_merge_knuth"
+        ),
+        new PatternDef("knuth_opt_range_cost", "knuth_opt_prefix_range_weight", "high",
+            "kn_w.*r.*\\+.*1.*-.*kn_w.*l|prefix_sum.*range.*weight",
+            "kn_w.*i.*\\+.*1.*=.*kn_w.*i.*\\+.*i.*\\+.*1|prefix_sum_init_weights",
+            "kn_range_w|range_weight_sum|knuth_cost_function"
+        ),
+        new PatternDef("mdm_gauss_elim_mod", "mdm_gauss_elimination_modular", "high",
+            "for.*col.*=.*0.*col.*<.*MDM_N|pivot_row.*=.*MDM_N|gauss_mod_pivot",
+            "inv_pivot.*=.*mdm_inv.*mat.*col.*col.*MDM_MOD|modular_inverse_pivot",
+            "mdm_det|gauss_elim_mod|matrix_det_mod"
+        ),
+        new PatternDef("mdm_fermat_inverse", "mdm_fermat_little_theorem_inverse", "high",
+            "mdm_powmod.*a.*m.*-.*2.*m|pow.*m.*-.*2.*mod.*prime|fermat_inv",
+            "result.*=.*result.*\\*.*base.*%.*m|base.*=.*base.*\\*.*base.*%.*m",
+            "mdm_inv|mdm_powmod|modular_inverse_prime"
+        ),
+        new PatternDef("mdm_row_reduce", "mdm_row_reduction_modular", "high",
+            "factor.*=.*mat.*row.*col.*\\*.*inv_pivot.*%.*MDM_MOD|row_reduce_factor",
+            "mat.*row.*k.*=.*mat.*row.*k.*\\+.*MDM_MOD.*-.*sub.*%.*MDM_MOD|subtract_mod",
+            "mdm_det.*row.*reduce|modular_row_sub|gauss_mod_eliminate"
+        ),
+        new PatternDef("mono_min_dc", "monotone_minima_divide_conquer", "high",
+            "mm_dc.*rs.*re.*cs.*ce|monotone_minima_dc.*row_range.*col_range",
+            "mid_r.*=.*rs.*\\+.*re.*-.*rs.*\\/.*2|mid_row.*=.*lo.*\\+.*hi.*-.*lo.*>>.*1",
+            "mm_argmin|monotone_minima|mono_min_dc"
+        ),
+        new PatternDef("mono_min_pivot", "monotone_minima_pivot_search", "high",
+            "for.*c.*=.*cs.*\\+.*1.*c.*<.*ce.*v.*=.*mm_cost.*mid_r.*c|scan_pivot_col",
+            "best_col.*=.*cs.*best_val.*=.*mm_cost.*mid_r.*cs|init_best_col_val",
+            "mm_argmin.*mid_r.*=.*best_col|set_row_argmin|mono_min_argmin"
+        ),
+        new PatternDef("mono_min_monotone_check", "monotone_minima_property_verify", "high",
+            "mm_argmin.*i.*<.*mm_argmin.*i.*-.*1|argmin.*not.*non_decreasing",
+            "monotone_ok.*=.*0|monotone_property_violated|mono_check_fail",
+            "mm_argmin|monotone_ok|monotone_minima_verify"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
