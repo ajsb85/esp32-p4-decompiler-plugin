@@ -2404,6 +2404,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cut.*<.*mc.*mc.*=.*cut.*sw_phase.*global.min.cut",
             "sw_min_cut|phase_cut_record|global_min_cut"
         ),
+
+        // ── LCP array (Kasai) ────────────────────────────────────────────────
+        new PatternDef("lcp_kasai_rank_advance", "lcp_kasai_rank_based_k_advance", "high",
+            "inv.*sa.*inv.*-.*1|rank.*sa.*rank.*-.*1|lcp.*inv.*i.*=.*k",
+            "while.*i.*\\+.*k.*<.*n.*&&.*j.*\\+.*k.*<.*n.*&&.*s.*i.*k.*==.*s.*j.*k",
+            "kasai_lcp|lcp_array_build|suffix_rank_lcp"
+        ),
+        new PatternDef("lcp_k_decrement", "lcp_kasai_k_decrement_after_suffix", "medium",
+            "if.*k.*>.*0.*k--|lcp.*k.*decrement|kasai_k_minus",
+            "if.*inv.*i.*==.*0.*k.*=.*0.*continue|if.*rank.*i.*==.*0",
+            "lcp_k_dec|kasai_decrement|lcp_k_step"
+        ),
+        new PatternDef("lcp_root_skip", "lcp_kasai_root_suffix_skip", "medium",
+            "if.*inv.*i.*==.*0.*continue|if.*rank.*i.*==.*0.*k.*=.*0",
+            "inv.*root.*==.*0.*k.*reset|kasai_root_skip",
+            "lcp_root_skip|kasai_root|rank_zero_skip"
+        ),
+
+        // ── Monotone queue (sliding window) ─────────────────────────────────
+        new PatternDef("deque_push_back_mono", "monotone_deque_pop_back_before_push", "high",
+            "while.*!dq_empty.*&&.*a.*dq_back.*<=.*a.*i|while.*deque_back.*<=.*arr.*idx",
+            "pop_back.*push_back.*i|d.*tail--.*d.*data.*d.*tail.*=.*i",
+            "monotone_deque|sliding_window_deque|mono_queue_push"
+        ),
+        new PatternDef("deque_front_expire", "monotone_deque_expire_front_element", "high",
+            "while.*!dq_empty.*&&.*dq_front.*<=.*i.*-.*k|while.*deque_front.*<.*i.*-.*window",
+            "dq_pop_front|head\\+\\+|deque.*head.*window.*expire",
+            "deque_front_expire|window_expire|sliding_expire"
+        ),
+        new PatternDef("window_max_collect", "sliding_window_max_collect_after_fill", "medium",
+            "if.*i.*>=.*k.*-.*1.*sum.*\\+=.*a.*dq_front|if.*i.*>=.*w.*-.*1.*ans.*\\+=",
+            "window.*full.*collect|i.*>=.*k.*1.*append|ans.*deque_front.*window_filled",
+            "window_max_collect|swm_collect|window_result"
+        ),
+
+        // ── Heavy-Light Decomposition ────────────────────────────────────────
+        new PatternDef("hld_chain_ascent", "hld_path_query_chain_ascent_loop", "high",
+            "while.*head_chain.*u.*!=.*head_chain.*v|while.*chain_top.*u.*!=.*chain_top.*v",
+            "res.*\\+=.*fen_range.*pos.*head_chain.*u.*pos.*u|sum.*range.*chain_head.*to.*u",
+            "hld_chain_ascent|hld_path_query|heavy_light_path"
+        ),
+        new PatternDef("hld_depth_swap", "hld_depth_controlled_node_swap", "medium",
+            "if.*depth.*head_chain.*u.*<.*depth.*head_chain.*v.*tmp.*=.*u.*u.*=.*v|hld_swap_deeper",
+            "depth_head_u.*<.*depth_head_v.*swap|make_u_deeper.*hld",
+            "hld_swap|hld_depth_swap|hld_chain_swap"
+        ),
+        new PatternDef("hld_lca_segment", "hld_lca_final_segment_query", "high",
+            "if.*depth.*u.*>.*depth.*v.*tmp.*=.*u.*u.*=.*v|same_chain.*depth_normalize.*u.*v",
+            "res.*\\+=.*fen_range.*pos.*u.*pos.*v|ans.*range_query.*same_chain",
+            "hld_lca_segment|hld_final_range|hld_same_chain"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
