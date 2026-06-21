@@ -860,6 +860,29 @@ int main(void){
    sqb[4/3]+=10-sqa[4];sqa[4]=10;
    int sq2=0;for(int i=1;i<3;i++)sq2+=sqa[i];sq2+=sqb[1];for(int i=6;i<=8;i++)sq2+=sqa[i];
    CHECK("test_sqrt_decomp",(9u<<16)|(((uint32_t)sq1&0xFFu)<<8)|((uint32_t)sq2&0xFFu),0x00092131u);}
+  /* test_dag_longest_path: 6 nodes 8 edges in topo order; max_dist=17 xor_dp=23 */
+  {int dlp_eu[]={0,0,1,1,2,2,3,4},dlp_ev[]={1,2,2,4,3,5,4,5},dlp_ew[]={3,6,4,11,5,2,1,3};
+   int dlp[6]={0,0,0,0,0,0};
+   for(int e=0;e<8;e++){int u=dlp_eu[e],v=dlp_ev[e],w=dlp_ew[e];if(dlp[u]+w>dlp[v])dlp[v]=dlp[u]+w;}
+   uint32_t dlp_max=0,dlp_xor=0;
+   for(int i=0;i<6;i++){if((uint32_t)dlp[i]>dlp_max)dlp_max=(uint32_t)dlp[i];dlp_xor^=(uint32_t)dlp[i];}
+   CHECK("test_dag_longest_path",(6u<<16)|((dlp_max&0xFFu)<<8)|(dlp_xor&0xFFu),0x00061117u);}
+  /* test_edit_distance: kitten→sitting=3, sunday→saturday=3, abc→yabd=2 */
+  {static int edp[16][16];
+   const char*s1[3]={"kitten","sunday","abc"},*s2[3]={"sitting","saturday","yabd"};
+   int ln1[3]={6,6,3},ln2[3]={7,8,4};
+   uint32_t ed_sum=0,ed_xor=0;
+   for(int t=0;t<3;t++){
+     int m=ln1[t],n=ln2[t];
+     for(int i=0;i<=m;i++)edp[i][0]=i;
+     for(int j=0;j<=n;j++)edp[0][j]=j;
+     for(int i=1;i<=m;i++)for(int j=1;j<=n;j++){
+       if(s1[t][i-1]==s2[t][j-1])edp[i][j]=edp[i-1][j-1];
+       else{int a=edp[i-1][j],b=edp[i][j-1],c=edp[i-1][j-1];int mn=a<b?a:b;mn=mn<c?mn:c;edp[i][j]=1+mn;}
+     }
+     ed_sum+=(uint32_t)edp[m][n];ed_xor^=(uint32_t)edp[m][n];
+   }
+   CHECK("test_edit_distance",(3u<<16)|((ed_sum&0xFFu)<<8)|(ed_xor&0xFFu),0x00030802u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

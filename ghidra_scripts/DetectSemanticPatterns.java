@@ -1379,6 +1379,22 @@ public class DetectSemanticPatterns extends GhidraScript {
             "sq_arr.*idx.*=.*val.*sq_blk.*idx.*SQ_BS.*\\+=",
             "sq_update|sqrt_update|block_point_update"
         ),
+        // ── Sprint 74: DAG longest path + edit distance ───────────────────────
+        new PatternDef("dag_longest_path", "dag_dp_longest", "high",
+            "if.*dp.*u.*\\+.*w.*>.*dp.*v.*dp.*v.*=.*dp.*u.*\\+.*w|dp.*dlp_eu.*dlp_ev.*dlp_ew",
+            "for.*e.*<.*DLP_NE.*dlp_eu.*dlp_ev.*dlp_ew|topo.*dp.*relax.*edge",
+            "dag_longest|dp.*topo|longest_path_dag"
+        ),
+        new PatternDef("edit_distance_dp", "levenshtein_distance", "high",
+            "dp.*i.*j.*=.*1.*\\+.*ed_min3.*dp.*i-1.*j.*dp.*i.*j-1.*dp.*i-1.*j-1",
+            "dp.*0.*j.*=.*j.*dp.*i.*0.*=.*i.*base.*case.*edit",
+            "edit_distance|levenshtein|ed_dp"
+        ),
+        new PatternDef("edit_distance_match", "levenshtein_char_match", "medium",
+            "if.*s1.*i-1.*==.*s2.*j-1.*dp.*i.*j.*=.*dp.*i-1.*j-1",
+            "cost.*s1.*i.*!=.*s2.*j.*dp.*i.*j.*min.*substitution",
+            "char_match|substitution_cost|edit_match"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

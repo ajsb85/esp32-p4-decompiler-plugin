@@ -197,6 +197,8 @@ declare -A EXPECTED_RESULT=(
     [test_max_product]=0x0003120A
     [test_articulation]=0x00050202
     [test_sqrt_decomp]=0x00092131
+    [test_dag_longest_path]=0x00061117
+    [test_edit_distance]=0x00030802
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -253,7 +255,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_suffix_array test_house_robber \
        test_egg_drop test_unique_paths \
        test_regex_match test_max_product \
-       test_articulation test_sqrt_decomp)
+       test_articulation test_sqrt_decomp \
+       test_dag_longest_path test_edit_distance)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
