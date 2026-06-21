@@ -1,7 +1,49 @@
 # Contributing to ESP32-P4 Ghidra Plugin
 
-Thank you for contributing. This document covers the development workflow,
-commit conventions, and PR checklist.
+Thank you for contributing. This document covers the development setup,
+workflow, script authoring, commit conventions, and PR checklist.
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+| Tool | Purpose | Minimum version |
+|------|---------|-----------------|
+| Ghidra | Plugin host and test runtime | 12.1.2 |
+| Java JDK | Build and script compilation | 21 |
+| Gradle | Build system (wrapper included) | 8 |
+| riscv32-esp-elf-gcc | Round-trip recompilation | esp-15.x |
+| ESP-IDF | ESP-IDF firmware builds | v6.0 |
+| esptool | Flashing to real hardware | 5.x |
+
+### First-time build
+
+```bash
+git clone https://github.com/ajsb85/esp32-p4-decompiler-plugin.git
+cd esp32-p4-decompiler-plugin
+gradle -PGHIDRA_INSTALL_DIR=/opt/ghidra_12.1.2_PUBLIC buildExtension
+```
+
+The built ZIP lands in `dist/`. Install it with
+**File → Install Extensions → select ZIP → restart Ghidra**.
+
+### Rebuilding and reinstalling
+
+After any change to Java sources or Sleigh files, rebuild and reinstall:
+
+```bash
+gradle -PGHIDRA_INSTALL_DIR=/opt/ghidra_12.1.2_PUBLIC buildExtension
+```
+
+Then in Ghidra: **File → Install Extensions** → remove old, install new,
+restart. If Ghidra appears to load the old version, delete the OSGi
+felix cache:
+
+```bash
+rm -rf ~/.config/ghidra/ghidra_12.1.2_PUBLIC/osgi/felixcache
+```
 
 ---
 
@@ -26,7 +68,7 @@ git checkout main && git pull
 git checkout -b feature/add-esp32p5-variant
 
 # 2. Make small, focused commits (see Conventional Commits below)
-git commit -m "feat(lang): add RV32.pspec variant for ESP32-P5"
+git commit -S -m "feat(lang): add RV32.pspec variant for ESP32-P5"
 
 # 3. Push and open a PR
 git push -u origin feature/add-esp32p5-variant
@@ -35,6 +77,9 @@ git push -u origin feature/add-esp32p5-variant
 
 Keep PRs small. If a feature takes more than two days, split it or use a
 feature flag in the Java plugin layer.
+
+All commits and tags must be GPG-signed (`-S` for commits, `git tag -s`
+for release tags).
 
 ---
 
@@ -61,7 +106,7 @@ Optional footer: Closes #42, BREAKING CHANGE: …
 | `docs` | README, CONTRIBUTING, comments |
 | `build` | Gradle, extension manifest, packaging |
 | `refactor` | Code restructure with no behavior change |
-| `test` | Headless test scripts or CI checks |
+| `test` | Round-trip fixtures or headless test scripts |
 | `chore` | Dependency bumps, file renames |
 | `perf` | Performance improvement |
 | `style` | Whitespace / formatting only |
@@ -74,6 +119,8 @@ Optional footer: Closes #42, BREAKING CHANGE: …
 | `lang` | Sleigh files (`.sinc`, `.slaspec`, `.cspec`, `.ldefs`) |
 | `plugin` | Java plugin source (`src/main/java/`) |
 | `scripts` | Ghidra scripts (`ghidra_scripts/`) |
+| `tools` | Recompilation helpers (`tools/`) |
+| `test` | Round-trip fixtures (`test/`) |
 | `docs` | Documentation files |
 | `build` | Build system (`build.gradle`, `settings.gradle`) |
 | `ci` | Workflow / automation |
@@ -84,10 +131,12 @@ Optional footer: Closes #42, BREAKING CHANGE: …
 feat(lang): add xespv2p2 PIE arithmetic patterns for 0x1B opcode
 fix(lang): correct vst.128.ip op2531 field to 0x41
 feat(scripts): add LoadESP32P4SVD peripheral label script
+fix(scripts): auto-fix bare return in void-promoted functions
 fix(plugin): null-check in ESP32P4Analyzer peripheral lookup
 docs: add PIE SIMD confirmed-ops table to README
 build: include riscv32.dwarf in extension zip
 chore(scripts): update LoadESP32P4SVD default SVD path
+test: add round-trip validation fixture
 ```
 
 ### Breaking changes
@@ -103,23 +152,252 @@ the new language ID.
 
 ---
 
+## Writing Ghidra Scripts
+
+All scripts live in `ghidra_scripts/` and extend `GhidraScript`. Every
+file must carry the Apache 2.0 SPDX header (copy the header from any
+existing script).
+
+### Headless compatibility
+
+Scripts that will be used in headless (`analyzeHeadless`) mode must not
+call interactive methods:
+
+- Do **not** use `askFile()`, `askString()`, or similar dialog methods in
+  code paths that run headlessly. Use `getScriptArgs()` instead.
+- If you want GUI mode to fall back to a dialog, guard it:
+
+```java
+String[] args = getScriptArgs();
+File outFile;
+if (args != null && args.length > 0 && !args[0].isEmpty()) {
+    outFile = new File(args[0]);
+} else {
+    outFile = askFile("Save output to", "Save");
+}
+```
+
+### Passing arguments headlessly
+
+```bash
+analyzeHeadless /tmp/proj MyProject \
+  -import firmware.elf \
+  -processor "RISCV:LE:32:ESP32-P4" \
+  -scriptPath ghidra_scripts \
+  -postScript MyScript.java arg1 arg2 \
+  -deleteProject
+```
+
+`getScriptArgs()` returns `["arg1", "arg2"]` inside the script.
+
+### Script categories
+
+The `@category` annotation places the script in the Script Manager tree.
+Use `ESP32-P4` for all scripts in this plugin:
+
+```java
+// @category ESP32-P4
+// @menupath Analysis.ESP32-P4.My Script Name
+```
+
+---
+
+## Decompilation Pipeline — How It Works
+
+`ExportDecompiledC.java` implements a three-pass pipeline over the Ghidra
+decompiler output. Understanding it is necessary before extending or
+modifying the script.
+
+### Pass 1 — Decompile all functions
+
+All functions in the program are decompiled via `DecompInterface` and
+stored in memory as raw C strings, keyed by `"funcName@address"`.
+Failures are recorded but do not abort the export.
+
+### Pass 2 — Detect promotion candidates
+
+Two regex patterns scan every decompiled function:
+
+- `VOID_SIG` — collects all function names declared `void funcName(`
+- `CALL_ASSIGN` — finds any `var = name(` pattern (assignment from a call)
+
+Any name that appears in both sets is promoted: Ghidra declared it `void`
+but a caller uses its return value.
+
+### Pass 3 — Write with fixes
+
+Each function is written line-by-line through three filters:
+
+1. **GP strip** — lines matching `gp = 0x[hex];` are dropped. The RISC-V
+   global pointer is initialized by startup code; Ghidra incorrectly emits
+   it as a C variable assignment on every function entry.
+
+2. **Void promotion** — the `void funcName(` signature line of any
+   promoted function is rewritten to `undefined4 funcName(`.
+
+3. **Bare return fix** — inside a promoted function, `return;` (bare,
+   no value) is rewritten to `return param_1;`. This is correct under the
+   RISC-V ilp32 ABI: the first parameter (`a0`) doubles as the return
+   register. A bare `return` in the decompiler output means the value
+   already in `a0` — which is `param_1` — is the intended return value.
+
+### Adding a new fix
+
+To add a fourth artifact fix, follow the established pattern:
+
+1. Declare a `private static final Pattern` constant with a clear name.
+2. Add a detection pass (if needed) before Pass 3.
+3. Add an `if` block inside the per-line loop in Pass 3.
+4. Add a counter, increment it when the fix fires, and include it in the
+   `println` summary at the end.
+5. Update the file-header comment block and the fix table in `README.md`.
+
+---
+
+## `tools/ghidra_types.h`
+
+Ghidra's decompiler emits C using type aliases that are not in any
+standard header (`undefined4`, `uint`, `uchar`, etc.). The file
+`tools/ghidra_types.h` maps each alias to the appropriate `<stdint.h>`
+type.
+
+Include it when recompiling any exported decompiled C:
+
+```bash
+riscv32-esp-elf-gcc \
+  -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 \
+  -include tools/ghidra_types.h \
+  -c firmware_decompiled.c
+```
+
+When Ghidra introduces a new type alias that is not yet in the header,
+add it here. Map to the smallest standard integer type that matches the
+alias's bit-width suffix (e.g. `undefined6` → `uint64_t` is acceptable
+as a safe approximation until a proper type is known).
+
+---
+
+## Round-trip Validation
+
+Before merging any change that touches `ExportDecompiledC.java`,
+`ghidra_types.h`, or the Sleigh processor definition, run the round-trip
+test to confirm the decompilation pipeline still produces compilable,
+correct output.
+
+```bash
+# Compile the bare-metal fixture
+GCC=~/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/\
+riscv32-esp-elf/bin/riscv32-esp-elf-gcc
+
+$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O1 -g \
+     -nostdlib -nostartfiles -ffreestanding \
+     -T test/roundtrip/hello.ld \
+     -o /tmp/hello.elf test/roundtrip/hello.c
+
+# Decompile
+analyzeHeadless /tmp/proj RoundtripTest \
+  -import /tmp/hello.elf \
+  -processor "RISCV:LE:32:ESP32-P4" \
+  -scriptPath ghidra_scripts \
+  -postScript ExportDecompiledC.java /tmp/decompiled.c \
+  -deleteProject
+
+# Recompile (must produce zero errors)
+$GCC -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -O0 \
+     -nostdlib -nostartfiles -ffreestanding \
+     -include tools/ghidra_types.h \
+     -T test/roundtrip/hello.ld \
+     -o /tmp/decompiled_rebuilt.elf /tmp/decompiled.c
+
+echo "Round-trip OK"
+```
+
+See `test/roundtrip/README.md` for expected sizes and the CRC32 reference
+value used for hardware validation.
+
+---
+
 ## Pull Request Checklist
 
 Before requesting review, confirm every item:
 
-- [ ] Branch name matches `feature/`, `fix/`, or `docs/` prefix
-- [ ] All commit subjects follow Conventional Commits (≤ 72 chars)
-- [ ] Sleigh compiles without new warnings in **our** files:
+- [ ] Branch name matches `feature/`, `fix/`, `docs/`, or `test/` prefix
+- [ ] All commit subjects follow Conventional Commits (≤ 72 chars) and
+      are GPG-signed
+- [ ] Sleigh compiles without new warnings **in our files**:
       `cd data/languages && sleigh -a .`
       (upstream `riscv.*.sinc` warnings are pre-existing and expected)
 - [ ] Java compiles without new warnings:
       `gradle compileJava`
 - [ ] Headless import succeeds with no new ERRORs:
       `analyzeHeadless … -processor "RISCV:LE:32:ESP32-P4" -noanalysis`
+- [ ] If `ExportDecompiledC.java`, `ghidra_types.h`, or Sleigh files
+      changed — round-trip test passes with zero compile errors
+- [ ] New Ghidra scripts work in both GUI mode and headless mode
+      (no `askFile()` / `askString()` calls in headless code paths)
+- [ ] Every new source file carries the Apache 2.0 SPDX header
 - [ ] Upstream files (`riscv.*.sinc`, `andestar_v5.instr.sinc`) are
       **not modified** unless strictly necessary
-- [ ] Every new source file carries the Apache 2.0 SPDX header
 - [ ] `dist/` and `*.sla` are **not committed** (covered by `.gitignore`)
+- [ ] `README.md` updated if a new script, fix, or tool was added
+
+---
+
+## Nice-to-Have Features
+
+The following improvements are not yet implemented. Pick one up and open a
+`feature/` branch — all are well-scoped and self-contained.
+
+### Decompilation pipeline
+
+- [ ] **Global variable export** — emit `extern` declarations for every
+      global symbol referenced in decompiled function bodies. Currently
+      callers must add these manually.
+- [ ] **Multi-return bare-return fix** — the current Fix 3 always emits
+      `return param_1;`. Extend it to inspect which local variable is
+      last written in the function body before the bare return and use
+      that variable instead.
+- [ ] **`ghidra_types.h` auto-discovery** — scan the decompiled output
+      for undeclared identifiers and auto-generate any missing type aliases
+      rather than maintaining the header manually.
+- [ ] **Per-function file output** — add a `--split` script argument that
+      writes one `.c` file per function (useful for large firmware where
+      a single file is unwieldy).
+- [ ] **Struct/enum export** — emit recovered struct and enum definitions
+      above the function bodies that use them.
+
+### Language support
+
+- [ ] **Full xespv2p2 arithmetic lift** — implement p-code semantics for
+      the remaining unconfirmed PIE SIMD opcodes so they decompile to
+      pseudo-intrinsics rather than opaque `esp.pie.arith` pcodeops.
+- [ ] **ESP32-P5 variant** — add a `esp32p5.slaspec` that extends the P4
+      definition for any ISA differences in the P5 silicon.
+- [ ] **CSR symbolic names** — map all ESP32-P4-specific CSR addresses in
+      `riscv.csr.sinc` to human-readable names from the TRM.
+
+### Tooling
+
+- [ ] **Automated round-trip test script** — a single shell script
+      `test/roundtrip/run.sh` that runs all four steps (compile, decompile,
+      recompile, diff) and exits non-zero on any failure.
+- [ ] **FIDB database artifact** — ship a pre-built `esp32p4-idf6.fidb`
+      alongside the extension so users do not need to run
+      `GenerateESP32P4FIDB.java` themselves.
+- [ ] **SVD bundling** — bundle `esp32p4.svd` in the extension ZIP (pending
+      Espressif license clarification) so `LoadESP32P4SVD.java` works
+      out of the box without a local SDK.
+- [ ] **OpenOCD / JTAG launch integration** — add a Ghidra plugin panel
+      that starts OpenOCD for the ESP32-P4 JTAG interface and attaches
+      GDB so live debugging is one click from the Ghidra UI.
+
+### Quality
+
+- [ ] **Sleigh unit tests** — add pattern-match tests for every
+      xesploop and xespv2p2 opcode using Ghidra's `PatternTest` framework.
+- [ ] **Headless smoke test** — a short `analyzeHeadless` run against
+      the round-trip fixture ELF that fails the build if any ERRORs appear
+      in the Ghidra log.
 
 ---
 
