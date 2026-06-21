@@ -316,6 +316,20 @@ int main(void){
    static const int sqlo[]={0,2,1},sqhi[]={7,5,4};uint32_t sqr[3]={0};
    for(int q=0;q<3;q++){int l=8+sqlo[q],r=8+sqhi[q]+1;uint32_t s=0;while(l<r){if(l&1)s+=sgt2[l++];if(r&1)s+=sgt2[--r];l>>=1;r>>=1;}sqr[q]=s;}
    CHECK("test_segment_tree",(8u<<16)|(72u<<8)|((sqr[0]^sqr[1]^sqr[2])&0xFFu),0x00084870u);}
+  /* test_fenwick: n=6 arr={1,3,5,7,9,11}, prefix(1)=1,prefix(3)=9,prefix(6)=36, xor=44 */
+  {int ft2[7]={0};static const int fa2[]={1,3,5,7,9,11};
+   for(int i=1;i<=6;i++){int j=i,v=fa2[i-1];while(j<=6){ft2[j]+=v;j+=j&(-j);}}
+   int fq2[3]={0};static const int fqi2[]={1,3,6};
+   for(int q=0;q<3;q++){int j=fqi2[q];while(j>0){fq2[q]+=ft2[j];j-=j&(-j);}}
+   uint32_t ftot=(uint32_t)fq2[2],fxr=(uint32_t)(fq2[0]^fq2[1]^fq2[2]);
+   CHECK("test_fenwick",(6u<<16)|(ftot<<8)|(fxr&0xFFu),0x0006242Cu);}
+  /* test_lis: {3,1,4,1,5,9,2,6,5,3,5} n=11, LIS=4, piles_xor=5 */
+  {static const int la2[]={3,1,4,1,5,9,2,6,5,3,5};int lpiles[11],lnp=0;
+   for(int i=0;i<11;i++){int v=la2[i],lo=0,hi=lnp;
+     while(lo<hi){int m=(lo+hi)/2;if(lpiles[m]<v)lo=m+1;else hi=m;}
+     lpiles[lo]=v;if(lo==lnp)lnp++;}
+   uint32_t lx=0;for(int i=0;i<lnp;i++)lx^=(uint32_t)lpiles[i];
+   CHECK("test_lis",(11u<<16)|((uint32_t)lnp<<8)|(lx&0xFFu),0x000B0405u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

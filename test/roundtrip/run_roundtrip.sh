@@ -119,6 +119,8 @@ declare -A EXPECTED_RESULT=(
     [test_bitset]=0x0008041E
     [test_pow_mod]=0x00048D53
     [test_segment_tree]=0x00084870
+    [test_fenwick]=0x0006242C
+    [test_lis]=0x000B0405
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -136,7 +138,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_sieve test_edit_dist \
        test_bellman_ford test_counting_sort \
        test_floyd_warshall test_bitset \
-       test_pow_mod test_segment_tree)
+       test_pow_mod test_segment_tree \
+       test_fenwick test_lis)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

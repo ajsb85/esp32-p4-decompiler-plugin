@@ -638,6 +638,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*r.*&.*1.*sum.*tree.*--r|if.*r.*&.*1",        // right boundary odd check
             "l.*>>=.*1.*r.*>>=.*1|l>>1.*r>>1"                 // halving step
         ),
+
+        // ── Fenwick tree / BIT (95, 96) ───────────────────────────────────────
+        new PatternDef("fenwick_update", "bit_update", "high",
+            "i\\s*\\+=\\s*i\\s*&\\s*\\(-i\\)|i.*\\+.*i.*&.*-i", // advance: i+=i&(-i)
+            "while.*i.*<=.*BIT_N|while.*i.*<=.*n",             // update loop bound
+            "bit_update|bit\\[i\\].*\\+=|fenwick.*update"     // naming
+        ),
+        new PatternDef("fenwick_query", "bit_prefix", "high",
+            "i\\s*-=\\s*i\\s*&\\s*\\(-i\\)|i.*-=.*i.*&.*-i",  // subtract: i-=i&(-i)
+            "while.*i.*>.*0|while.*i\\s*>\\s*0",               // query loop bound
+            "bit_prefix|sum.*\\+=.*bit\\[i\\]|fenwick.*query" // naming
+        ),
+
+        // ── LIS patience sort (97, 98) ────────────────────────────────────────
+        new PatternDef("lis_patience", "lis_piles", "high",
+            "lis_piles|piles\\[lo\\].*=.*v|piles\\[lo\\].*=",  // piles array write
+            "if.*lo.*==.*np.*np\\+\\+|lo.*==.*np.*np\\+\\+",  // extend new pile
+            "lis_length|patience_sort|lis_piles"              // function/var name
+        ),
+        new PatternDef("lis_bsearch", "lis_bisect", "high",
+            "piles\\[m\\].*<.*v|lis_piles.*<.*arr",            // patience binary search condition
+            "lo.*=.*m.*\\+.*1|lo=m\\+1",                       // lower bound advance
+            "lis.*lo.*hi|int lo.*=.*0.*hi.*=.*np"             // lo/hi init with np
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
