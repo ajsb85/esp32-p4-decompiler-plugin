@@ -1255,6 +1255,66 @@ public class DetectSemanticPatterns extends GhidraScript {
             "r.*=.*px_table.*px_qr.*i.*\\+.*1.*\\^.*px_table.*px_ql.*i|range.*xor.*px",
             "prefix_xor|px_table|range_xor|xorRange"
         ),
+        new PatternDef("tarjan_scc_low_link", "tarjan_strongly_connected", "high",
+            "low.*v.*=.*min.*low.*v.*disc.*u|if.*disc.*u.*<.*low.*v.*low.*v.*=.*disc.*u",
+            "if.*low.*v.*==.*disc.*v.*scc|pop.*stack.*until.*v.*scc_size",
+            "tarjan|tj_low|tj_disc|tj_scc|low_link"
+        ),
+        new PatternDef("huffman_merge_min", "huffman_tree_build", "high",
+            "huf_find_min.*huf_active|find_min.*active.*freq",
+            "nn.*=.*huf_n_nodes.*huf_nodes.*nn.*freq.*=.*huf_nodes.*a.*freq.*\\+.*huf_nodes.*b.*freq",
+            "huffman|huf_nodes|huf_active|huf_find_min"
+        ),
+        new PatternDef("huffman_code_len", "huffman_dfs_assign", "medium",
+            "huf_dfs.*node.*depth|if.*left.*==.*-1.*huf_code_len.*node.*=.*depth",
+            "total_bits.*\\+=.*freqs.*i.*\\*.*huf_code_len.*i|weighted.*code.*length",
+            "huf_dfs|huf_code_len|total_bits|huffman_code"
+        ),
+        new PatternDef("dfs_toposort_stack", "topological_sort_dfs_postorder", "high",
+            "td_vis.*v.*=.*1.*for.*td_deg.*v.*if.*!td_vis|visited.*=.*1.*recurse.*neighbor",
+            "td_stk.*td_top\\+\\+.*=.*v.*after.*recursion|stack.*push.*after.*all.*neighbors",
+            "td_dfs|toposort_dfs|dfs_topo|td_stk"
+        ),
+        new PatternDef("nim_xor_strategy", "nim_game_sprague_grundy", "high",
+            "nim_xor.*=.*pile.*0.*\\^.*pile.*1|x.*\\^=.*piles.*g.*i",
+            "if.*nim_xor.*==.*0.*lose|if.*xv.*!=.*0.*n_wins",
+            "nim_xor|nim_game|sprague_grundy|pile.*xor"
+        ),
+        new PatternDef("nim_winning_move", "nim_reduce_pile", "medium",
+            "pile.*i.*\\^.*xv.*<.*pile.*i.*reduce_to|piles.*\\^.*xor.*<.*piles",
+            "reduce_to.*=.*pile.*i.*\\^.*xv|winning_pile.*=.*pile.*\\^.*nim_xor",
+            "reduce_to|winning_move|nim_move|pile.*xor.*reduce"
+        ),
+        new PatternDef("tsp_bitmask_dp", "travelling_salesman_held_karp", "high",
+            "dp.*mask.*\\|.*1.*<<.*j.*j.*=.*min.*dp.*mask.*i.*\\+.*cost.*i.*j",
+            "for.*mask.*for.*i.*mask.*&.*1.*<<.*i.*for.*j.*!.*mask.*&.*1.*<<.*j",
+            "tsp_dp|bitmask_dp|held_karp|TSP_N"
+        ),
+        new PatternDef("euler_circuit_hierholzer", "hierholzer_euler_circuit", "high",
+            "ec_used.*v.*i.*=.*1.*mark.*reverse.*edge|used.*v.*i.*=.*1.*reverse",
+            "if.*!found.*circuit.*ec_clen.*=.*ec_stk.*--stop|pop.*to.*circuit.*when.*stuck",
+            "hierholzer|euler_circuit|ec_clen|ec_circuit"
+        ),
+        new PatternDef("euler_all_even_degree", "euler_circuit_existence", "medium",
+            "if.*ec_deg.*i.*%.*2.*!=.*0.*has_euler|all.*degrees.*even.*euler.*circuit",
+            "has_euler.*=.*0.*deg.*odd|for.*i.*<.*EC_N.*deg.*%.*2.*has_euler",
+            "has_euler|all_even|euler_exists|ec_deg.*%.*2"
+        ),
+        new PatternDef("convex_hull_cross", "graham_scan_cross_product", "high",
+            "ch_cross.*oi.*ai.*bi.*px.*ai.*-.*px.*oi.*py.*bi.*-.*py.*oi|cross.*a.*-.*o.*b.*-.*o",
+            "while.*ch_htop.*>=.*2.*ch_cross.*ch_hull.*ch_htop.*-.*2.*<=.*0.*ch_htop--",
+            "graham_scan|ch_cross|ch_hull|ch_htop|convex_hull"
+        ),
+        new PatternDef("digit_dp_tight", "digit_dp_bounded", "high",
+            "int.*lim.*=.*tight.*\\?.*digits.*pos.*:.*9|limit.*tight.*digit",
+            "cnt.*\\+=.*dd_solve.*pos.*\\+.*1.*rem.*\\+.*d.*%.*dd_k.*tight.*&&.*d.*==.*lim",
+            "dd_solve|digit_dp|dd_memo|dd_tight|dd_digits"
+        ),
+        new PatternDef("digit_dp_memo", "digit_dp_memoize", "medium",
+            "dd_memo_set.*pos.*rem.*tight|if.*dd_memo_set.*return.*dd_memo",
+            "dd_memo.*pos.*rem.*tight.*=.*cnt.*dd_memo_set.*pos.*rem.*tight.*=.*1",
+            "dd_memo|digit_dp_cache|memo_set|dp_digits"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

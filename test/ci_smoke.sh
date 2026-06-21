@@ -156,6 +156,21 @@ static int lca2(int a,int b){while(lca2_dep[a]>lca2_dep[b])a=lca2_par[a];while(l
 static int ni_vis2[4][5],ni_g2[4][5],ni_R2,ni_C2;
 static void ni_dfs2(int r,int c){if(r<0||r>=ni_R2||c<0||c>=ni_C2||!ni_g2[r][c]||ni_vis2[r][c])return;ni_vis2[r][c]=1;ni_dfs2(r-1,c);ni_dfs2(r+1,c);ni_dfs2(r,c-1);ni_dfs2(r,c+1);}
 static int ni_count2(void){int cnt=0;for(int r=0;r<ni_R2;r++)for(int c=0;c<ni_C2;c++)ni_vis2[r][c]=0;for(int r=0;r<ni_R2;r++)for(int c=0;c<ni_C2;c++)if(ni_g2[r][c]&&!ni_vis2[r][c]){ni_dfs2(r,c);cnt++;}return cnt;}
+static int tj2_disc[5],tj2_low[5],tj2_stk[5],tj2_on[5],tj2_timer2,tj2_stop,tj2_nscc;
+static int tj2_scc_sz[5];
+static int tj2_adj[5][2],tj2_deg[5];
+static void tj2_dfs(int v){tj2_disc[v]=tj2_low[v]=tj2_timer2++;tj2_stk[tj2_stop++]=v;tj2_on[v]=1;for(int i=0;i<tj2_deg[v];i++){int u=tj2_adj[v][i];if(tj2_disc[u]==-1){tj2_dfs(u);if(tj2_low[u]<tj2_low[v])tj2_low[v]=tj2_low[u];}else if(tj2_on[u]){if(tj2_disc[u]<tj2_low[v])tj2_low[v]=tj2_disc[u];}}if(tj2_low[v]==tj2_disc[v]){int s=tj2_nscc++;tj2_scc_sz[s]=0;int u;do{u=tj2_stk[--tj2_stop];tj2_on[u]=0;tj2_scc_sz[s]++;}while(u!=v);}}
+static int hf2_freq[5]={5,2,1,3,4};
+struct HN2{int freq,left,right;}hf2_nodes[9];
+static int hf2_act[9],hf2_nn,hf2_clen[5];
+static int hf2_min(void){int mf=0x7fffffff,mi=-1;for(int i=0;i<hf2_nn;i++)if(hf2_act[i]&&hf2_nodes[i].freq<mf){mf=hf2_nodes[i].freq;mi=i;}return mi;}
+static void hf2_dfs(int n,int d){if(hf2_nodes[n].left==-1){hf2_clen[n]=d;return;}hf2_dfs(hf2_nodes[n].left,d+1);hf2_dfs(hf2_nodes[n].right,d+1);}
+static int td2_adj[5][2]={{-1,-1},{-1,-1},{0,1},{1,-1},{2,3}},td2_deg[5]={0,0,2,1,2};
+static int td2_vis[5],td2_stk[5],td2_top;
+static void td2_dfs(int v){td2_vis[v]=1;for(int i=0;i<td2_deg[v];i++)if(!td2_vis[td2_adj[v][i]])td2_dfs(td2_adj[v][i]);td2_stk[td2_top++]=v;}
+static int ch2_px[6]={0,2,3,2,0,1},ch2_py[6]={0,0,1,2,2,1},ch2_hull[6],ch2_ht;
+static int ch2_cross(int oi,int ai,int bi){return(ch2_px[ai]-ch2_px[oi])*(ch2_py[bi]-ch2_py[oi])-(ch2_py[ai]-ch2_py[oi])*(ch2_px[bi]-ch2_px[oi]);}
+static void ch2_scan(void){int mi=0;for(int i=1;i<6;i++)if(ch2_py[i]<ch2_py[mi]||(ch2_py[i]==ch2_py[mi]&&ch2_px[i]<ch2_px[mi]))mi=i;int tx=ch2_px[0];ch2_px[0]=ch2_px[mi];ch2_px[mi]=tx;int ty=ch2_py[0];ch2_py[0]=ch2_py[mi];ch2_py[mi]=ty;for(int i=1;i<5;i++){int b=i;for(int j=i+1;j<6;j++){int c=ch2_cross(0,b,j);if(c<0){b=j;}else if(c==0){int d1=(ch2_px[b]-ch2_px[0])*(ch2_px[b]-ch2_px[0])+(ch2_py[b]-ch2_py[0])*(ch2_py[b]-ch2_py[0]);int d2=(ch2_px[j]-ch2_px[0])*(ch2_px[j]-ch2_px[0])+(ch2_py[j]-ch2_py[0])*(ch2_py[j]-ch2_py[0]);if(d2>d1)b=j;}}if(b!=i){tx=ch2_px[i];ch2_px[i]=ch2_px[b];ch2_px[b]=tx;ty=ch2_py[i];ch2_py[i]=ch2_py[b];ch2_py[b]=ty;}}ch2_ht=0;for(int i=0;i<6;i++){while(ch2_ht>=2&&ch2_cross(ch2_hull[ch2_ht-2],ch2_hull[ch2_ht-1],i)<=0)ch2_ht--;ch2_hull[ch2_ht++]=i;}}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -745,6 +760,45 @@ int main(void){
    int pql[]={0,2,0},pqr[]={3,5,7};uint32_t pxs=0,pxx=0;
    for(int i=0;i<3;i++){uint32_t r=(uint32_t)(pxp[pqr[i]+1]^pxp[pql[i]]);pxs+=r;pxx^=r;}
    CHECK("test_prefix_xor",(3u<<16)|((pxs&0xFFu)<<8)|(pxx&0xFFu),0x00031008u);}
+  /* test_tarjan_scc: n=5 SCCs=2 sizes={2,3} xor=1 */
+  {int adj_i[5][2]={{1,-1},{2,-1},{0,3},{4,-1},{3,-1}},deg_i[5]={1,1,2,1,1};
+   for(int i=0;i<5;i++){tj2_adj[i][0]=adj_i[i][0];tj2_adj[i][1]=adj_i[i][1];tj2_deg[i]=deg_i[i];tj2_disc[i]=-1;tj2_on[i]=0;}
+   tj2_timer2=0;tj2_stop=0;tj2_nscc=0;
+   for(int i=0;i<5;i++)if(tj2_disc[i]==-1)tj2_dfs(i);
+   uint32_t xs=0;for(int i=0;i<tj2_nscc;i++)xs^=(uint32_t)tj2_scc_sz[i];
+   CHECK("test_tarjan_scc",(5u<<16)|((uint32_t)tj2_nscc<<8)|(xs&0xFFu),0x00050201u);}
+  /* test_huffman: n=5 chars total_bits=33 xor_lens=2 */
+  {hf2_nn=5;for(int i=0;i<5;i++){hf2_nodes[i].freq=hf2_freq[i];hf2_nodes[i].left=-1;hf2_nodes[i].right=-1;hf2_act[i]=1;}
+   for(int i=5;i<9;i++){hf2_nodes[i].freq=0;hf2_nodes[i].left=-1;hf2_nodes[i].right=-1;hf2_act[i]=0;}
+   while(1){int a=hf2_min();if(a<0)break;hf2_act[a]=0;int b=hf2_min();if(b<0){hf2_act[a]=1;break;}hf2_act[b]=0;int nn=hf2_nn++;hf2_nodes[nn].freq=hf2_nodes[a].freq+hf2_nodes[b].freq;hf2_nodes[nn].left=a;hf2_nodes[nn].right=b;hf2_act[nn]=1;}
+   hf2_dfs(hf2_nn-1,0);
+   int tb=0;uint32_t xl=0;for(int i=0;i<5;i++){tb+=hf2_freq[i]*hf2_clen[i];xl^=(uint32_t)hf2_clen[i];}
+   CHECK("test_huffman",(5u<<16)|((uint32_t)(tb&0xFF)<<8)|(xl&0xFFu),0x00052102u);}
+  /* test_toposort_dfs: n=5 order=[4,3,2,1,0] sum=10 xor=4 */
+  {for(int i=0;i<5;i++){td2_vis[i]=0;}td2_top=0;
+   for(int i=0;i<5;i++)if(!td2_vis[i])td2_dfs(i);
+   uint32_t ts=0,tx=0;for(int i=td2_top-1;i>=0;i--){ts+=(uint32_t)td2_stk[i];tx^=(uint32_t)td2_stk[i];}
+   CHECK("test_toposort_dfs",(5u<<16)|((ts&0xFFu)<<8)|(tx&0xFFu),0x00050A04u);}
+  /* test_nim: 5 games n_wins=1 xor_all=2 */
+  {int piles[5][4]={{3,4,5,0},{1,2,3,0},{4,4,0,0},{3,3,3,3},{2,2,0,0}};int szs[5]={3,3,2,4,2};
+   uint32_t nw=0,xn=0;for(int g=0;g<5;g++){int nx=0;for(int i=0;i<szs[g];i++)nx^=piles[g][i];xn^=(uint32_t)nx;if(nx)nw++;}
+   CHECK("test_nim",(5u<<16)|(nw<<8)|(xn&0xFFu),0x00050102u);}
+  /* test_tsp_bitmask: n=4 min_cost=80 */
+  {int tc[4][4]={{0,10,15,20},{10,0,35,25},{15,35,0,30},{20,25,30,0}};
+   int dp[16][4];for(int m=0;m<16;m++)for(int i=0;i<4;i++)dp[m][i]=999999;dp[1][0]=0;
+   for(int mask=1;mask<16;mask++)for(int i=0;i<4;i++){if(!(mask&(1<<i))||dp[mask][i]==999999)continue;for(int j=0;j<4;j++){if(mask&(1<<j))continue;int nm=mask|(1<<j),nc=dp[mask][i]+tc[i][j];if(nc<dp[nm][j])dp[nm][j]=nc;}}
+   int best=999999;for(int i=1;i<4;i++){int c=dp[15][i]+tc[i][0];if(c<best)best=c;}
+   CHECK("test_tsp_bitmask",(4u<<16)|((uint32_t)(best&0xFF)<<8)|4u,0x00045004u);}
+  /* test_euler_circuit: n=5 n_edges=6 has_euler=1 (all even) */
+  {int deg5[5]={2,2,4,2,2};int he=1;for(int i=0;i<5;i++)if(deg5[i]%2!=0)he=0;
+   CHECK("test_euler_circuit",(5u<<16)|(6u<<8)|(uint32_t)he,0x00050601u);}
+  /* test_convex_hull: 6pts hull=5 sum_x=7 sum_y=5 */
+  {ch2_scan();int sx=0,sy=0;for(int i=0;i<ch2_ht;i++){sx+=ch2_px[ch2_hull[i]];sy+=ch2_py[ch2_hull[i]];}
+   CHECK("test_convex_hull",((uint32_t)ch2_ht<<16)|((uint32_t)(sx&0xFF)<<8)|(uint32_t)(sy&0xFF),0x00050705u);}
+  /* test_digit_dp: count(1..100,ds%3==0)=33 count(1..100,ds%5==0)=19 sum=52 xor=50 */
+  {int c3=0,c5=0;for(int n=1;n<=100;n++){int t=n,s=0;while(t>0){s+=t%10;t/=10;}if(s%3==0)c3++;if(s%5==0)c5++;}
+   uint32_t dds=(uint32_t)(c3+c5),ddx=(uint32_t)(c3^c5);
+   CHECK("test_digit_dp",(2u<<16)|((dds&0xFFu)<<8)|(ddx&0xFFu),0x00023432u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
