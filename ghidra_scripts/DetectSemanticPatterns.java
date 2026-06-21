@@ -6009,6 +6009,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x64084F|CP_UPPER.*100.*cp_count.*8.*last_p.*79|cousin_primes_metrics",
             "g_result.*0x64.*0x08.*0x4F|cp_g_result"
         ),
+
+        // ── sexy_primes ───────────────────────────────────────────────────────
+        new PatternDef("sexy_primes_is_prime", "sexy_primes_is_prime", "high",
+            "is_prime_sp|sexy.*prime.*check|p\\s*[+]\\s*6.*prime",
+            "for.*d\\s*=\\s*3.*d\\s*[*]\\s*d\\s*<=.*n.*d\\s*[+]=\\s*2|trial_div_odd_sp",
+            "n\\s*%\\s*d\\s*==\\s*0.*return\\s*0|is_prime_sp_reject"
+        ),
+        new PatternDef("sexy_primes_loop", "sexy_primes_loop", "high",
+            "for.*p.*2.*p\\s*[+]\\s*6.*<=.*SP_UPPER|sexy_pair_scan",
+            "is_prime_sp.*p.*&&.*is_prime_sp.*p\\s*[+]\\s*6|sexy_pair_test",
+            "sp_count[+][+].*last_p\\s*=\\s*p|sexy_primes_accumulate"
+        ),
+        new PatternDef("sexy_primes_pack", "sexy_primes_pack", "medium",
+            "SP_UPPER\\s*<<\\s*16.*sp_count.*<<.*8.*last_p|sexy_primes_pack",
+            "0x031AC1|SP_UPPER.*200.*sp_count.*26.*last_p.*193|sexy_primes_metrics",
+            "g_result.*sp_count.*metric_a.*metric_b|sp_g_result"
+        ),
+
+        // ── safe_primes ───────────────────────────────────────────────────────
+        new PatternDef("safe_primes_is_prime", "safe_primes_is_prime", "high",
+            "is_prime_safe|safe.*prime.*check|p\\s*-\\s*1.*>>\\s*1.*prime",
+            "for.*d\\s*=\\s*3.*d\\s*[*]\\s*d\\s*<=.*n.*d\\s*[+]=\\s*2|trial_div_odd_safe",
+            "n\\s*%\\s*d\\s*==\\s*0.*return\\s*0|is_prime_safe_reject"
+        ),
+        new PatternDef("safe_primes_loop", "safe_primes_loop", "high",
+            "for.*p.*5.*p\\s*<=.*SAFE_UPPER.*p\\s*[+]=\\s*2|safe_prime_scan",
+            "is_prime_safe.*p.*&&.*is_prime_safe.*p\\s*-\\s*1.*>>\\s*1|safe_test_pair",
+            "safe_count[+][+].*last_safe\\s*=\\s*p|safe_primes_accumulate"
+        ),
+        new PatternDef("safe_primes_pack", "safe_primes_pack", "medium",
+            "SAFE_UPPER\\s*<<\\s*16.*safe_count.*<<.*8.*last_safe|safe_primes_pack",
+            "0x03000C07|SAFE_UPPER.*300.*safe_count.*12.*last_safe.*263|safe_primes_metrics",
+            "g_result.*safe_count.*metric_a.*metric_b|safe_g_result"
+        ),
+
+        // ── chen_primes ───────────────────────────────────────────────────────
+        new PatternDef("chen_primes_omega", "chen_primes_omega", "high",
+            "omega_cp|prime_factor_count_cp|cnt[+][+].*n\\s*>>=\\s*1",
+            "while.*n\\s*%\\s*d\\s*==\\s*0.*cnt[+][+].*n\\s*/=\\s*d|omega_trial_div",
+            "if.*n\\s*>\\s*1.*cnt[+][+]|omega_last_factor"
+        ),
+        new PatternDef("chen_primes_loop", "chen_primes_loop", "high",
+            "for.*p.*2.*p\\s*[+]\\s*2.*<=.*CP_UPPER|chen_prime_scan",
+            "is_prime_cp.*q.*||.*omega_cp.*q.*==\\s*2|chen_test_condition",
+            "chen_count[+][+].*last_chen\\s*=\\s*p|chen_primes_accumulate"
+        ),
+        new PatternDef("chen_primes_pack", "chen_primes_pack", "medium",
+            "CP_UPPER\\s*<<\\s*16.*chen_count.*<<.*8.*last_chen|chen_primes_pack",
+            "0x031561|CP_UPPER.*100.*chen_count.*21.*last_chen.*97|chen_primes_metrics",
+            "g_result.*chen_count.*metric_a.*metric_b|cp_g_result_chen"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
