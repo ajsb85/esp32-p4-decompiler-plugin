@@ -825,6 +825,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*i.*=.*2.*i.*<=.*n|for.*i.*<.*=.*n.*pos",   // i from 2 to n loop
             "josephus|survivor|pos.*\\+.*1"                  // naming / +1 adjustment
         ),
+
+        // ── Sprint 43: QuickSelect ───────────────────────────────────────────
+        new PatternDef("quick_select_pivot", "quick_select", "high",
+            "if.*p.*==.*k.*return|pivot_idx.*==.*k",          // early-exit on pivot==k
+            "k.*<.*p.*hi.*=|lo.*=.*p.*\\+.*1",               // one-sided recurse
+            "quick_select|qs_partition|kth_smallest"         // naming
+        ),
+
+        // ── Sprint 43: Matrix Chain Multiplication DP ───────────────────────
+        new PatternDef("matrix_chain_dp", "matrix_chain_mult", "high",
+            "for.*l.*=.*2.*l.*<=.*n",                         // outer length loop
+            "mc_dp.*\\[i\\].*\\[j\\].*=.*0x7f|INT_MAX",      // sentinel init
+            "mc_dp|dims.*\\[i\\].*dims.*\\[k.*\\+.*1\\]"    // cost formula / naming
+        ),
+        new PatternDef("matrix_chain_cost", "matrix_chain_inner", "medium",
+            "cost.*mc_dp.*\\[i\\].*\\[k\\].*mc_dp.*\\[k",    // dp[i][k]+dp[k+1][j] sum
+            "dims.*\\[.*\\].*\\*.*dims.*\\[.*\\].*\\*.*dims", // triple dims product
+            "matrix_chain|mc_dp|chain_mult"                  // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -422,6 +422,19 @@ int main(void){
    for(int t=0;t<3;t++){int p=0;for(int i=2;i<=jns[t];i++)p=(p+jks[t])%i;p++;
      jsum+=(uint32_t)p;jxor^=(uint32_t)p;}
    CHECK("test_josephus",(10u<<16)|(jsum<<8)|(jxor&0xFFu),0x000A0C02u);}
+  /* test_quick_select: {7,2,1,6,5,3,4,8} n=8; ks={0,3,7}→{1,4,8} sum=13 xor=13 */
+  {static const int qsin[]={7,2,1,6,5,3,4,8};int qsa[8],qss[8];uint32_t qsum=0,qxor=0;
+   static const int qks[]={0,3,7};
+   for(int t=0;t<3;t++){for(int i=0;i<8;i++)qsa[i]=qsin[i];
+     int lo=0,hi=7,k=qks[t];
+     while(lo<hi){int pv=qsa[hi],ii=lo-1;for(int j=lo;j<hi;j++)if(qsa[j]<=pv){ii++;int tmp=qsa[ii];qsa[ii]=qsa[j];qsa[j]=tmp;}int tmp=qsa[ii+1];qsa[ii+1]=qsa[hi];qsa[hi]=tmp;int p=ii+1;if(p==k)break;else if(k<p)hi=p-1;else lo=p+1;}
+     qsum+=(uint32_t)qsa[k];qxor^=(uint32_t)qsa[k];}
+   CHECK("test_quick_select",(8u<<16)|(qsum<<8)|(qxor&0xFFu),0x00080D0Du);}
+  /* test_matrix_chain: dims={2,3,4,5} n=3; dp[0][2]=64, dp[0][1]=24 */
+  {static const int mcd[]={2,3,4,5};int mcdp[3][3]={{0,0,0},{0,0,0},{0,0,0}};
+   for(int l=2;l<=3;l++)for(int i=0;i<=3-l;i++){int j=i+l-1;mcdp[i][j]=0x7fffffff;
+     for(int k=i;k<j;k++){int c=mcdp[i][k]+mcdp[k+1][j]+mcd[i]*mcd[k+1]*mcd[j+1];if(c<mcdp[i][j])mcdp[i][j]=c;}}
+   CHECK("test_matrix_chain",(3u<<16)|((uint32_t)mcdp[0][2]<<8)|(uint32_t)mcdp[0][1],0x00034018u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

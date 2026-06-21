@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 56 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 58 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -68,6 +68,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_subset_sum.c` | Subset sum boolean DP {3,5,2,8,7}; targets {10,12,11} all reachable; xor=13 | `0x0005030D` | |
 | `test_next_greater.c` | Next Greater Element monotonic stack {4,5,2,10,8,3,6,1}; count=4, xor=3 | `0x00080403` | |
 | `test_josephus.c` | Josephus recurrence pos=(pos+k)%i; (n=10,k=3)→4, (n=7,k=2)→7, (n=12,k=4)→1 | `0x000A0C02` | |
+| `test_quick_select.c` | QuickSelect k-th smallest Lomuto; {7,2,1,6,5,3,4,8} k∈{0,3,7}→{1,4,8} | `0x00080D0D` | |
+| `test_matrix_chain.c` | Matrix chain mult DP; dims={2,3,4,5} n=3; dp[0][2]=64, dp[0][1]=24 | `0x00034018` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -150,7 +152,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-124 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+127 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -213,6 +215,8 @@ Pattern families currently covered (51 patterns):
 | Subset sum DP | dp[0]=1; for each v: for j=limit..v: dp[j]\|=dp[j-v] (boolean 0/1) |
 | Next Greater Element | while(top>=0 && arr[stack[top]]<arr[i]) nge[stack[top--]]=arr[i]; stack[++top]=i |
 | Josephus recurrence | pos=0; for i=2..n: pos=(pos+k)%i; survivor=pos+1 |
+| QuickSelect | Lomuto partition; if(pivot==k)return; recurse only one side |
+| Matrix chain DP | l=2..n diagonal; dp[i][j]=min(dp[i][k]+dp[k+1][j]+dims product) |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
