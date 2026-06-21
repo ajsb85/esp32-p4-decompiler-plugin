@@ -3084,6 +3084,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cost.*\\+=.*dist.*t.*\\*.*bottleneck|mcmf_cumulative_cost",
             "mcmf_cost|mcmf_accumulate|mcmf_total_cost"
         ),
+
+        // ── Randomized Quickselect ───────────────────────────────────────────
+        new PatternDef("rqs_partition_lomuto", "quickselect_lomuto_partition_store_index", "high",
+            "store.*=.*lo.*for.*i.*=.*lo.*i.*<.*hi.*if.*arr.*i.*<=.*pivot.*swap.*store.*store\\+\\+",
+            "pivot.*swap.*store.*lo.*arr.*store.*hi.*lomuto.*partition|rqs_store.*pivot",
+            "rqs_partition|quickselect_partition|lomuto_store"
+        ),
+        new PatternDef("rqs_median_of_three", "quickselect_median_of_three_pivot", "high",
+            "mid.*=.*lo.*\\+.*hi.*-.*lo.*\\/.*2.*if.*arr.*lo.*>.*arr.*mid.*swap.*lo.*mid",
+            "if.*arr.*lo.*>.*arr.*hi.*swap.*lo.*hi.*if.*arr.*mid.*>.*arr.*hi.*swap.*mid.*hi|median_of_three",
+            "rqs_pivot|med3_pivot|quickselect_median3"
+        ),
+        new PatternDef("rqs_tail_recurse", "quickselect_tail_narrow_range_loop", "high",
+            "while.*lo.*<.*hi.*p.*=.*partition.*if.*p.*==.*k.*return.*arr.*p.*else.*if.*p.*<.*k.*lo.*=.*p.*\\+.*1",
+            "p.*==.*k.*return.*p.*<.*k.*lo.*=.*p.*\\+.*1.*hi.*=.*p.*-.*1|quickselect_narrow",
+            "rqs_select|quickselect_loop|rqs_lo_hi_narrow"
+        ),
+
+        // ── Manacher Palindrome ──────────────────────────────────────────────
+        new PatternDef("manacher_transform", "manacher_hash_sentinel_transform", "high",
+            "man_t.*=.*#.*for.*i.*<.*n.*man_t.*=.*man_s.*i.*man_t.*=.*#|transform.*#.*palindrome.*sentinel",
+            "tlen.*=.*0.*t.*tlen\\+\\+.*=.*#.*for.*i.*=.*0.*i.*<.*n.*t.*=.*s.*i.*t.*=.*#|manacher_build_t",
+            "manacher_transform|man_tlen|palindrome_sentinel_insert"
+        ),
+        new PatternDef("manacher_mirror_expand", "manacher_mirror_right_boundary_expand", "high",
+            "if.*i.*<.*r.*p.*i.*=.*min.*p.*mirror.*r.*-.*i.*while.*t.*i.*-.*p.*i.*-.*1.*==.*t.*i.*\\+.*p.*i.*\\+.*1",
+            "mirror.*=.*2.*c.*-.*i.*if.*i.*<.*r.*p.*i.*=.*p.*mirror.*<.*r.*-.*i|manacher_expand_center",
+            "manacher_mirror|man_expand|palindrome_expand_right"
+        ),
+        new PatternDef("manacher_right_update", "manacher_update_rightmost_palindrome_center", "high",
+            "if.*i.*\\+.*p.*i.*>.*r.*c.*=.*i.*r.*=.*i.*\\+.*p.*i|update.*c.*r.*rightmost.*manacher",
+            "c.*=.*i.*r.*=.*i.*\\+.*p.*i.*if.*i.*\\+.*p.*i.*>.*r|manacher_center_right_update",
+            "manacher_right|man_c_r|manacher_boundary_update"
+        ),
+
+        // ── Sqrt Decomposition ───────────────────────────────────────────────
+        new PatternDef("sqd_build_blocks", "sqrt_decomp_build_block_sums", "high",
+            "for.*i.*=.*0.*i.*<.*sqd_n.*bsum.*i.*\\/.*sqd_b.*\\+=.*arr.*i|block_sum.*\\+=.*arr.*i.*block.*=.*i.*\\/.*B",
+            "sqd_bsum.*idx.*\\/.*SQD_B.*\\+=.*delta|sqrt_decomp_block_build",
+            "sqd_build|block_sum_build|sqrt_decomp_preprocess"
+        ),
+        new PatternDef("sqd_point_update", "sqrt_decomp_point_update_and_block_sum", "high",
+            "arr.*idx.*\\+=.*delta.*bsum.*idx.*\\/.*b.*\\+=.*delta|sqd_update.*sqd_bsum.*\\+=.*delta",
+            "sqd_arr.*idx.*\\+=.*delta.*sqd_bsum.*idx.*\\/.*SQD_B.*\\+=.*delta|point_update_block",
+            "sqd_update|sqrt_point_update|block_sum_update"
+        ),
+        new PatternDef("sqd_range_query", "sqrt_decomp_range_query_partial_full_blocks", "high",
+            "bl.*=.*l.*\\/.*sqd_b.*br.*=.*r.*\\/.*sqd_b.*if.*bl.*==.*br.*for.*i.*=.*l.*i.*<=.*r",
+            "for.*b.*=.*bl.*\\+.*1.*b.*<.*br.*sum.*\\+=.*bsum.*b.*for.*i.*=.*right_start.*i.*<=.*r|sqd_query",
+            "sqd_query|sqrt_range_sum|block_partial_full_query"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
