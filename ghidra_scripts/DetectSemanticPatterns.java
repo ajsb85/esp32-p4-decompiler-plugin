@@ -2240,6 +2240,37 @@ public class DetectSemanticPatterns extends GhidraScript {
             "s.*\\+=.*bit2.*i.*j.*nested.prefix.query|2d_fenwick_rect_sum",
             "bit2d_query|fenwick_2d_sum|2d_prefix_rect"
         ),
+
+        // ── String period via KMP failure function ─────────────────────────
+        new PatternDef("kmp_period_formula", "kmp_failure_function_period", "high",
+            "period.*=.*n.*-.*fail.*n.*-.*1|n.*-.*sp_fail.*n.*-.*1.*period",
+            "n.*%.*period.*==.*0.*exact|fail.*n.*-.*1.*period.*exact.check",
+            "kmp_period|string_period|failure_period"
+        ),
+        new PatternDef("kmp_backtrack_while", "kmp_failure_function_backtrack", "high",
+            "while.*j.*>.*0.*&&.*s.*j.*!=.*s.*i.*j.*=.*fail.*j.*-.*1",
+            "while.*j.*>.*0.*s\\[j\\].*!=.*s\\[i\\].*j.*=.*sp_fail.*j.*-.*1",
+            "kmp_fail|prefix_fail|kmp_backtrack"
+        ),
+
+        // ── Inversion count via Fenwick ─────────────────────────────────────
+        new PatternDef("inv_bit_precount", "inversion_count_fenwick_precount", "high",
+            "inv_cnt.*\\+=.*inv_query.*a.*i.*-.*1.*inv_update.*a.*i.*1",
+            "cnt.*\\+=.*iqry.*a.*i.*-.*1.*iupd.*a.*i.*1|inversions.*before.*insert",
+            "inversion_bit|count_inversions_fenwick|inv_count"
+        ),
+
+        // ── Matrix chain multiplication (memoized) ─────────────────────────
+        new PatternDef("mcm_memo_check", "matrix_chain_memoized_base_check", "high",
+            "if.*mc_memo.*i.*j.*>=.*0.*return.*mc_memo.*i.*j|if.*memo.*i.*j.*>=.*0.*return",
+            "mc_memo\\[i\\]\\[j\\].*>=.*0.*return|memoized.*matrix.*chain.*dp",
+            "matrix_chain_memo|mcm_dp|chain_memoize"
+        ),
+        new PatternDef("mcm_dimension_product", "matrix_chain_dimension_product_cost", "high",
+            "mc_p.*i.*\\*.*mc_p.*k.*\\+.*1.*\\*.*mc_p.*j.*\\+.*1|p.*i.*p.*k.*1.*p.*j.*1.*cost",
+            "cost.*=.*mcs.*i.*k.*\\+.*mcs.*k.*\\+.*1.*j.*\\+.*p.*i.*p.*k.*p.*j",
+            "mcm_cost|dimension_product|chain_split_cost"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
