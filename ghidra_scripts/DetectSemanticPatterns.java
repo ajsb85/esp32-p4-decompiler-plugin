@@ -5739,6 +5739,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x0A1504|WP_N.*10.*dp_sum.*21.*dp_max.*4|waring_result",
             "g_result.*0x0A.*0x15.*0x04|wp_g_result"
         ),
+        new PatternDef("euler_zigzag_entringer", "euler_zigzag_triangle", "high",
+            "ez_T\\[n\\]\\[k\\]\\s*=\\s*ez_T\\[n\\]\\[k.*1\\].*ez_T\\[n.*1\\]\\[n.*k\\]|entringer_recurrence",
+            "ez_T|ez_zigzag|entringer.*triangle|zigzag.*diagonal",
+            "zigzag\\[n\\]\\s*=\\s*T\\[n\\]\\[n\\]|ez_T.*n.*n.*ez_zigzag"
+        ),
+        new PatternDef("euler_zigzag_odd_sum", "euler_zigzag_odd_acc", "high",
+            "odd_sum.*ez_zigzag|zigzag.*i.*1.*odd_sum|EZ_N.*7.*odd.*E1.*E3.*E5",
+            "i\\s*&\\s*1.*odd_sum|odd_indexed.*zigzag|alternate.*sum.*zigzag",
+            "odd_sum.*19|ez_zigzag.*1.*2.*16|alternating_perm_sum"
+        ),
+        new PatternDef("euler_zigzag_pack", "euler_zigzag_pack", "medium",
+            "EZ_N\\s*<<\\s*16.*odd_sum.*<<.*8.*max_val|euler_zigzag_pack",
+            "0x07133D|EZ_N.*7.*odd_sum.*19.*max_val.*61|zigzag_result",
+            "g_result.*0x07.*0x13.*0x3D|ez_g_result"
+        ),
+        new PatternDef("tangent_numbers_entringer", "tangent_numbers_triangle", "high",
+            "tan_E\\[n\\]\\[k\\]\\s*=\\s*tan_E\\[n\\]\\[k.*1\\].*tan_E\\[n.*1\\]\\[n.*k\\]|tangent_entringer",
+            "tan_E|tan_vals|tangent.*odd.*diagonal|entringer.*tangent",
+            "tan_E\\[row\\]\\[row\\]|2.*k.*1.*tangent.*odd_row"
+        ),
+        new PatternDef("tangent_numbers_extract", "tangent_numbers_extract", "high",
+            "row\\s*=\\s*2.*k.*1.*tan_E\\[row\\]\\[row\\]|tangent_extract",
+            "T1.*1.*T3.*2.*T5.*16.*T7.*272|tangent_vals.*1_2_16_272",
+            "2.*k.*1.*TAN_N.*4|odd_row_diagonal.*tangent"
+        ),
+        new PatternDef("tangent_numbers_pack", "tangent_numbers_pack", "medium",
+            "TAN_N\\s*<<\\s*16.*sum_t.*<<.*8.*xor_t|tangent_pack",
+            "0x042303|TAN_N.*4.*sum.*291.*xor.*259|tangent_result",
+            "g_result.*0x04.*0x23.*0x03|tan_g_result"
+        ),
+        new PatternDef("smooth_numbers_trial_div", "smooth_numbers_trial_div", "high",
+            "rem\\s*%\\s*p\\s*==\\s*0.*rem\\s*/=\\s*p|smooth_trial_div",
+            "sn_primes|while.*rem.*%.*p.*0.*rem.*p|trial_divide.*smooth",
+            "rem.*1.*count_smooth|smooth_remainder_check"
+        ),
+        new PatternDef("smooth_numbers_classify", "smooth_numbers_classify", "high",
+            "SN_UPPER.*SN_B.*smooth|for.*n.*SN_UPPER.*trial.*smooth",
+            "count_smooth|sum_smooth|5.smooth.*range|B_smooth.*20",
+            "1.*2.*3.*4.*5.*6.*8.*9.*10.*12.*15.*16.*18.*20|smooth_list_20"
+        ),
+        new PatternDef("smooth_numbers_pack", "smooth_numbers_pack", "medium",
+            "SN_UPPER\\s*<<\\s*16.*count_smooth.*<<.*8.*sum_smooth|smooth_pack",
+            "0x140E81|SN_UPPER.*20.*count.*14.*sum.*129|smooth_result",
+            "g_result.*0x14.*0x0E.*0x81|sn_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
