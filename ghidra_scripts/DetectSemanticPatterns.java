@@ -1970,6 +1970,11 @@ public class DetectSemanticPatterns extends GhidraScript {
             "insert.*endpoints.*0.*and.*len.*sort.*interval.*dp.*cut.*cost",
             "stick_cut|cut_interval|min_cut_dp"
         ),
+        new PatternDef("palindrome_precompute_2d", "palindrome_2d_table_precompute", "medium",
+            "for.*i.*=.*0.*n.*pal.*i.*i.*=.*1.*for.*i.*=.*0.*i.*1.*<.*n.*pal.*i.*i.*1.*=.*s.*i.*==.*s.*i.*1",
+            "for.*len.*=.*3.*len.*<=.*n.*pal.*i.*j.*=.*s.*i.*==.*s.*j.*&&.*pal.*i.*1.*j.*-.*1",
+            "palindrome_2d|pal_precompute|palindrome_table"
+        ),
         new PatternDef("bfs_word_transform", "word_ladder_bfs_transform", "high",
             "for.*i.*=.*0.*nd.*if.*visited.*i.*||.*one_diff.*cur.*dict.*i.*continue",
             "bfs.*word.*transform.*one.*letter.*at.*a.*time.*shortest.*path",
