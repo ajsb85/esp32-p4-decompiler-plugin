@@ -4869,6 +4869,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xl.*=.*p.*&.*0xFFu|pell_x_low_byte",
             "yl.*=.*q.*&.*0xFFu|pell_y_low_byte"
         ),
+        new PatternDef("harshad_digit_sum", "harshad_digit_sum_extract", "high",
+            "s.*\\+?=.*n.*%.*10|digit_sum_accumulate",
+            "n.*/?=.*10.*s.*\\+=.*n|digit_extraction_loop",
+            "digit_sum.*harshad|harshad_sum_compute"
+        ),
+        new PatternDef("harshad_divisibility", "harshad_divisibility_check", "high",
+            "n.*%.*s.*==.*0|divisible_by_digit_sum",
+            "is_harshad|harshad_check_remainder",
+            "digit_sum.*==.*0.*return.*0|harshad_zero_guard"
+        ),
+        new PatternDef("harshad_metric", "harshad_result_encode", "medium",
+            "count.*<<.*16.*last.*<<.*8.*checksum|harshad_pack_result",
+            "last.*=.*i.*is_harshad|harshad_last_update",
+            "count.*last.*0xFF|harshad_checksum_encode"
+        ),
+        new PatternDef("lucky_odd_init", "lucky_sieve_odd_init", "high",
+            "i.*\\+?=.*2.*lucky_arr|odd_number_fill",
+            "1.*\\+.*2.*\\*.*i.*lucky|lucky_step2_init",
+            "lucky_sz.*=.*0.*i.*1.*i.*\\+=.*2|lucky_sieve_init"
+        ),
+        new PatternDef("lucky_sieve_step", "lucky_sieve_remove_step", "high",
+            "step.*=.*arr.*k.*arr.*k.*\\+\\+|lucky_sieve_step_advance",
+            "i.*\\+.*1.*%.*step.*!=.*0.*keep|lucky_sieve_filter",
+            "new_sz.*lucky_arr.*new_sz.*\\+\\+|lucky_sieve_compact"
+        ),
+        new PatternDef("lucky_metric", "lucky_sieve_result_encode", "medium",
+            "count.*<<.*16.*last.*0xFF.*<<.*8|lucky_pack_result",
+            "arr.*i.*<=.*50|lucky_bound_filter",
+            "count.*last.*checksum.*0xFF|lucky_checksum_encode"
+        ),
+        new PatternDef("palindrome_prime_check", "palindrome_prime_dual_test", "high",
+            "is_prime.*is_palindrome|palindrome_prime_filter",
+            "is_prime.*i.*&&.*is_palindrome.*i|combined_primality_palindrome",
+            "palindrome_prime.*count|palindrome_prime_counter"
+        ),
+        new PatternDef("palindrome_reverse_digits", "palindrome_digit_reversal", "high",
+            "reversed.*\\*.*10.*n.*%.*10|digit_reversal_loop",
+            "original.*==.*reversed|palindrome_equality_check",
+            "n.*/?=.*10.*reversed.*\\*=.*10|palindrome_reverse_extract"
+        ),
+        new PatternDef("palindrome_prime_metric", "palindrome_prime_result_encode", "medium",
+            "count.*<<.*16.*last.*0xFF.*<<.*8|palindrome_prime_pack",
+            "last.*=.*i.*is_prime.*is_palindrome|palindrome_prime_last_update",
+            "count.*last.*checksum.*0xFFu|palindrome_prime_checksum"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
