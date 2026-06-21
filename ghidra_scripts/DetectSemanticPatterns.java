@@ -518,6 +518,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "result.*=.*mid.*lo.*=.*mid.*\\+.*1|lo.*=.*mid.*\\+.*1.*last", // rightmost
             "bs_first|bs_last|first_occ|last_occ"               // function names
         ),
+
+        // ── Topological sort — Kahn's (75, 76) ───────────────────────────────
+        new PatternDef("toposort_kahn", "kahn_indegree", "high",
+            "--indeg|indeg\\[v\\]--",                            // in-degree decrement
+            "if.*indeg.*==.*0.*queue|queue.*tail.*=.*v",         // add newly-zero to queue
+            "kahn_sort|topo_indeg|topological"                  // naming
+        ),
+        new PatternDef("toposort_queue", "kahn_bfs", "high",
+            "while.*head.*<.*tail|while.*head.*tail",            // BFS main loop
+            "topo_order|topo\\[.*n_sorted|topo\\[.*n\\+\\+\\]", // topo output array
+            "topo_queue|kahn_queue|toposort"                    // queue name
+        ),
+
+        // ── Fibonacci memoization (77, 78) ───────────────────────────────────
+        new PatternDef("fib_memoization", "fib_cache_check", "high",
+            "fib_cache|memo\\[n\\]|fib.*cache",                  // cache array reference
+            "if.*cache.*>=.*0|if.*memo.*>=.*0",                  // cache hit check
+            "return.*cache|return.*memo"                        // return cached value
+        ),
+        new PatternDef("fib_recursive", "fib_topdown", "medium",
+            "fib.*n.*-.*1.*\\+.*fib.*n.*-.*2|fib\\(n-1\\).*fib\\(n-2\\)", // recursive sum
+            "cache\\[n\\].*=.*fib|memo\\[n\\].*=",              // memoize before return
+            "fib_cache\\[n\\].*=|fib_memo\\[n\\].*="           // cache write
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

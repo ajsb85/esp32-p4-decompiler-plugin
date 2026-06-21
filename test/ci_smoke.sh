@@ -252,6 +252,17 @@ int main(void){
    lo=0;hi=9;while(lo<=hi){int m=(lo+hi)/2;if(bsa[m]<4)lo=m+1;else if(bsa[m]>4)hi=m-1;else{li=m;lo=m+1;}}
    int cnt=(fi>=0&&li>=0)?li-fi+1:0;
    CHECK("test_binary_search",(10u<<16)|((uint32_t)fi<<8)|(uint32_t)cnt,0x000A0104u);}
+  /* test_toposort: Kahn's on 6-node DAG; topo=[4,5,0,2,3,1], sum=15, xor=1 */
+  {static const int ta2[6][6]={{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,1,0,0},{0,1,0,0,0,0},{1,1,0,0,0,0},{1,0,1,0,0,0}};
+   int ti2[6]={2,2,1,1,0,0},tq2[6],th2=0,tt2=0,to2[6],tn2=0;
+   for(int i=0;i<6;i++)if(ti2[i]==0)tq2[tt2++]=i;
+   while(th2<tt2){int u=tq2[th2++];to2[tn2++]=u;for(int v=0;v<6;v++)if(ta2[u][v]&&--ti2[v]==0)tq2[tt2++]=v;}
+   uint32_t ts=0,tx2=0;for(int i=0;i<6;i++){ts+=(uint32_t)to2[i];tx2^=(uint32_t)to2[i];}
+   CHECK("test_toposort",(6u<<16)|(ts<<8)|(tx2&0xFFu),0x00060F01u);}
+  /* test_fib_memo: fib(0..9)={0,1,1,2,3,5,8,13,21,34}, fib(9)=34, xor_all=54 */
+  {int fc2[10];fc2[0]=0;fc2[1]=1;for(int i=2;i<10;i++)fc2[i]=fc2[i-1]+fc2[i-2];
+   uint32_t fx=0;for(int i=0;i<10;i++)fx^=(uint32_t)fc2[i];
+   CHECK("test_fib_memo",(10u<<16)|((uint32_t)fc2[9]<<8)|(fx&0xFFu),0x000A2236u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
