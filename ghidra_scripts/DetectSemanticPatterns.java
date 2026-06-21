@@ -67,6 +67,10 @@
 //  bst_inorder       .left/.right + inorder name in body  bst_traverse
 //  min_heap          2*i+1/2 child-index + sift idiom     heap_op
 //  heap_extract      extract_min + sift_down call          heap_extract
+//  rle_encode        run counter + emit count to output    rle_encode
+//  rle_decode        expand (count,value) pairs into buf   rle_decode
+//  base64_encode     6-bit mask + shift extraction + table base64_enc
+//  base64_table      full base64 alphabet in string literal base64_op
 //
 // ── Output format ────────────────────────────────────────────────────────────
 //
@@ -347,6 +351,28 @@ public class DetectSemanticPatterns extends GhidraScript {
             "extract_min|heap_extract|sift_down",         // extract operation
             "2\\s*\\*\\s*[ij]\\s*\\+",                   // child index formula
             "heap_arr|heap_sz|heap\\["                    // array-based heap
+        ),
+
+        // ── Codec patterns ────────────────────────────────────────────────────
+        new PatternDef("rle_encode", "rle_encode", "high",
+            "count\\+\\+|count\\s*=\\s*1",               // run counter increment
+            "out\\[.*\\]\\s*=.*count|enc\\[.*count",     // emit run count to output
+            "while\\s*\\(.*==.*count|for.*count.*<"      // run-scanning loop
+        ),
+        new PatternDef("rle_decode", "rle_decode", "high",
+            "count\\s*=\\s*enc\\[|count\\s*=\\s*rle",    // decode count from buffer
+            "for\\s*\\(.*count|while.*count--",           // repeat-value expansion loop
+            "out\\[.*\\]\\s*=.*val|dec\\[.*val"          // value written to output
+        ),
+        new PatternDef("base64_encode", "base64_enc", "high",
+            "0x3[Ff]|&\\s*63",                            // 6-bit mask (0x3F or &63)
+            ">>\\s*2|>>\\s*4|>>\\s*6",                   // 6-bit group extraction shifts
+            "B64_TABLE|b64_table|b64\\[|base64.*table"   // table lookup
+        ),
+        new PatternDef("base64_table", "base64_op", "medium",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",                 // uppercase base64 alphabet
+            "abcdefghijklmnopqrstuvwxyz",                 // lowercase base64 alphabet
+            "0123456789\\+/|0123456789\\+\\-"            // digit + symbol segment
         ),
     };
 

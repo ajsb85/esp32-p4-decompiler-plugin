@@ -165,6 +165,22 @@ int main(void){
    while(hsz>0){int min=ha[0];ha[0]=ha[--hsz];int _i=0;while(1){int l=2*_i+1,r=2*_i+2,m=_i;if(l<hsz&&ha[l]<ha[m])m=l;if(r<hsz&&ha[r]<ha[m])m=r;if(m==_i)break;HSWAP(_i,m);_i=m;}hx^=(uint32_t)min;hs+=(uint32_t)min;}
 #undef HSWAP
    CHECK("test_heap",(hs<<8)|(hx&0xFFu),0x00002707u);}
+  /* test_rle: encode {1,1,2,2,2,3,1,1,1,1,4,4}, decode, XOR */
+  {static const uint8_t rlin[12]={1,1,2,2,2,3,1,1,1,1,4,4};
+   uint8_t rlenc[32];uint32_t ep2=0;
+   uint32_t ip2=0;
+   while(ip2<12){uint8_t v2=rlin[ip2];uint32_t c2=1;while(ip2+c2<12&&rlin[ip2+c2]==v2&&c2<255)c2++;rlenc[ep2++]=(uint8_t)c2;rlenc[ep2++]=v2;ip2+=c2;}
+   uint8_t rldec[32];uint32_t dp2=0;
+   for(uint32_t j2=0;j2+1<ep2;j2+=2){uint32_t c3=rlenc[j2];uint8_t v3=rlenc[j2+1];for(uint32_t k2=0;k2<c3;k2++)rldec[dp2++]=v3;}
+   uint32_t rx=0;for(int i2=0;i2<12;i2++)rx^=rlin[i2];
+   CHECK("test_rle",(ep2<<16)|(dp2<<8)|(rx&0xFFu),0x000A0C01u);}
+  /* test_base64: encode "Hello!" → "SGVsbG8h", XOR of encoded */
+  {static const char b64t[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+   static const uint8_t b64in[6]={0x48,0x65,0x6C,0x6C,0x6F,0x21};
+   char b64out[16];uint32_t b64op=0;
+   for(uint32_t bi=0;bi+2<6;bi+=3){unsigned b0=b64in[bi],b1=b64in[bi+1],b2=b64in[bi+2];b64out[b64op++]=b64t[(b0>>2)&0x3F];b64out[b64op++]=b64t[((b0<<4)|(b1>>4))&0x3F];b64out[b64op++]=b64t[((b1<<2)|(b2>>6))&0x3F];b64out[b64op++]=b64t[b2&0x3F];}
+   uint32_t bx=0;for(uint32_t bi=0;bi<b64op;bi++)bx^=(uint8_t)b64out[bi];
+   CHECK("test_base64",(b64op<<8)|(bx&0xFFu),0x00000844u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

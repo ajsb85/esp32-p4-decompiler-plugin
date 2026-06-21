@@ -28,6 +28,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_hwlp.c` | xesploop: `esp.lp.setup` 3-instruction counted sum loop (raw `.word`) | `0x00000824` | ✓ |
 | `test_bst.c` | Binary search tree: static-pool insert + in-order traversal XOR | `0x0000320A` | |
 | `test_heap.c` | Min-heap: array-based insert + extract-min × 8, sift-up / sift-down | `0x00002707` | |
+| `test_rle.c` | Run-length encoding: encode {1,1,2,2,2,3,1,1,1,1,4,4} + decode | `0x000A0C01` | |
+| `test_base64.c` | Base64 encoding: "Hello!" → "SGVsbG8h", 6-bit extraction + table lookup | `0x00000844` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -110,7 +112,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-45 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+49 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -140,6 +142,7 @@ Pattern families currently covered (39 patterns):
 | PIE SIMD | `vld/vst.128.ip` loops, `zero.q`, bitwise Q ops, SIMD loop |
 | xesploop | HWLP setup detection (`hwlp_setup`), counted loop reconstruction (`hwlp_counted_loop`) |
 | Data structures | BST insert / in-order traverse, min-heap insert / extract-min |
+| Codecs | RLE encode/decode run scanning, Base64 6-bit extraction + table |
 
 ---
 
