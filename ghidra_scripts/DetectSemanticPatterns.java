@@ -3542,6 +3542,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*row.*!=.*rank.*&&.*gf2_m.*row.*>>.*col.*&.*1u.*gf2_m.*row.*\\^=",
             "gf2_xor|gf2_eliminate|matrix_rank_xor|gf2_row_elim"
         ),
+
+        // ── Tree Isomorphism (AHU canonical label hashing) ───────────────────
+        new PatternDef("tree_iso_canonical_label", "tree_iso_ahu_canonical_label_dict", "high",
+            "ti_label_of.*code|canonical.*label.*dict.*tree_iso|label_of.*key.*ti_dict",
+            "ti_dict.*==.*key|ti_dict_sz|canonical_label_lookup|ahu_label_dict",
+            "tree_iso_label|ahu_canonical|ti_label_of|tree_isomorphism_dict"
+        ),
+        new PatternDef("tree_iso_children_sort", "tree_iso_children_label_insertion_sort", "high",
+            "ch_labels.*ch_cnt|insertion.*sort.*ch_labels|children.*label.*sort.*tree_iso",
+            "ch_labels.*b\\+1.*=.*ch_labels.*b|sort.*children.*canonical.*label",
+            "tree_iso_sort|ch_labels_sort|children_label_sort|ahu_children_sort"
+        ),
+        new PatternDef("tree_iso_postorder_dfs", "tree_iso_postorder_dfs_label", "high",
+            "ti_par.*v.*==.*u.*ch_labels|postorder.*label.*tree_iso|order.*ord_sz.*label",
+            "for.*i.*=.*ord_sz.*-.*1.*i.*>=.*0|reverse_dfs_order.*label.*children",
+            "tree_iso_postorder|ti_par|tree_iso_dfs|ahu_postorder"
+        ),
+
+        // ── Hall's Theorem / Bipartite Matching via Hall condition ───────────
+        new PatternDef("hall_nbr_union", "hall_theorem_neighbourhood_union_bitmask", "high",
+            "nbr.*\\|=.*hm_adj.*u|neighbourhood.*union.*bitmask.*hall|nbr.*OR.*adj.*subset",
+            "for.*u.*<.*HM_N.*if.*s.*&.*1u.*<<.*u.*nbr.*\\|=|hall_nbr_union",
+            "hall_nbr|hm_adj|hall_neighbourhood|hall_theorem_nbr_union"
+        ),
+        new PatternDef("hall_subset_check", "hall_theorem_subset_violation_check", "high",
+            "nbr_size.*<.*s_size.*violations|hall.*violation.*subset.*check|hall_condition_fail",
+            "for.*s.*=.*1.*s.*<.*1.*<<.*HM_N|subset_enum.*hall_check|hall_violations",
+            "hall_violations|hall_subset|hall_condition|hall_marriage_check"
+        ),
+        new PatternDef("hall_augment_dfs", "hall_bipartite_augmenting_path_dfs", "high",
+            "hm_match_r.*r.*<.*0.*\\|\\|.*hm_dfs.*hm_match_r.*r|augmenting_path.*hall_match",
+            "hm_visited.*r.*=.*1|hm_match_r.*r.*=.*u|bipartite_augment_dfs.*hall",
+            "hm_dfs|hm_match_r|hall_augment|bipartite_hall_dfs"
+        ),
+
+        // ── Topological-order DP (longest path in DAG / Kahn's relaxation) ──
+        new PatternDef("topo_dp_kahn_sort", "topo_dp_kahn_bfs_topological_sort", "high",
+            "if.*--td_indeg.*v.*==.*0.*td_queue.*tail|kahn.*topo.*indeg.*enqueue|indeg.*decrement.*zero.*enqueue",
+            "td_indeg.*td_edges.*i.*v|kahn_topological_sort.*dag|topo_sort_kahn_bfs",
+            "topo_dp_kahn|td_indeg|kahn_sort|topological_dp_indeg"
+        ),
+        new PatternDef("topo_dp_relax", "topo_dp_dag_edge_relaxation", "high",
+            "td_dist.*u.*\\+.*w.*>.*td_dist.*v.*td_dist.*v.*=|dag_relax.*topo_order|longest_path_relax.*dag",
+            "if.*td_dist.*u.*\\+.*w.*>.*td_dist.*v|edge_relaxation.*topological.*dp",
+            "topo_dp_relax|td_dist|dag_relax|topological_dp_edge_relax"
+        ),
+        new PatternDef("topo_dp_longest", "topo_dp_longest_path_dag_scan", "high",
+            "longest.*<.*td_dist.*i.*longest.*=.*td_dist.*i|max_dist.*dag.*topo_dp|longest_path_dag_final",
+            "for.*i.*<.*TD_V.*if.*td_dist.*i.*>.*longest|topo_dp_max_scan|dag_longest_path",
+            "topo_dp_longest|td_dist_max|dag_longest|topological_dp_longest_path"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
