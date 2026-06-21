@@ -4722,6 +4722,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cnt.*\\+\\+.*gold_is_prime.*p.*&&.*gold_is_prime.*n.*-.*p|goldbach_accumulate_pairs",
             "goldbach_verify_all|gold_verify|goldbach_all_even_check"
         ),
+
+        // ── Sprint 154: Farey Sequence ───────────────────────────────────────
+        new PatternDef("farey_mediant_next", "farey_sequence_next_term", "high",
+            "k.*=.*q0.*\\+.*n.*\\/.*q1|farey_mediant_step|farey_next_term",
+            "p2.*=.*k.*\\*.*p1.*-.*p0|farey_numerator_update|farey_mediant_num",
+            "q2.*=.*k.*\\*.*q1.*-.*q0|farey_denominator_update|farey_mediant_den"
+        ),
+        new PatternDef("farey_count_terms", "farey_sequence_count", "high",
+            "farey_count|cnt.*\\+\\+.*p1.*!=.*1u.*||.*q1.*!=.*1u|farey_term_count",
+            "cnt.*=.*2u.*p0.*=.*0u.*q0.*=.*1u.*p1.*=.*1u.*q1.*=.*n|farey_init_pair",
+            "while.*p1.*!=.*1.*q1.*!=.*1.*farey|farey_iterate_until_one_one"
+        ),
+        new PatternDef("farey_nth_term", "farey_sequence_index_lookup", "medium",
+            "farey_nth_term|farey_term_at_index|farey_idx_lookup",
+            "cur.*<.*idx.*p2.*=.*k.*\\*.*p1|farey_advance_to_index",
+            "q1.*<<.*16.*|.*p1|farey_pack_fraction|farey_return_pq"
+        ),
+
+        // ── Sprint 154: Linear Diophantine Equation ──────────────────────────
+        new PatternDef("dioph_ext_gcd", "diophantine_extended_euclidean", "high",
+            "ext_gcd|dioph_gcd|g.*=.*ext_gcd.*b.*a.*%.*b.*x1.*y1",
+            "px.*=.*y1.*py.*=.*x1.*-.*a.*\\/.*b.*\\*.*y1|dioph_coeff_backsubstitute",
+            "diophantine|dioph_solve|linear_diophantine_equation"
+        ),
+        new PatternDef("dioph_solvable_check", "diophantine_divisibility_check", "high",
+            "c.*%.*g.*!=.*0.*return.*0|dioph_no_solution|diophantine_unsat_check",
+            "scale.*=.*c.*\\/.*g|dioph_scale_particular|diophantine_particular_soln",
+            "rx.*=.*x0.*\\*.*scale.*ry.*=.*y0.*\\*.*scale|dioph_particular_assign"
+        ),
+        new PatternDef("dioph_verify_soln", "diophantine_verify_solution", "medium",
+            "a.*\\*.*x.*\\+.*b.*\\*.*y.*==.*c|dioph_verify|diophantine_check_result",
+            "solvable.*&&.*verify|dioph_solution_valid|diophantine_result_ok",
+            "dioph_solve.*12.*8.*4|dioph_test_case|diophantine_fixture_run"
+        ),
+
+        // ── Sprint 154: Totient Sum (linear sieve) ───────────────────────────
+        new PatternDef("totient_linear_sieve", "totient_sum_sieve_build", "high",
+            "tot_phi.*i.*\\*.*p.*=.*tot_phi.*i.*\\*.*p|totient_phi_composite_rule",
+            "i.*%.*p.*==.*0u.*tot_phi.*i.*\\*.*p.*=.*tot_phi.*i.*\\*.*p|totient_phi_divisible",
+            "tot_phi.*i.*\\*.*p.*=.*tot_phi.*i.*\\*.*p.*-.*1u|totient_phi_coprime_rule"
+        ),
+        new PatternDef("totient_sum_prefix", "totient_sum_accumulate", "high",
+            "totient_sum|s.*\\+=.*tot_phi.*k|totient_prefix_accumulate",
+            "for.*k.*=.*1u.*k.*<=.*n.*k.*<.*TOT_MAX|totient_sum_loop_bound",
+            "s10.*==.*32|totient_sum_10_check|phi_sum_to_10"
+        ),
+        new PatternDef("totient_sieve_primes", "totient_linear_sieve_primes", "medium",
+            "tot_is_composite.*i.*\\*.*p.*=.*1u|totient_mark_composite",
+            "tot_primes.*tot_pcnt\\+\\+.*=.*i|totient_prime_list_append",
+            "for.*j.*<.*tot_pcnt.*i.*\\*.*tot_primes.*j.*<.*TOT_MAX|totient_inner_sieve_loop"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
