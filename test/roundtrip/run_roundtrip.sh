@@ -213,6 +213,14 @@ declare -A EXPECTED_RESULT=(
     [test_interleave]=0x00030203
     [test_activity_selection]=0x000B0418
     [test_bipartite_matching]=0x00090303
+    [test_mod_exp]=0x0003B905
+    [test_gcd_ext]=0x00031A0C
+    [test_matrix_exp]=0x000340DE
+    [test_derange]=0x00033727
+    [test_stirling2]=0x00037A44
+    [test_bell_num]=0x0003483E
+    [test_min_window_substr]=0x00030C02
+    [test_max_gap]=0x00031505
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -277,7 +285,11 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_gray_code test_fisher_yates \
        test_partition_equal_sum test_jump_game2 \
        test_perfect_squares test_interleave \
-       test_activity_selection test_bipartite_matching)
+       test_activity_selection test_bipartite_matching \
+       test_mod_exp test_gcd_ext \
+       test_matrix_exp test_derange \
+       test_stirling2 test_bell_num \
+       test_min_window_substr test_max_gap)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

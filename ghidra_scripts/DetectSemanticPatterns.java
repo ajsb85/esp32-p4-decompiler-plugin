@@ -1507,6 +1507,60 @@ public class DetectSemanticPatterns extends GhidraScript {
             "max_match.*=.*0.*for.*u.*left.*vis.*zero.*try.*augment",
             "max_match|matching_count|bpm_driver"
         ),
+        /* Sprint 82: Modular Exponentiation + Extended GCD */
+        new PatternDef("modular_exponentiation", "fast_binary_power", "high",
+            "while.*exp.*>.*0.*if.*exp.*&.*1.*result.*=.*result.*\\*.*base.*%.*mod.*base.*=.*base.*\\*.*base.*%.*mod.*exp.*>>=.*1",
+            "result.*=.*1.*base.*%=.*mod|me_pow.*binary.*exponent",
+            "mod_exp|me_pow|binary_power|modpow"
+        ),
+        new PatternDef("extended_euclidean", "bezout_coefficients", "high",
+            "if.*b.*==.*0.*\\*x.*=.*1.*\\*y.*=.*0.*return.*a|ge_ext.*base.*case",
+            "\\*x.*=.*y1.*\\*y.*=.*x1.*-.*a.*b.*\\*.*y1|bezout.*coefficient.*update",
+            "gcd_ext|ge_ext|bezout|extended_gcd"
+        ),
+        new PatternDef("extended_gcd_coefficients", "modular_inverse_via_ext_gcd", "medium",
+            "a.*\\*.*x.*\\+.*b.*\\*.*y.*==.*g|bezout.*identity.*verify",
+            "inv_mod.*=.*x.*%.*mod.*if.*inv_mod.*<.*0.*inv_mod.*\\+.*mod|modular.*inverse",
+            "inv_mod|mod_inverse|bezout_identity"
+        ),
+        /* Sprint 83: Matrix Exponentiation + Derangements */
+        new PatternDef("matrix_exponentiation_2x2", "fibonacci_matrix_power", "high",
+            "mat_mul.*res.*A.*res.*mat_mul.*A.*A.*A.*n.*>>=.*1|while.*n.*>.*0.*mat.*mul.*power",
+            "res.*0.*0.*=.*1.*0.*0.*1.*A.*0.*0.*=.*1.*1.*1.*0|identity.*matrix.*init",
+            "mat_exp|matrix_power|fib_mat|me2_fib"
+        ),
+        new PatternDef("matrix_multiply_2x2", "2x2_matrix_multiply_modular", "medium",
+            "t.*i.*j.*=.*t.*i.*j.*\\+.*a.*i.*k.*\\*.*b.*k.*j.*%.*mod|2x2.*matmul",
+            "for.*i.*<.*2.*for.*j.*<.*2.*for.*k.*<.*2|double.*loop.*matrix.*product",
+            "mat_mul|me2_mul|matrix_multiply"
+        ),
+        new PatternDef("derangement_recurrence", "subfactorial_dp", "high",
+            "dp.*n.*=.*n.*-.*1.*\\*.*dp.*n.*-.*1.*\\+.*dp.*n.*-.*2|dr_dp.*recurrence",
+            "dp.*0.*=.*1.*dp.*1.*=.*0.*derangement.*base|subfactorial.*base.*case",
+            "derange|subfactorial|dr_dp|no_fixed_point"
+        ),
+        /* Sprint 84: Stirling Numbers + Bell Numbers */
+        new PatternDef("stirling_second_kind", "set_partition_stirling", "high",
+            "st.*n.*k.*=.*k.*\\*.*st.*n-1.*k.*\\+.*st.*n-1.*k-1|stirling.*recurrence",
+            "st.*0.*0.*=.*1.*st.*n.*0.*=.*0.*for.*n.*>.*0|stirling.*base.*case",
+            "stirling2|st.*n.*k|set_partition"
+        ),
+        new PatternDef("bell_triangle", "bell_number_compute", "high",
+            "bell.*i.*0.*=.*bell.*i-1.*i-1|start.*row.*from.*last.*diagonal",
+            "bell.*i.*j.*=.*bell.*i.*j-1.*\\+.*bell.*i-1.*j-1|bell.*triangle.*recurrence",
+            "bell_num|bn_bell|bell_triangle"
+        ),
+        /* Sprint 85: Min Window Substring + Max Gap */
+        new PatternDef("min_window_substring", "sliding_window_coverage", "high",
+            "cnt_s.*right.*\\+\\+.*if.*cnt_s.*==.*cnt_t.*formed.*\\+\\+|window.*expand.*right",
+            "while.*formed.*==.*required.*if.*right.*-.*left.*\\+.*1.*<.*min_len|shrink.*left",
+            "min_window|mw_cnt_s|sliding_coverage"
+        ),
+        new PatternDef("max_gap_linear", "maximum_consecutive_gap", "medium",
+            "for.*i.*=.*1.*n.*if.*arr.*i.*-.*arr.*i-1.*>.*mg.*mg.*=.*arr.*i.*-.*arr.*i-1",
+            "sort.*first.*then.*linear.*scan.*gap|mg_max_gap",
+            "max_gap|mg_max|consecutive_gap"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 133 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 141 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -146,6 +146,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_interleave.c` | Interleaving strings DP; 3 cases n_true=2 | `0x00030203` | |
 | `test_activity_selection.c` | Greedy interval scheduling; 11 acts, 4 selected | `0x000B0418` | |
 | `test_bipartite_matching.c` | Augmenting-path bipartite match K_{3,3}; max=3 | `0x00090303` | |
+| `test_mod_exp.c` | Modular exponentiation binary; 3 cases sum=185 xor=5 | `0x0003B905` | |
+| `test_gcd_ext.c` | Extended Euclidean; gcd(12,8)=4 (21,14)=7 (45,30)=15 | `0x00031A0C` | |
+| `test_matrix_exp.c` | Matrix exp Fibonacci F(10,12,14); sum%256=64 xor%256=222 | `0x000340DE` | |
+| `test_derange.c` | Derangements D(3)=2 D(4)=9 D(5)=44; sum=55 xor=39 | `0x00033727` | |
+| `test_stirling2.c` | Stirling 2nd kind S(4,2)=7 S(5,3)=25 S(6,3)=90 | `0x00037A44` | |
+| `test_bell_num.c` | Bell numbers B(3)=5 B(4)=15 B(5)=52; sum=72 xor=62 | `0x0003483E` | |
+| `test_min_window_substr.c` | Min window substring; 3 cases sum=12 xor=2 | `0x00030C02` | |
+| `test_max_gap.c` | Max gap sorted; 3 arrays sum=21 xor=5 | `0x00031505` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -240,7 +248,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (248 patterns):
+Pattern families currently covered (260 patterns):
 
 | Family | Patterns |
 |--------|---------|

@@ -183,6 +183,11 @@ static void ap2_dfs(int u){ap2_disc[u]=ap2_low[u]=ap2_timer2++;ap2_vis[u]=1;int 
 /* Sprint 81: bipartite_matching augmenting path */
 static int bpm2_match_r[3],bpm2_vis[3];
 static int bpm2_try(int u){for(int i=0;i<3;i++){if(!bpm2_vis[i]){bpm2_vis[i]=1;if(bpm2_match_r[i]==-1||bpm2_try(bpm2_match_r[i])){bpm2_match_r[i]=u;return 1;}}}return 0;}
+/* Sprint 82: extended GCD (recursive) */
+static int ge2_ext(int a,int b,int*x,int*y){if(b==0){*x=1;*y=0;return a;}int x1,y1;int g=ge2_ext(b,a%b,&x1,&y1);*x=y1;*y=x1-(a/b)*y1;return g;}
+/* Sprint 83: matrix_exp helper */
+static void me2_mul(uint32_t a[2][2],uint32_t b[2][2],uint32_t c[2][2]){uint32_t t[2][2]={{0,0},{0,0}};for(int i=0;i<2;i++)for(int j=0;j<2;j++)for(int k=0;k<2;k++)t[i][j]=(t[i][j]+a[i][k]*b[k][j])%10000u;for(int i=0;i<2;i++)for(int j=0;j<2;j++)c[i][j]=t[i][j];}
+static uint32_t me2_fib(uint32_t n){uint32_t r[2][2]={{1,0},{0,1}},A[2][2]={{1,1},{1,0}};while(n>0){if(n&1u)me2_mul(r,A,r);me2_mul(A,A,A);n>>=1;}return r[0][1];}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -992,6 +997,53 @@ int main(void){
   {for(int i=0;i<3;i++)bpm2_match_r[i]=-1;
    int bmt=0; for(int u=0;u<3;u++){for(int i=0;i<3;i++)bpm2_vis[i]=0;if(bpm2_try(u))bmt++;}
    CHECK("test_bipartite_matching",(9u<<16)|((uint32_t)(bmt&0xFF)<<8)|(3u),0x00090303u);}
+  /* Sprint 82: test_mod_exp — 2^10%1000=24, 3^7%100=87, 5^5%113=74; sum=185 xor=5 */
+  {uint32_t me_r0=1,me_r1=1,me_r2=1,mb,me;
+   mb=2%1000u;me=10;while(me>0){if(me&1u)me_r0=me_r0*mb%1000u;mb=mb*mb%1000u;me>>=1;}
+   mb=3%100u;me=7;while(me>0){if(me&1u)me_r1=me_r1*mb%100u;mb=mb*mb%100u;me>>=1;}
+   mb=5%113u;me=5;while(me>0){if(me&1u)me_r2=me_r2*mb%113u;mb=mb*mb%113u;me>>=1;}
+   CHECK("test_mod_exp",(3u<<16)|(((me_r0+me_r1+me_r2)&0xFFu)<<8)|((me_r0^me_r1^me_r2)&0xFFu),0x0003B905u);}
+  /* Sprint 82: test_gcd_ext — gcd(12,8)=4, gcd(21,14)=7, gcd(45,30)=15; sum=26 xor=12 */
+  {int gx,gy; int gg0=ge2_ext(12,8,&gx,&gy),gg1=ge2_ext(21,14,&gx,&gy),gg2=ge2_ext(45,30,&gx,&gy);
+   CHECK("test_gcd_ext",(3u<<16)|(((uint32_t)(gg0+gg1+gg2)&0xFFu)<<8)|((uint32_t)(gg0^gg1^gg2)&0xFFu),0x00031A0Cu);}
+  /* Sprint 83: test_matrix_exp — F(10)=55 F(12)=144 F(14)=377; sum%256=64 xor%256=222 */
+  {uint32_t mf0=me2_fib(10),mf1=me2_fib(12),mf2=me2_fib(14);
+   CHECK("test_matrix_exp",(3u<<16)|(((mf0+mf1+mf2)&0xFFu)<<8)|((mf0^mf1^mf2)&0xFFu),0x000340DEu);}
+  /* Sprint 83: test_derange — D(3)=2 D(4)=9 D(5)=44; sum=55 xor=39 */
+  {uint32_t dr[6];dr[0]=1;dr[1]=0;for(int n=2;n<6;n++)dr[n]=(uint32_t)(n-1)*(dr[n-1]+dr[n-2]);
+   CHECK("test_derange",(3u<<16)|(((dr[3]+dr[4]+dr[5])&0xFFu)<<8)|((dr[3]^dr[4]^dr[5])&0xFFu),0x00033727u);}
+  /* Sprint 84: test_stirling2 — S(4,2)=7 S(5,3)=25 S(6,3)=90; sum=122 xor=68 */
+  {static uint32_t st2[7][5];for(int n=0;n<7;n++)for(int k=0;k<5;k++)st2[n][k]=0;st2[0][0]=1;
+   for(int n=1;n<7;n++)for(int k=1;k<5;k++)st2[n][k]=(uint32_t)k*st2[n-1][k]+st2[n-1][k-1];
+   uint32_t sa=st2[4][2],sb=st2[5][3],sc=st2[6][3];
+   CHECK("test_stirling2",(3u<<16)|(((sa+sb+sc)&0xFFu)<<8)|((sa^sb^sc)&0xFFu),0x00037A44u);}
+  /* Sprint 84: test_bell_num — B(3)=5 B(4)=15 B(5)=52; sum=72 xor=62 */
+  {static uint32_t bn2[6][6];for(int i=0;i<6;i++)for(int j=0;j<6;j++)bn2[i][j]=0;
+   bn2[0][0]=1;for(int i=1;i<=5;i++){bn2[i][0]=bn2[i-1][i-1];for(int j=1;j<=i;j++)bn2[i][j]=bn2[i][j-1]+bn2[i-1][j-1];}
+   uint32_t bb3=bn2[3][0],bb4=bn2[4][0],bb5=bn2[5][0];
+   CHECK("test_bell_num",(3u<<16)|(((bb3+bb4+bb5)&0xFFu)<<8)|((bb3^bb4^bb5)&0xFFu),0x0003483Eu);}
+  /* Sprint 85: test_min_window_substr — "ADOBECODEBANC"/"ABC"=4,"a"/"a"=1,"AABBBBC"/"AABC"=7 */
+  {static int mwcs[128],mwct[128];
+   const char*mws[3]={"ADOBECODEBANC","a","AABBBBC"};
+   const char*mwt[3]={"ABC","a","AABC"};
+   int mwns[3]={13,1,7},mwnt[3]={3,1,4},mwres[3]={0,0,0};
+   for(int tc=0;tc<3;tc++){
+     for(int i=0;i<128;i++){mwcs[i]=0;mwct[i]=0;}
+     for(int i=0;i<mwnt[tc];i++)mwct[(unsigned char)mwt[tc][i]]++;
+     int req=0;for(int i=0;i<128;i++)if(mwct[i]>0)req++;
+     int formed=0,left=0,ml=mwns[tc]+1;
+     for(int right=0;right<mwns[tc];right++){int c=(unsigned char)mws[tc][right];mwcs[c]++;if(mwct[c]>0&&mwcs[c]==mwct[c])formed++;
+       while(formed==req){if(right-left+1<ml)ml=right-left+1;int lc=(unsigned char)mws[tc][left];mwcs[lc]--;if(mwct[lc]>0&&mwcs[lc]<mwct[lc])formed--;left++;}}
+     mwres[tc]=ml>mwns[tc]?0:ml;}
+   uint32_t mwsum=(uint32_t)(mwres[0]+mwres[1]+mwres[2]),mwxr=(uint32_t)(mwres[0]^mwres[1]^mwres[2]);
+   CHECK("test_min_window_substr",(3u<<16)|((mwsum&0xFFu)<<8)|(mwxr&0xFFu),0x00030C02u);}
+  /* Sprint 85: test_max_gap — {1,3,6,10,18}=8,{1,9}=8,{1,4,7,9,11,15,20}=5; sum=21 xor=5 */
+  {static const int mga0[5]={1,3,6,10,18},mga1[2]={1,9},mga2[7]={1,4,7,9,11,15,20};
+   int mg0=0,mg1=0,mg2=0;
+   for(int i=1;i<5;i++)if(mga0[i]-mga0[i-1]>mg0)mg0=mga0[i]-mga0[i-1];
+   if(mga1[1]-mga1[0]>mg1)mg1=mga1[1]-mga1[0];
+   for(int i=1;i<7;i++)if(mga2[i]-mga2[i-1]>mg2)mg2=mga2[i]-mga2[i-1];
+   CHECK("test_max_gap",(3u<<16)|(((uint32_t)(mg0+mg1+mg2)&0xFFu)<<8)|((uint32_t)(mg0^mg1^mg2)&0xFFu),0x00031505u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
