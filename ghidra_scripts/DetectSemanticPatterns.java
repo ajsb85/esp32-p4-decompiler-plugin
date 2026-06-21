@@ -5229,6 +5229,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*xor_acc.*&.*0xFF|perrin_metric_xor",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|perrin_pack"
         ),
+        new PatternDef("kaprekar_digit_sort", "kaprekar_extract_digits", "high",
+            "extract_digits|d\\[3\\].*1000.*d\\[2\\].*100.*d\\[1\\].*10.*d\\[0\\]|kaprekar_sort_desc",
+            "big.*small.*d\\[3\\].*1000|d\\[0\\].*1000.*d\\[1\\].*100|kaprekar_bigsmall",
+            "bubble.*sort.*ascending|d\\[j\\].*>.*d\\[j.*1\\].*tmp|kaprekar_bubblesort"
+        ),
+        new PatternDef("kaprekar_iteration", "kaprekar_routine_step", "high",
+            "n.*!=.*6174.*steps.*<.*7|kaprekar_convergence_loop",
+            "big.*-.*small|next.*big.*small|kaprekar_subtract",
+            "kaprekar_steps|steps\\+\\+.*n.*==.*0.*steps.*=.*7|kaprekar_step_count"
+        ),
+        new PatternDef("kaprekar_result", "kaprekar_result_encode", "medium",
+            "step_sum.*xor_acc|kaprekar_accumulate_steps",
+            "metric_a.*step_sum.*&.*0xFF|kaprekar_metric_sum",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|kaprekar_pack"
+        ),
+        new PatternDef("stern_diatomic_even", "stern_diatomic_even_rule", "high",
+            "s\\[2.*i\\].*=.*s\\[i\\]|fusc_even_rule|stern_even_index",
+            "s\\[2.*i.*1\\].*=.*s\\[i\\].*s\\[i.*1\\]|stern_odd_rule|fusc_odd_index",
+            "for.*i.*1.*i.*<=.*10|stern_fill_loop"
+        ),
+        new PatternDef("stern_diatomic_sequence", "stern_diatomic_compute", "high",
+            "s\\[0\\].*=.*0.*s\\[1\\].*=.*1|stern_seed_init",
+            "2.*\\*.*i.*<=.*20|stern_even_bound_check",
+            "2.*\\*.*i.*1.*<=.*20|stern_odd_bound_check"
+        ),
+        new PatternDef("stern_diatomic_result", "stern_diatomic_result_encode", "medium",
+            "term_sum.*%.*251|stern_metric_modprime",
+            "xor_acc.*\\^=.*s\\[i\\].*&.*0xFF|stern_xor_loop",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|stern_pack"
+        ),
+        new PatternDef("recaman_subtract_rule", "recaman_step_rule", "high",
+            "a\\[i\\].*=.*sub|a\\[i.*1\\].*>.*i.*sub.*<.*SEEN_SIZE.*!seen|recaman_go_back",
+            "a\\[i\\].*=.*a\\[i.*1\\].*\\+.*i|recaman_go_forward",
+            "seen\\[a\\[i\\]\\].*=.*1|recaman_mark_seen"
+        ),
+        new PatternDef("recaman_seen_array", "recaman_seen_tracking", "high",
+            "seen\\[SEEN_SIZE\\]|uint8_t.*seen|recaman_visited_array",
+            "seen\\[0\\].*=.*0|for.*i.*<.*SEEN_SIZE.*seen\\[i\\].*=.*0|recaman_seen_init",
+            "sub.*<.*SEEN_SIZE.*!seen\\[sub\\]|recaman_check_visited"
+        ),
+        new PatternDef("recaman_result", "recaman_result_encode", "medium",
+            "term_sum.*%.*251|recaman_metric_modprime",
+            "xor_acc.*\\^=.*a\\[i\\].*&.*0xFF|recaman_xor_acc",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|recaman_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
