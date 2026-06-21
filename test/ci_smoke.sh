@@ -386,6 +386,18 @@ int main(void){
    for(int i=1;i<6;i++){A2 k=aa[i];int j=i-1;while(j>=0&&aa[j].e>k.e){aa[j+1]=aa[j];j--;}aa[j+1]=k;}
    int acnt=0,ale=-1,ase=0;for(int i=0;i<6;i++)if(aa[i].s>=ale){acnt++;ale=aa[i].e;ase+=aa[i].e;}
    CHECK("test_activity_sel",(6u<<16)|((uint32_t)acnt<<8)|((uint32_t)ase&0xFFu),0x00060416u);}
+  /* test_lps: "BBABCBCAB" n=9, LPS=7, n-LPS=2 */
+  {static const char lpss[]="BBABCBCAB";int ldp[9][9]={0};
+   for(int i=0;i<9;i++)ldp[i][i]=1;
+   for(int len=2;len<=9;len++)for(int i=0;i<=9-len;i++){int j=i+len-1;
+     if(lpss[i]==lpss[j])ldp[i][j]=(len==2)?2:ldp[i+1][j-1]+2;
+     else ldp[i][j]=ldp[i+1][j]>ldp[i][j-1]?ldp[i+1][j]:ldp[i][j-1];}
+   CHECK("test_lps",(9u<<16)|((uint32_t)ldp[0][8]<<8)|((uint32_t)(9-ldp[0][8])&0xFFu),0x00090702u);}
+  /* test_dutch_flag: {2,0,2,1,1,0} pivot=1 → {0,0,1,1,2,2}, lo=2, mid=4 */
+  {int df2[]={2,0,2,1,1,0};int dlo=0,dmid=0,dhi=5;
+   while(dmid<=dhi){if(df2[dmid]<1){int t=df2[dlo];df2[dlo]=df2[dmid];df2[dmid]=t;dlo++;dmid++;}
+     else if(df2[dmid]==1){dmid++;}else{int t=df2[dmid];df2[dmid]=df2[dhi];df2[dhi]=t;dhi--;}}
+   CHECK("test_dutch_flag",(6u<<16)|((uint32_t)dlo<<8)|(uint32_t)dmid,0x00060204u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

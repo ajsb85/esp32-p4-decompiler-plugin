@@ -758,6 +758,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count\\+\\+.*last_end.*=.*acts.*\\.end|last_end.*=.*acts.*end",  // pick + advance
             "activity_select|acts_select|count.*last_end"   // naming
         ),
+
+        // ── LPS interval DP (115, 116) ────────────────────────────────────────
+        new PatternDef("lps_diagonal_fill", "lps_dp_fill", "high",
+            "for.*len.*=.*2.*len.*<=.*n|for.*len.*=.*2.*len.*<=.*LPS_N",  // diagonal-fill outer loop
+            "j.*=.*i.*\\+.*len.*-.*1|j\\s*=\\s*i\\s*\\+\\s*len",  // j = i+len-1
+            "lps_dp|lps_compute|lps.*interval"             // naming
+        ),
+        new PatternDef("lps_recurrence", "lps_case", "high",
+            "s\\[i\\].*==.*s\\[j\\]|lps_s.*i.*==.*lps_s.*j",     // character equality
+            "lps_dp.*i.*\\+.*1.*j.*-.*1.*\\+.*2|dp.*i\\+1.*j-1.*\\+.*2",  // +2 palindrome extend
+            "max.*dp.*i.*\\+.*1.*j.*dp.*i.*j.*-.*1|max.*i\\+1.*j.*i.*j-1"  // max of sub-problems
+        ),
+
+        // ── Dutch National Flag (117, 118) ────────────────────────────────────
+        new PatternDef("dutch_flag_3way", "dnf_3way_partition", "high",
+            "while.*mid.*<=.*hi|while.*mid\\s*<=\\s*hi",          // 3-way while loop
+            "if.*arr.*mid.*<.*pivot|dnf_arr.*mid.*<.*pivot",      // less-than branch
+            "dnf_partition|dutch_flag|3way.*partition"           // naming
+        ),
+        new PatternDef("dutch_flag_branches", "dnf_branches", "high",
+            "swap.*lo.*mid.*lo\\+\\+.*mid\\+\\+|lo\\+\\+.*mid\\+\\+",  // <pivot branch
+            "swap.*mid.*hi.*hi--|hi--",                           // >pivot branch: hi--
+            "else.*if.*==.*pivot|elif.*==.*pivot"               // equality branch
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

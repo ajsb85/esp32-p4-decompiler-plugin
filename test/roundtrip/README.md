@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 50 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 52 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -62,6 +62,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_ext_gcd.c` | Extended GCD Bezout coefficients on 3 pairs; gcd={5,6,25} sum=36 xor=26 | `0x0003241A` | |
 | `test_sparse_table.c` | Sparse table RMQ n=8 {3,7,1,9,2,8,5,4}; RMQ(0,1)=3,RMQ(1,4)=1,RMQ(5,7)=4 | `0x00080806` | |
 | `test_activity_sel.c` | Activity selection greedy n=6; sorted by end, count=4, sum_end=22 | `0x00060416` | |
+| `test_lps.c` | Longest Palindromic Subsequence "BBABCBCAB" n=9; LPS=7, n-LPS=2 | `0x00090702` | |
+| `test_dutch_flag.c` | Dutch National Flag 3-way partition {2,0,2,1,1,0} pivot=1; lo=2, mid=4 | `0x00060204` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -144,7 +146,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-113 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+117 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -201,6 +203,8 @@ Pattern families currently covered (51 patterns):
 | Extended Euclidean GCD | if(b==0)*x=1,*y=0; recursive: *x=y1, *y=x1-(a/b)*y1 |
 | Sparse table RMQ | Build st[j][i]=min(st[j-1][i],st[j-1][i+(1<<(j-1))]); query min(st[k][l],st[k][r-(1<<k)+1]) |
 | Activity selection | Sort by .end; greedy: if(start≥last_end){count++;last_end=end} |
+| LPS interval DP | for(len=2..n) j=i+len-1; if(s[i]==s[j])dp+2 else max(dp[i+1][j],dp[i][j-1]) |
+| Dutch National Flag | while(mid≤hi) 3-branch: <pivot swap+lo++mid++; ==pivot mid++; >pivot swap+hi-- |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
