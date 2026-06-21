@@ -4472,6 +4472,52 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count_distinct.*total.*-=.*lcp.*i|subtract_lcp_array_sum",
             "count_distinct|distinct_substrings_lcp|n_n1_div2_minus_sum_lcp"
         ),
+        /* Sprint 149: stirling_numbers, partition_function, coin_change_unbounded */
+        new PatternDef("stirling1_build", "stirling_first_kind_table", "high",
+            "str1.*n.*k.*=.*n.*-.*1.*\\*.*str1.*n-1.*k.*\\+.*str1.*n-1.*k-1|stirling1_recurrence",
+            "str1.*0.*0.*=.*1.*for.*n.*=.*1.*k.*=.*1.*k.*<=.*n|stirling1_base_init",
+            "stirling1|stirling_first_kind|unsigned_stirling|cycle_permutation_count"
+        ),
+        new PatternDef("stirling1_query", "stirling_first_kind_lookup", "high",
+            "c52.*=.*str1.*5.*2.*c43.*=.*str1.*4.*3|stirling1_lookup_indices",
+            "str1.*n.*k.*stirling.*first.*kind|stirling1_table_access",
+            "str1|c52|c43|stirling1_query|stirling_cycles"
+        ),
+        new PatternDef("stirling1_verify", "stirling_first_kind_check", "medium",
+            "c55.*=.*str1.*5.*5.*c55.*==.*1|stirling1_diagonal_one",
+            "metric_a.*=.*c52.*&.*0xFF.*metric_b.*=.*c43.*&.*0xFF|stirling1_pack_result",
+            "stirling1_verify|stirling_diagonal|stirling_identity"
+        ),
+        new PatternDef("partition_build", "integer_partition_pentagonal", "high",
+            "part.*0.*=.*1.*gpos.*=.*k.*\\*.*3.*k.*-.*1.*\\/.*2|pentagonal_number_gen",
+            "val.*\\+=.*part.*n.*-.*gpos.*val.*-=.*part.*n.*-.*gpos|pentagonal_inclusion_exclusion",
+            "partition_build|part.*pentagonal|integer_partition_dp|euler_pentagonal"
+        ),
+        new PatternDef("partition_query", "integer_partition_lookup", "high",
+            "p7.*=.*part.*7.*p10.*=.*part.*10.*p12.*=.*part.*12|partition_result_indices",
+            "part.*n.*partition.*function.*pentagonal.*recurrence|partition_table_lookup",
+            "p7|p10|p12|partition_query|partition_function_result"
+        ),
+        new PatternDef("partition_verify", "integer_partition_check", "medium",
+            "metric_a.*=.*p10.*&.*0xFF.*metric_b.*=.*p7.*&.*0xFF|partition_pack_result",
+            "run_partition_tests.*partition_build.*p7.*p10|partition_test_driver",
+            "partition_verify|partition_pack|pentagonal_check"
+        ),
+        new PatternDef("cc_unbounded_dp", "coin_change_unbounded_ways", "high",
+            "cc_dp.*0.*=.*1.*for.*ci.*=.*0.*c.*=.*coins.*ci|unbounded_knapsack_coin",
+            "cc_dp.*j.*\\+=.*cc_dp.*j.*-.*int.*c.*j.*=.*int.*c.*j.*<=.*target|coin_unbounded_inner",
+            "cc_count_ways|cc_dp|unbounded_knapsack|coin_change_combinations"
+        ),
+        new PatternDef("cc_unbounded_test", "coin_change_unbounded_cases", "high",
+            "coins1.*1.*2.*5.*cc_count_ways.*coins1.*3.*10|unbounded_coins_test1",
+            "coins2.*1.*5.*6.*9.*cc_count_ways.*coins2.*4.*11|unbounded_coins_test2",
+            "w1.*cc_count_ways|w2.*cc_count_ways|coin_change_test_cases"
+        ),
+        new PatternDef("cc_unbounded_pack", "coin_change_unbounded_result", "medium",
+            "metric_a.*=.*w1.*&.*0xFF.*metric_b.*=.*w2.*&.*0xFF|coin_change_pack_result",
+            "run_coin_change_tests.*cc_count_ways.*w1.*w2|coin_change_test_driver",
+            "cc_unbounded_pack|coin_change_result|unbounded_ways_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
