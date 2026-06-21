@@ -4283,6 +4283,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "ph_x.*\\+=.*ph_dk.*ph_mod_crt|pohlig_hellman_crt_partial_log",
             "g_result.*<<.*16.*ph_x.*&.*0xFF.*<<.*8|pohlig_hellman_result_pack"
         ),
+
+        // ── Weighted Interval Scheduling DP (Sprint 145) ──────────────────────
+        new PatternDef("wis_sort_finish", "wis_sort_by_finish_time", "high",
+            "wis_ivs.*j.*\\.finish.*>.*key\\.finish|ivs.*j.*finish.*>.*key.*finish",
+            "wis_ivs.*j.*\\+.*1.*=.*wis_ivs.*j|wis_sort.*finish.*insertion",
+            "wis_sort|weighted_interval.*sort|sort_by_finish"
+        ),
+        new PatternDef("wis_pred_bsearch", "wis_predecessor_binary_search", "high",
+            "wis_ivs.*mid.*\\.finish.*<=.*t|wis_ivs.*finish.*<=.*start",
+            "lo.*=.*mid.*\\+.*1.*ans.*=.*mid|hi.*=.*mid.*-.*1.*ans.*bsearch",
+            "wis_pred|wis_predecessor|pred_binary_search"
+        ),
+        new PatternDef("wis_dp_recurrence", "wis_dp_take_or_skip", "high",
+            "wis_dp.*i.*\\+.*1.*=.*take.*>.*skip.*?.*take.*:.*skip|wis_dp.*max.*take.*skip",
+            "wis_ivs.*i.*\\.weight.*\\+.*dp_p|wis_take.*weight.*dp_predecessor",
+            "wis_solve|wis_dp|weighted_interval_dp"
+        ),
+
+        // ── Longest Palindromic Subsequence DP (Sprint 145) ───────────────────
+        new PatternDef("lpq_diag_fill", "lpq_dp_diagonal_length_fill", "high",
+            "for.*len.*=.*2.*len.*<=.*LPQ_N|for.*length.*=.*2.*length.*<=.*n",
+            "j.*=.*i.*\\+.*len.*-.*1|j\\s*=\\s*i\\s*\\+\\s*length\\s*-\\s*1",
+            "lpq_solve|lpq_dp|lps_diagonal|palindromic_subseq"
+        ),
+        new PatternDef("lpq_char_match", "lpq_character_equality_branch", "high",
+            "lpq_s.*i.*==.*lpq_s.*j|lps_s.*i.*==.*lps_s.*j",
+            "len.*==.*2.*?.*2.*:.*lpq_dp.*i.*\\+.*1.*j.*-.*1.*\\+.*2|dp.*i\\+1.*j-1.*2",
+            "lpq_match|palindromic_extend|char_equal_lps"
+        ),
+        new PatternDef("lpq_max_subprob", "lpq_max_of_subproblems", "high",
+            "lpq_dp.*i.*\\+.*1.*j.*>.*lpq_dp.*i.*j.*-.*1|dp.*i\\+1.*j.*dp.*i.*j-1",
+            "lpq_dp.*i.*j.*=.*a.*>.*b.*?.*a.*:.*b|lps_max_sub.*mismatch",
+            "lpq_mismatch|lps_max|lpq_dp_mismatch"
+        ),
+
+        // ── Maximum Sum Subrectangle (Sprint 145) ─────────────────────────────
+        new PatternDef("msr_col_compress", "msr_column_range_compress_to_1d", "high",
+            "msr_col_sum.*row.*\\+=.*msr_mat.*row.*r|col_sum.*row.*\\+=.*mat.*row.*r",
+            "for.*r.*=.*l.*r.*<.*MSR_COLS|for.*right.*=.*left.*right.*<.*cols",
+            "msr_max_rect|msr_col_compress|column_range_sum"
+        ),
+        new PatternDef("msr_kadane", "msr_kadane_max_subarray", "high",
+            "cur.*=.*cur.*\\+.*v.*>.*v.*?.*cur.*\\+.*v.*:.*v|cur.*=.*max.*cur.*\\+.*v.*v",
+            "if.*cur.*>.*max_so_far.*max_so_far.*=.*cur|msr_max_so_far.*update",
+            "msr_kadane|kadane_1d|max_subarray_kadane"
+        ),
+        new PatternDef("msr_left_right_scan", "msr_left_right_boundary_scan", "high",
+            "for.*l.*=.*0.*l.*<.*MSR_COLS|for.*left.*=.*0.*left.*<.*cols",
+            "for.*row.*=.*0.*row.*<.*MSR_ROWS.*msr_col_sum.*row.*=.*0|reset_col_sum",
+            "msr_max_rect|left_right_scan|msr_boundary_loop"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
