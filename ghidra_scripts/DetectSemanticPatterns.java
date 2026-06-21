@@ -5874,6 +5874,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x280F99|AQ_UPPER.*40.*max.*15.*sum.*153|aliquot_metrics",
             "g_result.*0x28.*0x0F.*0x99|aq_g_result"
         ),
+        new PatternDef("sociable_numbers_proper_sum", "sociable_numbers_proper_sum", "high",
+            "soc_proper_sum.*d.*\\*.*d.*<=.*n.*n\\s*%\\s*d.*s\\s*\\+=.*n\\s*/\\s*d|sociable_sqrt_div",
+            "soc_proper_sum.*b.*soc_proper_sum.*a.*b\\s*!=\\s*a.*b\\s*>.*1|sociable_pair_check",
+            "SOC_UPPER.*300.*count.*sum_acc|sociable_amicable_scan"
+        ),
+        new PatternDef("sociable_numbers_pair_test", "sociable_numbers_pair_test", "high",
+            "b\\s*!=\\s*a.*b\\s*>\\s*1.*soc_proper_sum.*b.*==.*a|amicable_double_check",
+            "count\\s*\\+\\+.*sum_acc\\s*\\+=.*a|sociable_count_accum",
+            "220.*284.*504|SOC_UPPER.*300.*count.*2.*sum.*248|amicable_pair_values"
+        ),
+        new PatternDef("sociable_numbers_pack", "sociable_numbers_pack", "medium",
+            "SOC_UPPER\\s*<<\\s*16.*count.*<<.*8.*sum_acc|sociable_pack",
+            "0x012C02F8|SOC_UPPER.*300.*count.*2.*sum.*248|sociable_metrics",
+            "g_result.*0x01.*0x2C.*0x02.*0xF8|soc_g_result"
+        ),
+        new PatternDef("arithmetic_derivative_factorize", "arithmetic_derivative_factorize", "high",
+            "arith_deriv.*result\\s*\\+=\\s*n\\s*/\\s*d.*temp\\s*/=\\s*d|arith_deriv_quotient_accum",
+            "ad_is_prime.*arith_deriv.*temp.*d.*d.*<=.*temp|arith_deriv_trial_div",
+            "result\\s*\\+=\\s*n\\s*/\\s*temp.*temp\\s*>\\s*1|arith_deriv_residual_prime"
+        ),
+        new PatternDef("arithmetic_derivative_exceed", "arithmetic_derivative_exceed", "high",
+            "count_exceed.*d\\s*>\\s*i.*total_sum\\s*\\+=.*d|arith_deriv_exceed_count",
+            "AD_UPPER.*60.*count_exceed.*17.*total_sum.*87|arith_deriv_values",
+            "arith_deriv.*i.*>=.*2.*d.*>.*i|arith_deriv_exceed_guard"
+        ),
+        new PatternDef("arithmetic_derivative_pack", "arithmetic_derivative_pack", "medium",
+            "AD_UPPER\\s*<<\\s*16.*count_exceed.*<<.*8.*total_sum|arith_deriv_pack",
+            "0x3C1157|AD_UPPER.*60.*count.*17.*sum.*87|arith_deriv_metrics",
+            "g_result.*0x3C.*0x11.*0x57|ad_g_result"
+        ),
+        new PatternDef("liouville_function_omega", "liouville_function_omega", "high",
+            "big_omega.*count.*d.*\\*.*d.*<=.*n.*n\\s*%\\s*d.*count\\s*\\+\\+|liouville_big_omega",
+            "omega\\s*&\\s*1.*count_neg\\s*\\+\\+.*count_pos\\s*\\+\\+|liouville_parity_branch",
+            "LV_UPPER.*56.*count_pos.*count_neg|liouville_dual_counter"
+        ),
+        new PatternDef("liouville_function_parity", "liouville_function_parity", "high",
+            "big_omega.*omega.*omega\\s*&\\s*1u.*count_neg.*count_pos|liouville_odd_even",
+            "count_pos.*26.*count_neg.*30|LV_UPPER.*56.*liouville_values",
+            "Omega.*even.*lambda.*1.*Omega.*odd.*lambda.*-1|liouville_sign_comment"
+        ),
+        new PatternDef("liouville_function_pack", "liouville_function_pack", "medium",
+            "LV_UPPER\\s*<<\\s*16.*count_pos.*<<.*8.*count_neg|liouville_pack",
+            "0x381A1E|LV_UPPER.*56.*pos.*26.*neg.*30|liouville_metrics",
+            "g_result.*0x38.*0x1A.*0x1E|lv_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
