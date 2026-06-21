@@ -4620,6 +4620,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "return.*dera_D.*k|derangement_table_lookup|dera_count_fn",
             "dera_MAXN|derangement_maxn|dera_count_limit"
         ),
+
+        // ── Nim game (Sprague-Grundy, multi-pile XOR) ────────────────────────
+        new PatternDef("nim_pile_xor_sum", "nim_game_xor_sum_piles", "high",
+            "xv.*\\^=.*piles.*i|nim_xor_sum.*piles.*n|xor.*pile.*for.*loop",
+            "nim_xor_sum|nim_pile_xor|xor_sum_piles",
+            "return.*xv|nim_sum_return|pile_xor_accumulate"
+        ),
+        new PatternDef("nim_p_position", "nim_game_p_position_check", "high",
+            "nim_xor_sum.*==.*0u.*?.*1u.*:.*0u|nim_is_losing|p_position_nim",
+            "nim_is_losing|losing_position_nim|nim_sum_zero_check",
+            "return.*nim_xor_sum.*==.*0|nim_pposition_return|nim_lose_detect"
+        ),
+        new PatternDef("nim_winning_move", "nim_game_find_winning_move", "high",
+            "target.*=.*piles.*i.*\\^.*xv|nim_find_winning_move|winning_pile_reduce",
+            "target.*<.*piles.*i.*new_size_out|nim_move_target|pile_reduce_winning",
+            "return.*-1.*losing.*no.*winning.*move|nim_no_winning_move|nim_move_idx"
+        ),
+
+        // ── Necklace counting (Burnside + Euler totient + Mobius) ─────────────
+        new PatternDef("nck_burnside_sum", "necklace_burnside_phi_sum", "high",
+            "n.*%.*d.*==.*0.*nck_phi.*d.*\\*.*nck_pow2.*n.*d|necklace_burnside_divisor",
+            "total.*\\+=.*nck_phi.*d.*nck_pow2|burnside_phi_pow2_sum",
+            "necklace_count_burnside|nck_burnside|burnside_necklace_count"
+        ),
+        new PatternDef("nck_lyndon_mobius", "necklace_lyndon_mobius_count", "high",
+            "nck_mu.*n.*d.*mu.*>.*0.*total.*\\+=.*nck_pow2|lyndon_mu_positive",
+            "mu.*<.*0.*total.*-=.*nck_pow2|lyndon_mu_negative|mobius_lyndon_sub",
+            "lyndon_count|nck_lyndon|lyndon_word_count_mobius"
+        ),
+        new PatternDef("nck_phi_factor", "necklace_euler_phi_factorization", "high",
+            "result.*-=.*result.*p|euler_phi_factor_result|phi_reduce_factor",
+            "n.*>.*1.*result.*-=.*result.*n|phi_remaining_prime|nck_phi_fn",
+            "nck_phi|euler_totient_necklace|phi_for_necklace"
+        ),
+
+        // ── Bracket sequence DP (valid sequences, min removals, parenthesization) ──
+        new PatternDef("bsq_count_dp", "bracket_sequence_valid_count_dp", "high",
+            "ndp.*j.*\\+.*1.*\\+=.*dp.*j|bracket_seq_add_open_dp",
+            "j.*>.*0.*ndp.*j.*-.*1.*\\+=.*dp.*j|bracket_seq_close_dp",
+            "bracket_seq_count|bsq_count|valid_bracket_sequences_dp"
+        ),
+        new PatternDef("bsq_min_removals", "bracket_sequence_min_removals", "high",
+            "open.*>.*0.*open--|close\\+\\+|bracket_mismatch_close_count",
+            "return.*open.*\\+.*close|bracket_min_removals|unmatched_bracket_sum",
+            "bracket_min_removals|bsq_removals|min_bracket_delete"
+        ),
+        new PatternDef("bsq_parenthesization", "bracket_sequence_parenthesization_dp", "high",
+            "p.*i.*\\+=.*p.*k.*\\*.*p.*i.*-.*k|parenthesization_recurrence",
+            "parenthesization_count|bsq_paren|catalan_parenthesization_dp",
+            "p.*1.*=.*1.*p.*0.*=.*0|parenthesization_init|paren_count_base"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
