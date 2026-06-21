@@ -128,6 +128,11 @@ static uint32_t my_strchr_cnt(const char *s,char c){uint32_t n=0;while(*s){if(*s
 static uint32_t needle_srch(const char *h,uint32_t hl,const char *nd,uint32_t nl){if(!nl||nl>hl)return 0xFFFFFFFFu;for(uint32_t i=0;i<=hl-nl;i++){uint32_t j;for(j=0;j<nl;j++)if(h[i+j]!=nd[j])break;if(j==nl)return i;}return 0xFFFFFFFFu;}
 static int qs_part(int *a,int lo,int hi){int pv=a[hi],i=lo-1;for(int j=lo;j<hi;j++)if(a[j]<=pv){i++;int t=a[i];a[i]=a[j];a[j]=t;}int t=a[i+1];a[i+1]=a[hi];a[hi]=t;return i+1;}
 static void qsort_r2(int *a,int lo,int hi){if(lo<hi){int p=qs_part(a,lo,hi);qsort_r2(a,lo,p-1);qsort_r2(a,p+1,hi);}}
+static int ms_buf[16];
+static void ms_merge(int *a,int lo,int mid,int hi){int i=lo,j=mid+1,k=lo;while(i<=mid&&j<=hi)ms_buf[k++]=(a[i]<=a[j])?a[i++]:a[j++];while(i<=mid)ms_buf[k++]=a[i++];while(j<=hi)ms_buf[k++]=a[j++];for(int x=lo;x<=hi;x++)a[x]=ms_buf[x];}
+static void ms_sort(int *a,int lo,int hi){if(lo<hi){int m=(lo+hi)/2;ms_sort(a,lo,m);ms_sort(a,m+1,hi);ms_merge(a,lo,m,hi);}}
+static int uf_find2(int *p,int x){int r=x;while(p[r]!=r)r=p[r];while(p[x]!=r){int n=p[x];p[x]=r;x=n;}return r;}
+static void uf_union2(int *p,int *rk,int a,int b){a=uf_find2(p,a);b=uf_find2(p,b);if(a==b)return;if(rk[a]<rk[b]){int t=a;a=b;b=t;}p[b]=a;if(rk[a]==rk[b])rk[a]++;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -200,6 +205,16 @@ int main(void){
    static int dp[8][6];for(int i=0;i<=7;i++)dp[i][0]=0;for(int j=0;j<=5;j++)dp[0][j]=0;
    for(int i=1;i<=7;i++)for(int j=1;j<=5;j++){if(da[i-1]==db[j-1])dp[i][j]=dp[i-1][j-1]+1;else{int l=dp[i][j-1],u=dp[i-1][j];dp[i][j]=l>u?l:u;}}
    CHECK("test_dp",(7u<<16)|(5u<<8)|(uint32_t)dp[7][5],0x00070504u);}
+  /* test_mergesort: stable sort {9,2,7,1,5,3,8,4,6,0} → {0..9}, XOR=1, sum=45 */
+  {int ma[10]={9,2,7,1,5,3,8,4,6,0};ms_sort(ma,0,9);
+   uint32_t mx=0,ms2=0;for(int i=0;i<10;i++){mx^=(uint32_t)ma[i];ms2+=(uint32_t)ma[i];}
+   CHECK("test_mergesort",(10u<<16)|(ms2<<8)|(mx&0xFFu),0x000A2D01u);}
+  /* test_union_find: 8 nodes, 7 unions, sum_rank=7, xor_roots=0 */
+  {int ufp[8],ufrk[8];for(int i=0;i<8;i++){ufp[i]=i;ufrk[i]=0;}
+   static const int uops[7][2]={{0,1},{2,3},{4,5},{6,7},{1,2},{5,6},{3,4}};
+   for(int i=0;i<7;i++)uf_union2(ufp,ufrk,uops[i][0],uops[i][1]);
+   uint32_t sr=0,xr2=0;for(int i=0;i<8;i++){sr+=(uint32_t)ufrk[i];xr2^=(uint32_t)uf_find2(ufp,i);}
+   CHECK("test_union_find",(8u<<16)|(sr<<8)|(xr2&0xFFu),0x00080700u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

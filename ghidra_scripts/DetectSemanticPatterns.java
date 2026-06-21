@@ -422,6 +422,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dp\\[i-1\\]\\[j-1\\]\\s*\\+\\s*1",              // diagonal + 1 (match)
             "left.*>.*up|up.*>.*left|dp.*>.*dp"               // max(left, up) for mismatch
         ),
+
+        // ── Merge sort (59, 60) ───────────────────────────────────────────────
+        new PatternDef("mergesort_merge", "merge_step", "high",
+            "tmp\\[k\\+\\+\\]|ms_tmp|merge_tmp",              // temporary buffer write
+            "a\\[i\\].*<=.*a\\[j\\]|left.*<=.*right",         // two-pointer comparison
+            "while.*i.*<=.*mid|while.*j.*<=.*hi"              // merge drain loops
+        ),
+        new PatternDef("mergesort_recurse", "mergesort", "high",
+            "mid\\s*=\\s*\\(lo.*hi\\).*2|mid.*=.*(lo.*hi)/2", // mid-point calculation
+            "mergesort\\(|merge_sort\\(|sort.*lo.*mid",        // recursive call on half
+            "merge_step\\(|merge\\(.*lo.*mid.*hi"             // merge call after recursion
+        ),
+
+        // ── Disjoint Set Union / Union-Find (61, 62) ─────────────────────────
+        new PatternDef("union_find_path", "uf_find", "high",
+            "parent\\[root\\].*!=.*root|uf_parent.*!=.*x",    // root-finding loop
+            "parent\\[x\\]\\s*=\\s*root|uf_parent.*=.*root",  // path compression write
+            "uf_find|union_find|dsu_find"                      // function name
+        ),
+        new PatternDef("union_find_rank", "uf_union", "high",
+            "rank\\[a\\]\\s*<\\s*rank\\[b\\]|uf_rank.*<",    // rank comparison swap
+            "rank\\[a\\]\\s*==\\s*rank\\[b\\]|rank.*==.*rank", // equal-rank bump condition
+            "uf_union|union_sets|dsu_union"                    // union function name
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

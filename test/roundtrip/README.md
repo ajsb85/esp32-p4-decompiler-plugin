@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 22 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 24 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -34,6 +34,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_trie.c` | Prefix trie: 26-child array, insert 6 words, 8 searches (5 found), XOR of lengths | `0x00060507` | |
 | `test_quicksort.c` | Lomuto quicksort: sort {5,3,8,1,7,2,9,4,6} in-place; verify XOR+sum of output | `0x00092D01` | |
 | `test_dp.c` | LCS DP: 2D table for "ABCBDAB" vs "BDCAB", length=4 | `0x00070504` | |
+| `test_mergesort.c` | Top-down stable merge sort: {9,2,7,1,5,3,8,4,6,0} → {0..9}, two-pointer merge | `0x000A2D01` | |
+| `test_union_find.c` | Union-Find with path compression + union by rank; 8 nodes, 7 unions | `0x00080700` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -116,7 +118,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-57 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+61 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -147,8 +149,9 @@ Pattern families currently covered (51 patterns):
 | xesploop | HWLP setup detection (`hwlp_setup`), counted loop reconstruction (`hwlp_counted_loop`) |
 | Data structures | BST insert / in-order traverse, min-heap insert / extract-min, AVL rotate / balance, trie insert / search |
 | Codecs | RLE encode/decode run scanning, Base64 6-bit extraction + table |
-| Divide & conquer | Quicksort Lomuto partition + recursive sub-range split |
+| Divide & conquer | Quicksort Lomuto partition + recursive sub-range split, merge sort two-pointer merge + mid-split |
 | Dynamic programming | 2D DP table fill, LCS diagonal/max pattern |
+| Graph algorithms | Union-Find path compression, union by rank |
 
 ---
 
