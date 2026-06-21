@@ -3368,6 +3368,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*c.*<.*min_cost.*min_cost.*=.*c|tsp_final.*full_mask.*return.*origin",
             "tsp_final|held_karp_return|bitmask_dp_tsp_result"
         ),
+
+        // ── Compressed Trie (Patricia Trie) ──────────────────────────────────
+        new PatternDef("trie_compressed_insert", "trie_compressed_insert_key", "high",
+            "ct_goto\\[cur\\]\\[c\\].*==.*-1|ac_goto\\[cur\\]\\[c\\].*=.*-1.*ct_new_node|patricia_insert.*bit_diff",
+            "b_diff.*=.*CT_BITS.*-.*1.*while.*b_diff.*>=.*0.*ct_bit.*key.*b_diff.*==.*ct_bit|bit_index_find_differ",
+            "ct_insert|patricia_insert|trie_compressed_insert|radix_tree_insert"
+        ),
+        new PatternDef("trie_compressed_split", "trie_compressed_split_edge", "high",
+            "ct_nodes\\[nid\\]\\.right.*=.*nid.*ct_nodes\\[nid\\]\\.left.*=.*cur|patricia_split.*back_edge",
+            "if.*side.*ct_nodes\\[prev\\]\\.right.*=.*nid.*else.*ct_nodes\\[prev\\]\\.left.*=.*nid",
+            "ct_split|patricia_split|trie_compressed_split_edge|radix_split"
+        ),
+        new PatternDef("trie_compressed_search", "trie_compressed_lookup", "high",
+            "next.*=.*ct_bit.*key.*n->bit.*\\?.*n->right.*:.*n->left|patricia_search.*back_edge_test",
+            "if.*next.*==.*-1.*||.*ct_nodes\\[next\\]\\.bit.*>=.*n->bit.*return.*ct_nodes\\[cur\\]\\.key.*==.*key",
+            "ct_search|patricia_search|trie_compressed_lookup|radix_tree_search"
+        ),
+
+        // ── Fibonacci Heap ────────────────────────────────────────────────────
+        new PatternDef("fib_heap_link", "fibonacci_heap_link_tree", "high",
+            "fh_list_remove\\(y\\).*fh_nodes\\[y\\]\\.parent.*=.*x|fibonacci_link.*degree.*mark.*0",
+            "fh_nodes\\[x\\]\\.degree\\+\\+.*fh_nodes\\[y\\]\\.mark.*=.*0|fh_link.*consolidate",
+            "fh_link|fibonacci_heap_link|fib_tree_link|heap_link_same_degree"
+        ),
+        new PatternDef("fib_heap_consolidate", "fibonacci_heap_consolidate", "high",
+            "fh_deg\\[d\\].*!=.*-1.*y.*=.*fh_deg\\[d\\].*fh_nodes\\[x\\]\\.key.*>.*fh_nodes\\[y\\]\\.key|fib_consolidate",
+            "fh_link\\(y.*x\\).*fh_deg\\[d\\].*=.*-1.*d\\+\\+|fibonacci_consolidate_degree_table",
+            "fh_consolidate|fibonacci_heap_consolidate|fib_heap_rebuild_roots|consolidate_degrees"
+        ),
+        new PatternDef("fib_heap_decrease_key", "fibonacci_heap_decrease_key", "high",
+            "fh_nodes\\[x\\]\\.key.*=.*new_key.*p.*=.*fh_nodes\\[x\\]\\.parent|fib_decrease.*cascading_cut",
+            "fh_cut\\(x.*p\\).*fh_cascading_cut\\(p\\)|fibonacci_decrease_key_cut_cascade",
+            "fh_decrease_key|fibonacci_heap_decrease_key|fib_heap_relax_key|decrease_key_cascade"
+        ),
+
+        // ── Persistent Treap ──────────────────────────────────────────────────
+        new PatternDef("treap_persistent_clone", "treap_persistent_copy_on_write", "high",
+            "pt_pool\\[id\\].*=.*pt_pool\\[t\\]|persistent_treap_clone.*copy_on_write.*cow",
+            "pt_clone.*pt_pool_sz\\+\\+.*pt_pool\\[id\\].*=.*pt_pool\\[t\\]|treap_cow_node",
+            "pt_clone|treap_persistent_clone|persistent_treap_copy|cow_treap_node"
+        ),
+        new PatternDef("treap_persistent_split", "treap_persistent_split_by_key", "high",
+            "pt_clone\\(t\\).*pt_pool\\[nc\\]\\.right.*=.*pt_split_l.*pt_upd\\(nc\\)|persistent_treap_split",
+            "pt_split_l.*=.*nc.*pt_pool\\[nc\\]\\.left.*=.*pt_split_r.*pt_upd\\(nc\\)|treap_split_cow",
+            "pt_split|treap_persistent_split|persistent_treap_split_key|functional_treap_split"
+        ),
+        new PatternDef("treap_persistent_merge", "treap_persistent_merge_trees", "high",
+            "pt_pool\\[l\\]\\.prio.*>.*pt_pool\\[r\\]\\.prio.*nl.*=.*pt_clone\\(l\\)|persistent_treap_merge",
+            "pt_pool\\[nl\\]\\.right.*=.*pt_merge.*pt_pool\\[l\\]\\.right.*r.*pt_upd\\(nl\\)|treap_merge_cow",
+            "pt_merge|treap_persistent_merge|persistent_treap_combine|functional_treap_merge"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
