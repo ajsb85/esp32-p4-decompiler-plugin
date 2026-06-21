@@ -143,6 +143,8 @@ static int merge_inv2(int *a,int lo,int hi){if(hi-lo<=1)return 0;int mid=(lo+hi)
 static int nq_col2[8],nq_d1_2[16],nq_d2_2[16],nq_cnt2,nq_nn2;
 static void nq_solve2(int row){if(row==nq_nn2){nq_cnt2++;return;}for(int c=0;c<nq_nn2;c++){int d1=row+c,d2=row-c+nq_nn2-1;if(!nq_col2[c]&&!nq_d1_2[d1]&&!nq_d2_2[d2]){nq_col2[c]=nq_d1_2[d1]=nq_d2_2[d2]=1;nq_solve2(row+1);nq_col2[c]=nq_d1_2[d1]=nq_d2_2[d2]=0;}}}
 static int nqueens2(int n){nq_nn2=n;nq_cnt2=0;for(int i=0;i<n;i++)nq_col2[i]=0;for(int i=0;i<2*n;i++)nq_d1_2[i]=nq_d2_2[i]=0;nq_solve2(0);return nq_cnt2;}
+static int mr_pow2(int a,int e,int m){int r=1;a%=m;while(e>0){if(e&1)r=r*a%m;a=a*a%m;e>>=1;}return r;}
+static int miller_rabin2(int n){if(n<2)return 0;if(n==2)return 1;if(n%2==0)return 0;int d=n-1,s=0;while(d%2==0){d>>=1;s++;}int ws[]={2,3,5,7};for(int wi=0;wi<4;wi++){int a=ws[wi];if(a>=n)continue;int x=mr_pow2(a,d,n);if(x==1||x==n-1)continue;int r;for(r=1;r<s;r++){x=x*x%n;if(x==n-1)break;}if(r==s)return 0;}return 1;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -551,6 +553,15 @@ int main(void){
      while(pos!=cs){pos=cs;for(int i=cs+1;i<cyn;i++)if(cy[i]<item)pos++;while(item==cy[pos])pos++;t=cy[pos];cy[pos]=item;item=t;cyw++;}}
    uint32_t cyx=0;for(int i=0;i<cyn;i++)cyx^=(uint32_t)cy[i];
    CHECK("test_cycle_sort",((uint32_t)cyn<<16)|((uint32_t)cyw<<8)|(cyx&0xFFu),0x00050401u);}
+  /* test_ternary_search: 3 queries min of (x-t)^2; lo/hi/t={(0,7,3),(1,9,5),(4,12,8)}; min={3,5,8}; sum=16 xor=14 */
+  {uint32_t tss=0,tsx=0;int tslo[]={0,1,4},tshi[]={7,9,12},tstgt[]={3,5,8};
+   for(int q=0;q<3;q++){int lo=tslo[q],hi=tshi[q],t=tstgt[q];
+     while(hi-lo>2){int m1=lo+(hi-lo)/3,m2=hi-(hi-lo)/3;if((m1-t)*(m1-t)<=(m2-t)*(m2-t))hi=m2-1;else lo=m1+1;}
+     int best=lo;for(int i=lo+1;i<=hi;i++)if((i-t)*(i-t)<(best-t)*(best-t))best=i;tss+=(uint32_t)best;tsx^=(uint32_t)best;}
+   CHECK("test_ternary_search",(3u<<16)|(tss<<8)|(tsx&0xFFu),0x0003100Eu);}
+  /* test_miller_rabin: {2,3,5,9,11,15,17,97}; primes=6 xor=127 */
+  {int mrv[]={2,3,5,9,11,15,17,97};uint32_t mrc=0,mrx=0;for(int i=0;i<8;i++){if(miller_rabin2(mrv[i])){mrc++;mrx^=(uint32_t)mrv[i];}}
+   CHECK("test_miller_rabin",(8u<<16)|(mrc<<8)|(mrx&0xFFu),0x0008067Fu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

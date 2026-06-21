@@ -1020,6 +1020,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "arr.*pos.*=.*item.*writes\\+\\+|tmp.*arr.*pos.*arr.*pos.*=.*item", // write + count
             "cycle_sort|writes|cs.*dup"                      // naming
         ),
+
+        // ── Sprint 53: Ternary Search ────────────────────────────────────────
+        new PatternDef("ternary_search_midpoints", "ternary_search", "high",
+            "m1.*=.*lo.*\\+.*hi.*-.*lo.*\\/.*3.*m2.*=.*hi.*-.*hi.*-.*lo.*\\/.*3", // two midpoints
+            "hi.*-.*lo.*>.*2|while.*hi.*-.*lo.*>.*2",       // outer condition
+            "ternary_search|ts_find|m1.*m2.*tgt"            // naming
+        ),
+
+        // ── Sprint 53: Miller-Rabin ──────────────────────────────────────────
+        new PatternDef("miller_rabin_witness", "miller_rabin_primality", "high",
+            "d.*>>=.*1.*s\\+\\+|while.*d.*%.*2.*==.*0.*d.*s", // extract 2^s factor
+            "x.*=.*x.*\\*.*x.*%.*n.*n.*-.*1|x.*%.*n.*n.*-.*1", // squaring loop
+            "miller_rabin|mr_pow|witness"                    // naming
+        ),
+        new PatternDef("miller_rabin_composite", "mr_composite_check", "medium",
+            "if.*r.*==.*s.*return.*0|r.*==.*s.*composite",  // composite verdict
+            "for.*r.*=.*1.*r.*<.*s.*x.*=.*x.*\\*.*x.*%.*n", // squaring iteration
+            "miller_rabin|r.*==.*s|witness"                 // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
