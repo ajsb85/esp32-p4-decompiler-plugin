@@ -39,6 +39,22 @@
 //     return is semantically equivalent to "return param_1;".  These
 //     bare returns are rewritten to "return param_1;" automatically.
 //
+// Semantic enrichments (Sprint 1):
+//
+//  - Functions are emitted sorted by entry-point address so that
+//    consecutive re-runs produce stable output and git diff is meaningful.
+//
+//  - A block comment above each function records:
+//      * the Ghidra-resolved symbol name (DWARF / FIDB / manual rename)
+//      * the authoritative typed signature from fn.getReturnType() and
+//        fn.getParameters() — useful when DWARF or FIDB provides real names
+//      * the memory region (IRAM, Flash, ROM, ...) from the MemoryBlock name
+//      * the list of calling functions (cross-reference)
+//
+//  - ROM functions (memory block named "ROM" or external functions) are
+//    emitted as a single extern declaration; their bodies are skipped,
+//    keeping the output focused on application code.
+//
 // The output file path can be passed as the first script argument when
 // running headlessly (-postScript ExportDecompiledC.java /path/out.c).
 // In GUI mode a save-file dialog is shown instead.
@@ -50,15 +66,22 @@
 
 import ghidra.app.decompiler.*;
 import ghidra.app.script.GhidraScript;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import java.util.stream.*;
 
 public class ExportDecompiledC extends GhidraScript {
 
     private static final int DECOMPILE_TIMEOUT_SECS = 30;
+
+    // Maximum callers to list before abbreviating (keeps comments readable).
+    private static final int MAX_CALLERS_SHOWN = 8;
 
     // Matches:  gp = 0x1a2b3c4d;   (with optional leading whitespace)
     private static final Pattern GP_ASSIGN =
@@ -94,7 +117,7 @@ public class ExportDecompiledC extends GhidraScript {
             }
         }
 
-        // ── decompile all functions into memory ───────────────────────────────
+        // ── decompile all functions, sorted by entry-point address ────────────
         DecompInterface decompiler = new DecompInterface();
         DecompileOptions opts = new DecompileOptions();
         decompiler.setOptions(opts);
@@ -107,8 +130,9 @@ public class ExportDecompiledC extends GhidraScript {
             return;
         }
 
-        // name → raw C text (may be null on failure)
-        Map<String, String> rawByName = new LinkedHashMap<>();
+        // TreeMap gives address-sorted iteration automatically.
+        TreeMap<Address, Function> fnByAddr   = new TreeMap<>();
+        TreeMap<Address, String>   rawByAddr  = new TreeMap<>();
         int failed = 0;
 
         try {
@@ -117,17 +141,19 @@ public class ExportDecompiledC extends GhidraScript {
             while (it.hasNext()) {
                 monitor.checkCancelled();
                 Function fn = it.next();
-                String key = fn.getName() + "@" + fn.getEntryPoint();
+                Address  addr = fn.getEntryPoint();
 
                 DecompileResults res =
                         decompiler.decompileFunction(fn, DECOMPILE_TIMEOUT_SECS, monitor);
 
+                fnByAddr.put(addr, fn);
+
                 if (res != null && res.decompileCompleted()) {
                     DecompiledFunction df = res.getDecompiledFunction();
-                    rawByName.put(key, df != null ? df.getC() : null);
+                    rawByAddr.put(addr, df != null ? df.getC() : null);
                     if (df == null) failed++;
                 } else {
-                    rawByName.put(key, null);
+                    rawByAddr.put(addr, null);
                     failed++;
                 }
             }
@@ -137,7 +163,7 @@ public class ExportDecompiledC extends GhidraScript {
 
         // ── collect all void-declared function names ──────────────────────────
         Set<String> voidFunctions = new HashSet<>();
-        for (String raw : rawByName.values()) {
+        for (String raw : rawByAddr.values()) {
             if (raw == null) continue;
             for (String line : raw.split("\n")) {
                 Matcher m = VOID_SIG.matcher(line);
@@ -147,7 +173,7 @@ public class ExportDecompiledC extends GhidraScript {
 
         // ── find void functions whose return value is actually used ───────────
         Set<String> promoteToUndefined4 = new HashSet<>();
-        for (String raw : rawByName.values()) {
+        for (String raw : rawByAddr.values()) {
             if (raw == null) continue;
             for (String line : raw.split("\n")) {
                 Matcher m = CALL_ASSIGN.matcher(line);
@@ -165,11 +191,12 @@ public class ExportDecompiledC extends GhidraScript {
                     + promoteToUndefined4);
         }
 
-        // ── write fixed output ────────────────────────────────────────────────
-        int exported = 0;
-        int gpStripped = 0;
-        int promoted = 0;
+        // ── write fixed + enriched output ─────────────────────────────────────
+        int exported     = 0;
+        int gpStripped   = 0;
+        int promoted     = 0;
         int bareReturnFixed = 0;
+        int romSkipped   = 0;
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(outFile))) {
             pw.println("/* Auto-generated by Ghidra ExportDecompiledC script */");
@@ -179,6 +206,10 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" *   - gp = 0x<hex>; lines stripped (RISC-V GP register artifact)");
             pw.println(" *   - void return promoted to undefined4 where caller uses result");
             pw.println(" *   - bare return; -> return param_1; in promoted functions");
+            pw.println(" * Semantic enrichments:");
+            pw.println(" *   - functions sorted by entry-point address");
+            pw.println(" *   - typed signature, memory region, and caller list per function");
+            pw.println(" *   - ROM functions emitted as extern declarations only");
             pw.println(" * Compile with:");
             pw.println(" *   riscv32-esp-elf-gcc -march=rv32imafc_zicsr_zifencei \\");
             pw.println(" *     -mabi=ilp32f -O0 -include ghidra_types.h -c "
@@ -186,22 +217,73 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" */");
             pw.println();
 
-            for (Map.Entry<String, String> e : rawByName.entrySet()) {
-                pw.println("/* --- " + e.getKey() + " --- */");
+            for (Map.Entry<Address, Function> e : fnByAddr.entrySet()) {
+                Address  addr = e.getKey();
+                Function fn   = e.getValue();
+                String   raw  = rawByAddr.get(addr);
 
-                String raw = e.getValue();
+                // ── per-function metadata ─────────────────────────────────────
+
+                // Memory region from the MemoryBlock name set by ESP32P4Analyzer.
+                MemoryBlock block      = currentProgram.getMemory().getBlock(addr);
+                String      regionName = (block != null) ? block.getName() : null;
+
+                // ROM detection: external functions or blocks explicitly named ROM.
+                boolean isRom = fn.isExternal() ||
+                        (regionName != null &&
+                         regionName.toUpperCase().contains("ROM"));
+
+                // Caller list (sorted for stable output).
+                Set<Function> callerSet = fn.getCallingFunctions(monitor);
+                List<String> callerNames = callerSet.stream()
+                        .map(Function::getName)
+                        .sorted()
+                        .collect(Collectors.toList());
+
+                // Typed signature from Ghidra's function record.
+                String typedSig = buildTypedSig(fn);
+
+                // ── section comment ───────────────────────────────────────────
+                pw.println("/* ═══════════════════════════════════════════════════ */");
+                pw.println("/* " + fn.getName() + " @ " + addr);
+                if (regionName != null)
+                    pw.println(" * region  : " + regionName);
+                pw.println(" * typed   : " + typedSig);
+                if (!callerNames.isEmpty()) {
+                    if (callerNames.size() <= MAX_CALLERS_SHOWN) {
+                        pw.println(" * callers : " + String.join(", ", callerNames));
+                    } else {
+                        pw.println(" * callers : "
+                                + String.join(", ",
+                                    callerNames.subList(0, MAX_CALLERS_SHOWN))
+                                + " (+" + (callerNames.size() - MAX_CALLERS_SHOWN)
+                                + " more)");
+                    }
+                } else {
+                    pw.println(" * callers : (none — possible root / ISR)");
+                }
+                pw.println(" */");
+
+                // ── ROM short-circuit: extern only, no body ───────────────────
+                if (isRom) {
+                    pw.println("extern " + typedSig + "; /* ROM */");
+                    pw.println();
+                    romSkipped++;
+                    continue;
+                }
+
+                // ── decompile failed ──────────────────────────────────────────
                 if (raw == null) {
                     pw.println("/* decompile failed */");
                     pw.println();
                     continue;
                 }
 
-                // is this function one whose return type was promoted?
-                final String entryKey = e.getKey();
-                boolean isPromoted = promoteToUndefined4.stream()
-                        .anyMatch(name -> entryKey.startsWith(name + "@"));
+                // ── is this a void-promoted function? ─────────────────────────
+                final String fnName = fn.getName();
+                boolean isPromoted = promoteToUndefined4.contains(fnName);
 
-                // apply fixes line-by-line
+                // ── apply fixes line-by-line ──────────────────────────────────
                 StringBuilder fixed = new StringBuilder();
                 for (String line : raw.split("\n", -1)) {
 
@@ -213,9 +295,8 @@ public class ExportDecompiledC extends GhidraScript {
 
                     // fix 2: promote void → undefined4 in the signature line
                     if (promoteToUndefined4.stream().anyMatch(name ->
-                            line.matches("\\s*void\\s+" + name + "\\s*\\(.*"))) {
-                        String fixed2 = line.replaceFirst(
-                                "\\bvoid\\b", "undefined4");
+                            line.matches("\\s*void\\s+" + Pattern.quote(name) + "\\s*\\(.*"))) {
+                        String fixed2 = line.replaceFirst("\\bvoid\\b", "undefined4");
                         fixed.append(fixed2).append("\n");
                         promoted++;
                         continue;
@@ -242,14 +323,46 @@ public class ExportDecompiledC extends GhidraScript {
         }
 
         println(String.format(
-            "Export complete: %d written, %d failed | "
+            "Export complete: %d written, %d ROM externs, %d failed | "
             + "%d gp lines stripped, %d return types promoted, "
             + "%d bare returns fixed → %s",
-            exported, failed, gpStripped, promoted, bareReturnFixed,
+            exported, romSkipped, failed,
+            gpStripped, promoted, bareReturnFixed,
             outFile.getAbsolutePath()));
 
         if (failed > 0)
             printerr(failed + " function(s) failed — "
                    + "check output for /* decompile failed */ markers.");
+    }
+
+    /**
+     * Builds a typed C function signature from Ghidra's function record.
+     * Uses fn.getReturnType() and fn.getParameters() — reflects DWARF debug
+     * info, FIDB matches, and any manual type annotations made in Ghidra.
+     * Falls back to "undefined4" for unknown/void types on promoted functions.
+     */
+    private String buildTypedSig(Function fn) {
+        DataType retType = fn.getReturnType();
+        String   retName = (retType != null)
+                ? retType.getDisplayName()
+                : "undefined4";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(retName).append(" ").append(fn.getName()).append("(");
+
+        Parameter[] params = fn.getParameters();
+        for (int i = 0; i < params.length; i++) {
+            if (i > 0) sb.append(", ");
+            DataType dt = params[i].getDataType();
+            String   dn = (dt != null) ? dt.getDisplayName() : "undefined4";
+            sb.append(dn).append(" ").append(params[i].getName());
+        }
+        if (params.length == 0) sb.append("void");
+        if (fn.hasVarArgs()) {
+            if (params.length > 0) sb.append(", ");
+            sb.append("...");
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }
