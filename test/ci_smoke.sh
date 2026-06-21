@@ -502,6 +502,14 @@ int main(void){
   {static const char ls1[]="ABABC",ls2[]="BABCAB";int lsdp[6][7]={{0}};int lsmx=0;
    for(int i=1;i<=5;i++)for(int j=1;j<=6;j++){if(ls1[i-1]==ls2[j-1]){lsdp[i][j]=lsdp[i-1][j-1]+1;if(lsdp[i][j]>lsmx)lsmx=lsdp[i][j];}else lsdp[i][j]=0;}
    CHECK("test_lc_substring",(5u<<16)|(6u<<8)|(uint32_t)lsmx,0x00050604u);}
+  /* test_catalan: C(0..5)={1,1,2,5,14,42}; sum(C3+C4+C5)=61 xor=33 */
+  {int ct[6]={0};ct[0]=1;for(int k=1;k<6;k++)for(int i=0;i<k;i++)ct[k]+=ct[i]*ct[k-1-i];
+   uint32_t csum=0,cxor=0;for(int i=3;i<=5;i++){csum+=(uint32_t)ct[i];cxor^=(uint32_t)ct[i];}
+   CHECK("test_catalan",(6u<<16)|(csum<<8)|(cxor&0xFFu),0x00063D21u);}
+  /* test_shell_sort: {8,3,7,1,5,2,9,4} n=8; sorted last=9 xor=7 */
+  {int sha[]={8,3,7,1,5,2,9,4};for(int gap=4;gap>0;gap/=2)for(int i=gap;i<8;i++){int tmp=sha[i],j=i;while(j>=gap&&sha[j-gap]>tmp){sha[j]=sha[j-gap];j-=gap;}sha[j]=tmp;}
+   uint32_t shx=0;for(int i=0;i<8;i++)shx^=(uint32_t)sha[i];
+   CHECK("test_shell_sort",(8u<<16)|((uint32_t)sha[7]<<8)|(shx&0xFFu),0x00080907u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

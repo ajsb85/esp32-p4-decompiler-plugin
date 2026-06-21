@@ -944,6 +944,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "else.*lcs_dp.*=.*0|else.*dp.*\\[.*\\].*=.*0",   // key: reset to 0 on mismatch
             "lcs_dp|lc_substr|max_len.*lcs"                  // naming
         ),
+
+        // ── Sprint 49: Catalan Numbers DP ───────────────────────────────────
+        new PatternDef("catalan_inner_product", "catalan_dp", "high",
+            "cat.*\\[k\\].*\\+=.*cat.*\\[i\\].*cat.*\\[k.*-.*1.*-.*i\\]", // inner product
+            "for.*i.*=.*0.*i.*<.*k.*cat|cat.*\\[.*\\].*\\+=", // accumulation loop
+            "catalan|cat_dp|cat\\[k\\]"                      // naming
+        ),
+
+        // ── Sprint 49: Shell Sort ────────────────────────────────────────────
+        new PatternDef("shell_sort_gap", "shell_sort", "high",
+            "gap.*=.*n.*\\/.*2.*gap.*>.*0.*gap.*\\/=.*2",    // outer gap-halving loop
+            "j.*-=.*gap|arr.*j.*=.*arr.*j.*-.*gap",          // gap-strided shift
+            "shell_sort|shell_arr|gap.*halv"                 // naming
+        ),
+        new PatternDef("shell_sort_insertion", "shell_insert_pass", "medium",
+            "while.*j.*>=.*gap.*arr.*j.*-.*gap.*>.*tmp",     // condition with gap subtraction
+            "arr.*j.*=.*arr.*j.*-.*gap.*j.*-=.*gap",         // shift + stride back
+            "shell_sort|gap.*insert|j.*gap"                  // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

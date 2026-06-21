@@ -147,6 +147,8 @@ declare -A EXPECTED_RESULT=(
     [test_count_inversions]=0x00060F07
     [test_jump_search]=0x000A030C
     [test_lc_substring]=0x00050604
+    [test_catalan]=0x00063D21
+    [test_shell_sort]=0x00080907
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -178,7 +180,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_sliding_window test_bitmask_enum \
        test_two_pointer test_min_stack \
        test_boyer_moore_vote test_count_inversions \
-       test_jump_search test_lc_substring)
+       test_jump_search test_lc_substring \
+       test_catalan test_shell_sort)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

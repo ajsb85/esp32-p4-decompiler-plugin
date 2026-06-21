@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 68 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 70 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -80,6 +80,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_count_inversions.c` | Count inversions merge sort {6,5,4,3,2,1}; inv=15 xor=7 | `0x00060F07` | |
 | `test_jump_search.c` | Jump search O(√n); {1,3..19} block=3; find{7,13,19}; xor_idx=12 | `0x000A030C` | |
 | `test_lc_substring.c` | Longest Common Substring DP; "ABABC"/"BABCAB"; lcs=4 ("BABC") | `0x00050604` | |
+| `test_catalan.c` | Catalan numbers DP C(0..5)={1,1,2,5,14,42}; sum(C3+C4+C5)=61 xor=33 | `0x00063D21` | |
+| `test_shell_sort.c` | Shell sort gap-halving; {8,3,7,1,5,2,9,4} n=8; last=9 xor=7 | `0x00080907` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -162,7 +164,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-143 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+146 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -237,6 +239,8 @@ Pattern families currently covered (51 patterns):
 | Count inversions (merge sort) | cnt+=mid-i when arr[right]<arr[left] in merge step |
 | Jump search | step forward by √n; linear scan back on overshoot |
 | Longest common substring DP | dp[i][j]=dp[i-1][j-1]+1 on match; else 0 (reset vs LCS) |
+| Catalan numbers DP | cat[n]=sum(cat[i]*cat[n-1-i]); index complement idiom |
+| Shell sort | outer gap=n/2;gap/=2; inner: j-=gap strided shift |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
