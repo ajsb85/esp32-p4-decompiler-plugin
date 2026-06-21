@@ -92,15 +92,16 @@ declare -A EXPECTED_RESULT=(
     [test_pie_simd]=0x0000109A
     [test_hash]=0x21708D55
     [test_string]=0x00001014
+    [test_hwlp]=0x00000824
 )
 
-# test_pie_simd requires real ESP32-P4 ECO2 hardware to execute PIE instructions.
-# It compiles fine but the result can only be verified by flashing with --flash.
-HARDWARE_ONLY_TESTS=(test_pie_simd)
+# Tests that require real ESP32-P4 ECO2 hardware to execute.
+# They compile fine but results can only be verified with --flash.
+HARDWARE_ONLY_TESTS=(test_pie_simd test_hwlp)
 
 TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops \
-       test_pie_simd test_hash test_string)
+       test_pie_simd test_hash test_string test_hwlp)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

@@ -61,6 +61,8 @@
 //  pie_zero_q      q? = 0 (zero.q real pcode output)    pie_zero_q
 //  pie_bitwise     q? &|^ + andq/orq/xorq pcodeop name  pie_bitwise_q
 //  pie_simd_loop   Q register + for loop + ld/st        pie_simd_loop
+//  hwlp_setup      HWLP0_COUNT= or esp_lp_setup() call  hwlp_loop
+//  hwlp_counted_loop HWLP COUNT+START+END writes present hwlp_counted
 //
 // ── Output format ────────────────────────────────────────────────────────────
 //
@@ -303,6 +305,20 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for\\s*\\(.*<=.*hlen|for\\s*\\(.*<.*hlen",
             "for\\s*\\(.*<.*nlen",
             "return.*[ij]\\b|0xFFFFFFFF"
+        ),
+
+        // ── xesploop hardware loop patterns ───────────────────────────────────
+        // After callotherfixup replaces the opaque pcodeop, the decompiler emits
+        // HWLP0_COUNT / HWLP0_END writes that are visible in the decompiled C.
+        // Without the fixup, the decompiled output shows esp_lp_setup(...) calls.
+        new PatternDef("hwlp_setup", "hwlp_loop", "high",
+            "HWLP[01]_COUNT\\s*=|esp_lp_setup\\s*\\(",   // count assignment (fixup or raw)
+            "HWLP[01]_(?:START|END)\\s*=|esp_lp_setup"   // setup visible in any form
+        ),
+        new PatternDef("hwlp_counted_loop", "hwlp_counted", "medium",
+            "HWLP[01]_COUNT\\s*=",                        // count register write
+            "HWLP[01]_END\\s*=",                          // end address write (callotherfixup)
+            "HWLP[01]_START\\s*="                         // start address write
         ),
     };
 

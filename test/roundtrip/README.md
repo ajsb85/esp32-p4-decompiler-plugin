@@ -25,6 +25,7 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_hash.c` | DJB2, FNV-1a, polynomial rolling hash | `0x21708D55` | |
 | `test_string.c` | `strlen`, `memcmp`, `strchr` count, brute-force substring search | `0x00001014` | |
 | `test_pie_simd.c` | xespv2p2 PIE: `esp.vld.128.ip`, `esp.vst.128.ip` (raw `.word`) | `0x0000109A` | ✓ |
+| `test_hwlp.c` | xesploop: `esp.lp.setup` 3-instruction counted sum loop (raw `.word`) | `0x00000824` | ✓ |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -107,7 +108,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-39 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+41 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -135,6 +136,7 @@ Pattern families currently covered (39 patterns):
 | Hash | DJB2, FNV-1a, polynomial rolling |
 | String | `strlen` loop, `memcmp`, substring search |
 | PIE SIMD | `vld/vst.128.ip` loops, `zero.q`, bitwise Q ops, SIMD loop |
+| xesploop | HWLP setup detection (`hwlp_setup`), counted loop reconstruction (`hwlp_counted_loop`) |
 
 ---
 
