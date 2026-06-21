@@ -3470,6 +3470,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "inv_count.*=.*0.*inv_merge_sort.*INV_N.*checksum.*inv_orig_first|inversion_tally",
             "inv_count_result|inversion_count_total|count_inversions_result|inv_total_count"
         ),
+        // ── sqrt_tree (O(1) RMQ via sqrt decomposition + sparse table) ─────
+        new PatternDef("sqt_build", "sqrt_tree_build", "high",
+            "sqt_pmin\\[lo\\].*=.*sqt_arr\\[lo\\].*for.*i.*=.*lo.*\\+.*1.*i.*<.*hi|sqrt_tree_prefix_build",
+            "sqt_smin\\[hi.*-.*1\\].*=.*sqt_arr\\[hi.*-.*1\\].*sqt_bmin\\[b\\]|sqrt_tree_suffix_build",
+            "sqt_build|sqrt_tree_build|sqt_sparse|sqrt_rmq_construct"
+        ),
+        new PatternDef("sqt_query", "sqrt_tree_query", "high",
+            "bl.*=.*l.*\\/.*SQTREE_B.*br.*=.*r.*\\/.*SQTREE_B.*bl.*==.*br|sqrt_tree_same_block",
+            "sqt_min.*sqt_smin\\[l\\].*sqt_pmin\\[r\\].*lb.*=.*bl.*\\+.*1|sqrt_tree_cross_block",
+            "sqt_query|sqrt_tree_query|sqrt_rmq_query|sqt_min_range"
+        ),
+        new PatternDef("sqt_sparse_table", "sqrt_tree_sparse", "high",
+            "sqt_sparse\\[0\\]\\[b\\].*=.*sqt_bmin\\[b\\].*for.*k.*=.*1.*k.*<.*SQTREE_LOG|sqrt_sparse_init",
+            "sqt_sparse\\[k\\]\\[b\\].*=.*sqt_min.*sqt_sparse\\[k.*-.*1\\]\\[b\\].*sqt_sparse\\[k.*-.*1\\]|sqrt_sparse_fill",
+            "sqt_sparse_table|sqrt_tree_sparse|sqt_block_sparse|sqrt_rmq_sparse"
+        ),
+        // ── dancing_links (DLX exact-cover solver) ──────────────────────────
+        new PatternDef("dlx_cover", "dancing_links_cover", "high",
+            "dlx_pool\\[dlx_pool\\[c\\]\\.R\\]\\.L.*=.*dlx_pool\\[c\\]\\.L.*dlx_pool\\[dlx_pool\\[c\\]\\.L\\]\\.R|dlx_column_cover",
+            "dlx_col_size\\[jc\\]--.*dlx_pool\\[dlx_pool\\[j\\]\\.D\\]\\.U.*=.*dlx_pool\\[j\\]\\.U|dlx_node_remove",
+            "dlx_cover|dancing_links_cover|dlx_hide_column|exact_cover_cover"
+        ),
+        new PatternDef("dlx_uncover", "dancing_links_uncover", "high",
+            "dlx_col_size\\[jc\\]\\+\\+.*dlx_pool\\[dlx_pool\\[j\\]\\.D\\]\\.U.*=.*j.*dlx_pool\\[dlx_pool\\[j\\]\\.U\\]\\.D|dlx_restore",
+            "dlx_pool\\[dlx_pool\\[c\\]\\.R\\]\\.L.*=.*c.*dlx_pool\\[dlx_pool\\[c\\]\\.L\\]\\.R.*=.*c|dlx_column_restore",
+            "dlx_uncover|dancing_links_uncover|dlx_restore_column|exact_cover_uncover"
+        ),
+        new PatternDef("dlx_search", "dancing_links_search", "high",
+            "dlx_pool\\[0\\]\\.R.*==.*0.*dlx_solutions\\+\\+.*dlx_sol_hash.*\\^=.*h|dlx_solution_found",
+            "dlx_col_size\\[c\\].*<.*dlx_col_size\\[best\\].*best.*=.*c.*dlx_cover\\(best\\)|dlx_mrv_heuristic",
+            "dlx_search|dancing_links_search|dlx_backtrack|exact_cover_search"
+        ),
+        // ── flow_push_relabel (highest-label push-relabel max-flow) ─────────
+        new PatternDef("pr_push", "push_relabel_push", "high",
+            "pr_excess\\[u\\].*<.*res.*\\?.*pr_excess\\[u\\].*:.*res.*pr_edges\\[e\\]\\.flow.*\\+=|push_relabel_saturate",
+            "pr_edges\\[pr_edges\\[e\\]\\.rev\\]\\.flow.*-=.*send.*pr_excess\\[u\\].*-=.*send.*pr_excess\\[v\\]|push_relabel_adjust",
+            "pr_push|push_relabel_push|pr_saturate_edge|max_flow_push"
+        ),
+        new PatternDef("pr_relabel", "push_relabel_relabel", "high",
+            "min_h.*=.*2.*\\*.*pr_n.*for.*e.*=.*pr_head\\[u\\].*e.*>=.*0.*pr_edges\\[e\\]\\.cap.*-.*pr_edges\\[e\\]\\.flow|pr_admissible_scan",
+            "pr_height\\[v\\].*<.*min_h.*min_h.*=.*pr_height\\[v\\].*pr_height\\[u\\].*=.*min_h.*\\+.*1|pr_height_update",
+            "pr_relabel|push_relabel_relabel|pr_lift_node|max_flow_relabel"
+        ),
+        new PatternDef("pr_max_flow", "push_relabel_max_flow", "high",
+            "pr_bfs_height.*pr_height\\[pr_S\\].*=.*pr_n.*for.*i.*=.*0.*i.*<.*pr_n.*pr_cur\\[i\\]|pr_init_preflow",
+            "pr_excess\\[pr_S\\].*-=.*res.*pr_excess\\[v\\].*\\+=.*res.*pr_cur\\[i\\].*=.*pr_head\\[i\\]|pr_discharge_source",
+            "pr_max_flow|push_relabel_max_flow|pr_highest_label|max_flow_push_relabel"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
