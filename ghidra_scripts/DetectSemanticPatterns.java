@@ -5370,6 +5370,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "xor_acc.*\\^=.*vdc2.*\\^.*vdc3|vdc_xor_combine",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|vdc_pack"
         ),
+        new PatternDef("leonardo_recurrence", "leo_recurrence_step", "high",
+            "leo.*\\[.*i.*\\].*=.*leo.*\\[.*i.*-.*1.*\\].*\\+.*leo.*\\[.*i.*-.*2.*\\].*\\+.*1|leo_next_val",
+            "leo_table.*\\[0\\].*=.*1|leo_init_zero",
+            "leo_table.*%.*3.*==.*0|leo_div3_check"
+        ),
+        new PatternDef("leonardo_smoothsort", "leo_smoothsort_shape", "medium",
+            "leo.*\\[.*i.*-.*1u\\].*\\+.*leo.*\\[.*i.*-.*2u\\].*\\+.*1u|leo_offset_recur",
+            "leonardo_build|leo_build_table",
+            "leonardo_sum_below|leo_partial_sum"
+        ),
+        new PatternDef("leonardo_result", "leo_result_pack", "medium",
+            "count_div3.*\\+\\+|leo_div3_count",
+            "xor_div3.*\\^=.*leo_table|leo_xor_accum",
+            "LEO_N.*<<.*16.*count_div3.*<<.*8.*xor_div3|leo_pack"
+        ),
+        new PatternDef("hofstadter_g", "hofstadter_g_lookup", "high",
+            "hof_G.*\\[.*i.*\\].*=.*i.*-.*hof_G.*\\[.*hof_G.*\\[.*i.*-.*1.*\\].*\\]|hofg_double_index",
+            "hof_G.*\\[0\\].*=.*0|hofg_base_case",
+            "hof_G.*\\[.*hof_G.*\\[.*i.*-.*1u.*\\].*\\]|hofg_nested_lookup"
+        ),
+        new PatternDef("hofstadter_h", "hofstadter_h_lookup", "high",
+            "hof_H.*\\[.*i.*\\].*=.*i.*-.*hof_H.*\\[.*tmp2.*\\]|hofh_triple_index",
+            "tmp1.*=.*hof_H.*\\[.*i.*-.*1u.*\\]|hofh_tmp_chain",
+            "tmp2.*=.*hof_H.*\\[.*tmp1.*\\]|hofh_second_deref"
+        ),
+        new PatternDef("hofstadter_result", "hofstadter_result_pack", "medium",
+            "g_fixed.*\\+\\+|hofstadter_fixed_count",
+            "g_sum.*\\+=.*hof_G|hofstadter_sum_accum",
+            "HOF_N.*<<.*16.*g_fixed.*<<.*8.*g_sum|hofstadter_pack"
+        ),
+        new PatternDef("rudin_shapiro_pairs", "rs_pair_count", "high",
+            "\\(.*n.*&.*3u.*\\).*==.*3u.*pairs\\+\\+|rs_consec_pair_check",
+            "rs_pair_count.*n.*>.*1u|rs_pair_loop",
+            "pairs.*&.*1u.*==.*0u|rs_parity_check"
+        ),
+        new PatternDef("rudin_shapiro_prefix", "rs_prefix_sum", "medium",
+            "rudin_shapiro.*i.*s.*\\+=|rs_prefix_accum",
+            "rs_prefix_sum.*limit|rs_prefix_call",
+            "pos_count.*\\+\\+.*sum_pos.*\\+=.*i|rs_positive_index_sum"
+        ),
+        new PatternDef("rudin_shapiro_result", "rs_result_pack", "medium",
+            "sum_pos.*\\+=.*i|rs_sum_pos_accum",
+            "RS_N.*<<.*16.*pos_count.*<<.*8.*sum_pos|rs_pack",
+            "rudin_shapiro.*pair_count.*&.*1u|rs_sign_map"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
