@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 60 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 62 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -72,6 +72,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_matrix_chain.c` | Matrix chain mult DP; dims={2,3,4,5} n=3; dp[0][2]=64, dp[0][1]=24 | `0x00034018` | |
 | `test_kruskal.c` | Kruskal's MST with path-compressed Union-Find; n=5 graph; weight=12, edges=4 | `0x00050C04` | |
 | `test_floyd_cycle.c` | Floyd tortoise-hare; next={1,2,3,4,2,6,2}; cycle_start=2, len=3 | `0x00070203` | |
+| `test_sliding_window.c` | Sliding window max monotonic deque; {1,3,-1,-3,5,3,6,7} w=3; sum=29 xor=1 | `0x00081D01` | |
+| `test_bitmask_enum.c` | Bitmask enumeration 2^n subsets; {2,3,7,5} div-by-3; count=6 max=15 | `0x0004060F` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -154,7 +156,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-131 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+135 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -221,6 +223,8 @@ Pattern families currently covered (51 patterns):
 | Matrix chain DP | l=2..n diagonal; dp[i][j]=min(dp[i][k]+dp[k+1][j]+dims product) |
 | Kruskal's MST | sort edges; if find(u)!=find(v): union+accumulate weight |
 | Floyd cycle detection | phase1: do{slow=f; fast=f(f)}while≠; phase2: slow=0,advance; phase3: count |
+| Sliding window max | pop-back while arr[back]<=arr[i]; pop-front stale; emit arr[deq[head]] |
+| Bitmask enumeration | for mask=0..1<<n: for b=0..n: if(mask&(1<<b)) sum+=items[b] |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

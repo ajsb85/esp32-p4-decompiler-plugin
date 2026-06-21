@@ -868,6 +868,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "while.*fast.*!=.*slow.*fast.*=.*f.*fast.*len\\+\\+", // count loop
             "cycle_len|cycle_length|floyd_cycle"             // naming
         ),
+
+        // ── Sprint 45: Sliding Window Maximum ───────────────────────────────
+        new PatternDef("sliding_window_deque", "sliding_window_max", "high",
+            "while.*head.*<.*tail.*arr.*deq.*tail.*-.*1.*<=.*arr", // pop-back condition
+            "while.*head.*<.*tail.*deq.*head.*<.*i.*-.*w",         // pop-front stale evict
+            "sw_deq|sw_max|sliding_window|window_max"             // naming
+        ),
+        new PatternDef("sliding_window_assign", "window_max_emit", "medium",
+            "if.*i.*>=.*w.*-.*1.*sw_max|if.*i.*>=.*w.*max.*=.*arr.*deq", // emit condition
+            "sw_max.*=.*arr.*sw_deq|max_out.*=.*arr.*deq.*head",          // assign from front
+            "sw_max|window_max|sliding_max"                       // naming
+        ),
+
+        // ── Sprint 45: Bitmask Enumeration ──────────────────────────────────
+        new PatternDef("bitmask_subset_enum", "bitmask_enumeration", "high",
+            "for.*mask.*=.*0.*mask.*<.*1.*<<.*n",              // outer loop 1<<n bound
+            "mask.*&.*1.*<<.*b.*sum.*\\+=",                    // bit test + accumulate
+            "bitmask|mask.*items|subset.*enum"                // naming
+        ),
+        new PatternDef("bitmask_divisibility", "bitmask_div_filter", "medium",
+            "sum.*%.*k.*==.*0|sum.*%.*BM_K.*==",              // divisibility check
+            "count\\+\\+.*max_sum|if.*sum.*>.*max",           // count and track max
+            "bitmask_enum|div_filter|max_sum"                 // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

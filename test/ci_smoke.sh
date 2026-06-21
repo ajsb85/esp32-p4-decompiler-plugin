@@ -450,6 +450,18 @@ int main(void){
    sl=0;while(sl!=fa){sl=fcn[sl];fa=fcn[fa];}int cs=sl;
    int fl=1;fa=fcn[sl];while(fa!=sl){fa=fcn[fa];fl++;}
    CHECK("test_floyd_cycle",(7u<<16)|((uint32_t)cs<<8)|(uint32_t)fl,0x00070203u);}
+  /* test_sliding_window: {1,3,-1,-3,5,3,6,7} w=3; maxima={3,3,5,5,6,7} sum=29 xor=1 */
+  {static const int swa[]={1,3,-1,-3,5,3,6,7};int swdq[8],swmx[8],swh=0,swt=0;
+   for(int i=0;i<8;i++){while(swh<swt&&swdq[swh]<i-3+1)swh++;
+     while(swh<swt&&swa[swdq[swt-1]]<=swa[i])swt--;swdq[swt++]=i;
+     if(i>=2)swmx[i-2]=swa[swdq[swh]];}
+   uint32_t swsum=0,swx=0;for(int i=0;i<6;i++){swsum+=(uint32_t)swmx[i];swx^=(uint32_t)swmx[i];}
+   CHECK("test_sliding_window",(8u<<16)|(swsum<<8)|(swx&0xFFu),0x00081D01u);}
+  /* test_bitmask_enum: items={2,3,7,5} n=4 k=3; count=6 max_sum=15 */
+  {static const int bmi[]={2,3,7,5};int bmcnt=0,bmms=-1;
+   for(int mask=0;mask<16;mask++){int s=0;for(int b=0;b<4;b++)if(mask&(1<<b))s+=bmi[b];
+     if(s%3==0){bmcnt++;if(s>bmms)bmms=s;}}
+   CHECK("test_bitmask_enum",(4u<<16)|((uint32_t)bmcnt<<8)|(uint32_t)bmms,0x0004060Fu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
