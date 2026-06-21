@@ -2523,6 +2523,48 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*pool.*pool.*r.*left.*\\.pri.*>.*pool.*r.*\\.pri.*r.*=.*right_rot|treap_heapify_up",
             "treap_insert|treap_bst_rot|treap_priority_insert"
         ),
+
+        // ── Stern-Brocot tree ───────────────────────────────────────────────
+        new PatternDef("sb_mediant_step", "stern_brocot_mediant_computation", "high",
+            new String[]{"mn.*=.*ln.*\\+.*rn", "md.*=.*ld.*\\+.*rd", "mediant"},
+            new String[]{"hash", "bloom"}
+        ),
+        new PatternDef("sb_boundary_update", "stern_brocot_boundary_update_on_compare", "high",
+            new String[]{"mn.*\\*.*q.*<.*p.*\\*.*md", "ln.*=.*mn", "rn.*=.*mn"},
+            new String[]{"matrix", "segment"}
+        ),
+        new PatternDef("sb_depth_count", "stern_brocot_depth_counter_increment", "medium",
+            new String[]{"depth\\+\\+", "mn.*==.*p", "md.*==.*q", "sb_depth"},
+            new String[]{"bfs", "dfs"}
+        ),
+
+        // ── Barrett modular reduction ────────────────────────────────────────
+        new PatternDef("barrett_factor_precompute", "barrett_reciprocal_factor_precompute", "high",
+            new String[]{"factor.*=.*1ULL.*<<.*32.*\\/.*m", "barrett_init", "uint64"},
+            new String[]{"montgomery", "fermat"}
+        ),
+        new PatternDef("barrett_q_shift", "barrett_approximate_quotient_right_shift", "high",
+            new String[]{">>.*32", "\\(uint64\\).*x.*\\*.*factor", "barrett_reduce"},
+            new String[]{"gcd", "euler"}
+        ),
+        new PatternDef("barrett_correction", "barrett_single_subtraction_correction", "medium",
+            new String[]{"r.*=.*x.*-.*q.*\\*.*b\\.m", "if.*r.*>=.*b\\.m.*r.*-=.*b\\.m"},
+            new String[]{"miller", "ntt"}
+        ),
+
+        // ── Cantor expansion ─────────────────────────────────────────────────
+        new PatternDef("cantor_factoradic_digit", "cantor_count_smaller_right_factoradic", "high",
+            new String[]{"p\\[j\\].*<.*p\\[i\\]", "rank.*\\+=.*cnt.*\\*.*fact", "cantor_encode"},
+            new String[]{"hash", "trie"}
+        ),
+        new PatternDef("cantor_decode_select", "cantor_decode_select_kth_unused_element", "high",
+            new String[]{"idx.*=.*rank.*\\/.*f", "rank.*=.*rank.*%.*f", "used\\[v\\]"},
+            new String[]{"segment", "fenwick"}
+        ),
+        new PatternDef("cantor_factorial_weight", "cantor_expansion_factorial_position_weight", "medium",
+            new String[]{"fact.*n.*-.*1.*-.*i", "cantor_decode", "used.*=.*1"},
+            new String[]{"fib", "catalan"}
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
