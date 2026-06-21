@@ -2631,44 +2631,51 @@ public class DetectSemanticPatterns extends GhidraScript {
 
         // ── Berlekamp-Massey GF(2) LFSR synthesis ────────────────────────
         new PatternDef("bm_discrepancy", "berlekamp_massey_discrepancy_xor_accumulate", "high",
-            new String[]{"d.*\\^=.*seq.*i.*-.*j", "C.*>>.*j.*&.*1", "discrepancy"},
-            new String[]{"crc", "hash"}
+            "d.*\\^=.*seq.*i.*-.*j",
+            "C.*>>.*j.*&.*1",
+            "discrepancy"
         ),
         new PatternDef("bm_poly_xor_shift", "berlekamp_massey_connection_poly_xor_shift_update", "high",
-            new String[]{"C.*\\^=.*B.*<<.*m", "T.*=.*C", "B.*=.*T"},
-            new String[]{"reed_solomon", "ntt"}
+            "C.*\\^=.*B.*<<.*m",
+            "T.*=.*C",
+            "B.*=.*T"
         ),
         new PatternDef("bm_length_change", "berlekamp_massey_lfsr_length_increase_on_nonzero", "medium",
-            new String[]{"L.*=.*i.*\\+.*1.*-.*L", "2.*\\*.*L.*<=.*i", "m.*=.*1"},
-            new String[]{"galois", "crc32"}
+            "L.*=.*i.*\\+.*1.*-.*L",
+            "2.*\\*.*L.*<=.*i"
         ),
 
         // ── Tarjan offline LCA ────────────────────────────────────────────
         new PatternDef("tarjan_lca_ancestor_set", "tarjan_offline_lca_ancestor_assign_after_dsu_union", "high",
-            new String[]{"ancestor.*dsu_find.*u.*=.*u", "dsu_union.*u.*v", "ancestor\\["},
-            new String[]{"rmq", "binary_lifting"}
+            "ancestor.*dsu_find.*u.*=.*u",
+            "dsu_union.*u.*v",
+            "ancestor\\["
         ),
         new PatternDef("tarjan_lca_visited_check", "tarjan_offline_lca_answer_when_peer_visited", "high",
-            new String[]{"visited.*other", "qa.*qi.*=.*ancestor", "dsu_find.*other"},
-            new String[]{"euler_tour", "sparse_table"}
+            "visited.*other",
+            "ancestor.*dsu_find.*other"
         ),
         new PatternDef("tarjan_lca_query_adj", "tarjan_offline_lca_query_adjacency_list_per_node", "medium",
-            new String[]{"qlist.*u.*qlist_cnt.*u", "qu.*idx.*=.*u", "qv.*idx.*=.*v"},
-            new String[]{"centroid", "heavy_light"}
+            "qlist.*u.*qlist_cnt.*u",
+            "qu.*idx.*=.*u",
+            "qv.*idx.*=.*v"
         ),
 
         // ── Divide-and-Conquer DP optimisation ───────────────────────────
         new PatternDef("dc_dp_midpoint", "divide_conquer_dp_midpoint_column_bisection", "high",
-            new String[]{"mid.*=.*col_lo.*\\+.*col_hi.*>>.*1", "dc_solve.*col_lo.*mid", "dc_solve.*mid.*col_hi"},
-            new String[]{"knapsack", "subset_sum"}
+            "mid.*=.*col_lo.*\\+.*col_hi.*>>.*1",
+            "dc_solve.*col_lo.*mid",
+            "dc_solve.*mid.*col_hi"
         ),
         new PatternDef("dc_dp_opt_monotone", "divide_conquer_dp_monotone_opt_range_constraint", "high",
-            new String[]{"opt_lo.*best_k", "best_k.*opt_hi", "opt.*i.*j.*=.*best_k"},
-            new String[]{"bitmask_dp", "profile_dp"}
+            "opt_lo.*best_k",
+            "best_k.*opt_hi",
+            "opt.*i.*j.*=.*best_k"
         ),
         new PatternDef("dc_dp_diagonal_fill", "divide_conquer_dp_diagonal_interval_cost_recurrence", "medium",
-            new String[]{"dp.*i.*k.*\\+.*dp.*k\\+1.*j", "cost.*i.*j", "len.*=.*2"},
-            new String[]{"matrix_chain", "knuth_yao"}
+            "dp.*i.*k.*\\+.*dp.*k\\+1.*j",
+            "cost.*i.*j",
+            "len.*=.*2"
         ),
     };
 
