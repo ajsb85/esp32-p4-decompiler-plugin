@@ -572,6 +572,16 @@ int main(void){
    while(trl<trr){if(trh[trl]<trh[trr]){if(trh[trl]>=trml)trml=trh[trl];else trw+=trml-trh[trl];trl++;}else{if(trh[trr]>=trmr)trmr=trh[trr];else trw+=trmr-trh[trr];trr--;}}
    uint32_t trx=0;for(int i=0;i<trn;i++)trx^=(uint32_t)trh[i];
    CHECK("test_trapping_rain",((uint32_t)trn<<16)|((uint32_t)trw<<8)|(trx&0xFFu),0x00060902u);}
+  /* test_jump_game: 5 tests; reachable={a0,a2,a4}; count=3 xor=1 */
+  {const int jg0[]={2,3,1,1,4},jg1[]={3,2,1,0,4},jg2[]={1,2,3,4,0},jg3[]={0,0,1,1,1},jg4[]={5,4,3,2,1,0};
+   const int*jgas[]={jg0,jg1,jg2,jg3,jg4};int jgls[]={5,5,5,5,6};uint32_t jgc=0,jgx=0;
+   for(int t=0;t<5;t++){int mr=0,ok=1;for(int i=0;i<jgls[t];i++){if(i>mr){ok=0;break;}if(i+jgas[t][i]>mr)mr=i+jgas[t][i];}jgc+=ok;jgx^=(uint32_t)ok;}
+   CHECK("test_jump_game",(5u<<16)|(jgc<<8)|(jgx&0xFFu),0x00050301u);}
+  /* test_gas_station: 3 tests; starts={3,-1,4}; count=2 xor=7 */
+  {const int gg0[]={1,2,3,4,5},gc0[]={3,4,5,1,2},gg1[]={2,3,4},gc1[]={3,4,3},gg2[]={5,1,2,3,4},gc2[]={4,4,1,5,1};
+   const int*ggs[]={gg0,gg1,gg2};const int*gcs[]={gc0,gc1,gc2};int gls[]={5,3,5};uint32_t gsc=0,gsx=0;
+   for(int t=0;t<3;t++){int tot=0,tank=0,start=0;for(int i=0;i<gls[t];i++){int d=ggs[t][i]-gcs[t][i];tot+=d;tank+=d;if(tank<0){start=i+1;tank=0;}}if(tot>=0){gsc++;gsx^=(uint32_t)start;}}
+   CHECK("test_gas_station",(3u<<16)|(gsc<<8)|(gsx&0xFFu),0x00030207u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

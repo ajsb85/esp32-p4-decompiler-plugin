@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 80 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 82 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -92,6 +92,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_miller_rabin.c` | Miller-Rabin primality; {2,3,5,9,11,15,17,97}; prime count=6 xor=127 | `0x0008067F` | |
 | `test_max_rect_histogram.c` | Max rect in histogram; {2,1,5,6,2,3} n=6; max_area=10 xor=1 | `0x00060A01` | |
 | `test_trapping_rain.c` | Trapping rain two-pointer; {4,2,0,3,2,5} n=6; water=9 xor=2 | `0x00060902` | |
+| `test_jump_game.c` | Jump game greedy; 5 tests; reachable count=3 xor=1 | `0x00050301` | |
+| `test_gas_station.c` | Gas station greedy; 3 tests; valid starts=2 xor=7 | `0x00030207` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -174,7 +176,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-166 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+170 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -261,6 +263,8 @@ Pattern families currently covered (51 patterns):
 | Miller-Rabin primality | extract 2^s factor (d>>=1; s++); squaring loop; composite verdict (r==s) |
 | Max rectangle histogram | monotonic stack; pop-while-taller; width = (top<0)?i:i-stk[top]-1 |
 | Trapping rain water | two-pointer advance-shorter-side; running max_l/max_r; water+=max-h |
+| Jump game (greedy) | if(i>max_reach) early-exit; max_reach=max(max_reach,i+arr[i]) update |
+| Gas station (greedy) | tank+=gas-cost; if(tank<0){start=i+1;tank=0}; feasibility via total |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

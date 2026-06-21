@@ -1058,6 +1058,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "water.*+=.*max_l|water.*+=.*max_r",             // water accumulation
             "trap_rain|max_l|max_r"                          // naming
         ),
+
+        // ── Sprint 55: Jump Game ─────────────────────────────────────────────
+        new PatternDef("jump_game_greedy", "jump_game_reachability", "high",
+            "if.*i.*>.*max_reach.*return.*0|i.*>.*max_reach",  // early-exit pruning
+            "if.*i.*\\+.*arr.*i.*>.*max_reach.*max_reach.*=.*i.*\\+.*arr.*i", // greedy update
+            "jump_game|max_reach|jump_arr"                   // naming
+        ),
+
+        // ── Sprint 55: Gas Station ───────────────────────────────────────────
+        new PatternDef("gas_station_greedy", "gas_station_circuit", "high",
+            "tank.*\\+=.*gas.*i.*-.*cost.*i|tank.*diff|total.*diff", // running tank + total
+            "if.*tank.*<.*0.*start.*=.*i.*\\+.*1.*tank.*=.*0", // greedy reset pattern
+            "gas_station|start.*tank|total.*tank"            // naming
+        ),
+        new PatternDef("gas_station_feasibility", "gas_circuit_feasible", "medium",
+            "return.*total.*<.*0.*?.*-1|if.*total.*<.*0.*return.*-1", // infeasibility check
+            "total.*<.*0.*-1.*:.*start|total.*gas.*cost",    // total feasibility
+            "gas_station|total.*cost|circuit"                // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
