@@ -126,6 +126,8 @@ static uint32_t my_strlen2(const char *s){uint32_t n=0;while(*s++)n++;return n;}
 static uint32_t my_memcmp2(const uint8_t *a,const uint8_t *b,uint32_t n){for(uint32_t i=0;i<n;i++)if(a[i]!=b[i])return i+1;return 0;}
 static uint32_t my_strchr_cnt(const char *s,char c){uint32_t n=0;while(*s){if(*s==c)n++;s++;}return n;}
 static uint32_t needle_srch(const char *h,uint32_t hl,const char *nd,uint32_t nl){if(!nl||nl>hl)return 0xFFFFFFFFu;for(uint32_t i=0;i<=hl-nl;i++){uint32_t j;for(j=0;j<nl;j++)if(h[i+j]!=nd[j])break;if(j==nl)return i;}return 0xFFFFFFFFu;}
+static int qs_part(int *a,int lo,int hi){int pv=a[hi],i=lo-1;for(int j=lo;j<hi;j++)if(a[j]<=pv){i++;int t=a[i];a[i]=a[j];a[j]=t;}int t=a[i+1];a[i+1]=a[hi];a[hi]=t;return i+1;}
+static void qsort_r2(int *a,int lo,int hi){if(lo<hi){int p=qs_part(a,lo,hi);qsort_r2(a,lo,p-1);qsort_r2(a,p+1,hi);}}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -189,6 +191,15 @@ int main(void){
   {static const uint32_t wlens[6]={3,3,4,4,3,4};uint32_t xl=0;
    for(int i=0;i<6;i++)xl^=wlens[i];
    CHECK("test_trie",(6u<<16)|(5u<<8)|(xl&0xFFu),0x00060507u);}
+  /* test_quicksort: Lomuto sort {5,3,8,1,7,2,9,4,6} → {1..9}, XOR=1, sum=45 */
+  {int qa[9]={5,3,8,1,7,2,9,4,6};qsort_r2(qa,0,8);
+   uint32_t qx=0,qs2=0;for(int i=0;i<9;i++){qx^=(uint32_t)qa[i];qs2+=(uint32_t)qa[i];}
+   CHECK("test_quicksort",(9u<<16)|(qs2<<8)|(qx&0xFFu),0x00092D01u);}
+  /* test_dp: LCS("ABCBDAB","BDCAB")=4; g_result=(7<<16)|(5<<8)|4 */
+  {static const char da[]="ABCBDAB";static const char db[]="BDCAB";
+   static int dp[8][6];for(int i=0;i<=7;i++)dp[i][0]=0;for(int j=0;j<=5;j++)dp[0][j]=0;
+   for(int i=1;i<=7;i++)for(int j=1;j<=5;j++){if(da[i-1]==db[j-1])dp[i][j]=dp[i-1][j-1]+1;else{int l=dp[i][j-1],u=dp[i-1][j];dp[i][j]=l>u?l:u;}}
+   CHECK("test_dp",(7u<<16)|(5u<<8)|(uint32_t)dp[7][5],0x00070504u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

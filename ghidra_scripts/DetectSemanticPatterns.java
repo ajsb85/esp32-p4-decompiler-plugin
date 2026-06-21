@@ -398,6 +398,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "is_end|trie.*return.*0|return.*is_end",           // search-failure or result
             "trie_search|trie_find|prefix_search"             // search function names
         ),
+
+        // ── Quicksort (55, 56) ────────────────────────────────────────────────
+        new PatternDef("quicksort_partition", "qs_partition", "high",
+            "pivot|a\\[hi\\]|a\\[high\\]",                    // pivot selection (Lomuto/Hoare)
+            "a\\[i\\].*=.*a\\[j\\]|swap.*pivot",              // partition swap
+            "qs_part|partition|lomuto|hoare"                  // partition function names
+        ),
+        new PatternDef("quicksort_recurse", "quicksort", "high",
+            "quicksort|qsort_r|quick_sort",                   // recursive call name
+            "lo\\s*<\\s*hi|low\\s*<\\s*high|left.*<.*right",  // recursion bounds check
+            "p\\s*-\\s*1|pivot.*-.*1|p\\s*\\+\\s*1"          // sub-range split after partition
+        ),
+
+        // ── Dynamic Programming (57, 58) ─────────────────────────────────────
+        new PatternDef("dp_2d_table", "dp_fill", "high",
+            "dp\\[i\\]\\[j\\]|dp\\[.*\\]\\[.*\\]",           // 2D DP table access
+            "dp\\[i-1\\]\\[j-1\\]|dp\\[i\\]\\[j-1\\]",       // diagonal or left neighbor
+            "dp\\[i-1\\]\\[j\\]|dp\\[i\\]\\[j-1\\]"          // up or left access
+        ),
+        new PatternDef("lcs_pattern", "lcs_op", "high",
+            "a\\[i.*-.*1\\]\\s*==\\s*b\\[j.*-.*1\\]",        // character equality check
+            "dp\\[i-1\\]\\[j-1\\]\\s*\\+\\s*1",              // diagonal + 1 (match)
+            "left.*>.*up|up.*>.*left|dp.*>.*dp"               // max(left, up) for mismatch
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 20 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 22 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -32,6 +32,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_base64.c` | Base64 encoding: "Hello!" → "SGVsbG8h", 6-bit extraction + table lookup | `0x00000844` | |
 | `test_avl.c` | AVL tree: LL/RR/LR/RL rotations; insert {3,1,4,5,9,2,6}; in-order XOR+sum | `0x00071E0E` | |
 | `test_trie.c` | Prefix trie: 26-child array, insert 6 words, 8 searches (5 found), XOR of lengths | `0x00060507` | |
+| `test_quicksort.c` | Lomuto quicksort: sort {5,3,8,1,7,2,9,4,6} in-place; verify XOR+sum of output | `0x00092D01` | |
+| `test_dp.c` | LCS DP: 2D table for "ABCBDAB" vs "BDCAB", length=4 | `0x00070504` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -114,7 +116,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-53 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+57 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -145,6 +147,8 @@ Pattern families currently covered (51 patterns):
 | xesploop | HWLP setup detection (`hwlp_setup`), counted loop reconstruction (`hwlp_counted_loop`) |
 | Data structures | BST insert / in-order traverse, min-heap insert / extract-min, AVL rotate / balance, trie insert / search |
 | Codecs | RLE encode/decode run scanning, Base64 6-bit extraction + table |
+| Divide & conquer | Quicksort Lomuto partition + recursive sub-range split |
+| Dynamic programming | 2D DP table fill, LCS diagonal/max pattern |
 
 ---
 
