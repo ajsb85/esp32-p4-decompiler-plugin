@@ -3953,6 +3953,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "flow.*\\+=.*f.*while.*ff_dfs.*s.*t|total_flow_accumulate_augment",
             "ff_maxflow|ford_fulkerson_max_flow|run_ford_fulkerson_tests"
         ),
+
+        // ── segtree_fractional_cascading ──────────────────────────────────────
+        new PatternDef("fc_build_merge_sorted", "segtree_fractional_cascading_build_merge", "high",
+            "fc_off\\[node\\].*=.*fc_alloc.*fc_val\\[fc_alloc\\+\\+\\]|seg_tree_node_sorted_array_alloc",
+            "fc_val\\[k\\+\\+\\].*=.*lv\\[i\\+\\+\\].*fc_val\\[k\\+\\+\\].*=.*rv\\[j\\+\\+\\]|merge_sorted_children_into_parent",
+            "fc_build|segtree_fractional_cascading_build|merge_sort_tree_node"
+        ),
+        new PatternDef("fc_cross_links", "segtree_fractional_cascading_lpos_rpos_crosslinks", "high",
+            "fc_lpos\\[base.*\\+.*p\\].*=.*fc_count_le.*lv.*nl.*fc_val|left_child_cross_link_fractional_cascade",
+            "fc_rpos\\[base.*\\+.*p\\].*=.*fc_count_le.*rv.*nr.*fc_val|right_child_cross_link_fractional_cascade",
+            "fc_lpos|fc_rpos|fractional_cascading_cross_link_build"
+        ),
+        new PatternDef("fc_kth_query", "segtree_fractional_cascading_kth_range_query", "medium",
+            "fc_len\\[2\\*node\\].*left_in_range.*right_in_range.*k.*<=.*left_in_range|cascading_kth_descent",
+            "fc_val\\[fc_off\\[node\\]\\].*root_v\\[.*\\].*fc_count_le|sorted_node_kth_extract",
+            "fc_kth|fc_query|run_fc_tests|segtree_fractional_cascading_query"
+        ),
+
+        // ── edge_coloring ─────────────────────────────────────────────────────
+        new PatternDef("ec_free_color_assign", "edge_coloring_free_color_vertex_assign", "high",
+            "ec_vertex_color_edge\\[v\\]\\[c\\].*==.*EC_NONE.*return.*c|find_free_color_at_vertex",
+            "ec_color\\[e\\].*=.*c.*ec_vertex_color_edge\\[u\\]\\[c\\].*=.*e|edge_color_assign_update_table",
+            "ec_free_color|ec_assign|edge_coloring_assign_color"
+        ),
+        new PatternDef("ec_augment_path", "edge_coloring_augmenting_alternating_path_swap", "high",
+            "ec_vertex_color_edge\\[v\\]\\[c2\\].*ec_color\\[e2\\].*=.*c1.*ec_vertex_color_edge|alternating_path_color_swap",
+            "int.*tmp.*=.*c1.*c1.*=.*c2.*c2.*=.*tmp.*ec_augment_path|swap_c1_c2_augment_continue",
+            "ec_augment_path|edge_coloring_alternating_path|vizing_fan_rotation"
+        ),
+        new PatternDef("ec_verify_coloring", "edge_coloring_validity_check", "medium",
+            "ec_color\\[e1\\].*==.*ec_color\\[e2\\].*u1.*==.*u2.*u1.*==.*v2.*v1.*==.*u2|same_color_shared_vertex_check",
+            "ec_count_colors|used\\[ec_color\\[e\\]\\].*=.*1|distinct_colors_used_count",
+            "ec_verify|ec_count_colors|run_ec_tests|edge_coloring_verify"
+        ),
+
+        // ── max_independent_set ───────────────────────────────────────────────
+        new PatternDef("mis_bitmask_adj", "max_independent_set_bitmask_adjacency", "high",
+            "mis_adj\\[u\\].*\\|=.*1u.*<<.*v.*mis_adj\\[v\\].*\\|=.*1u.*<<.*u|bitmask_adjacency_bidirectional_add",
+            "mis_adj\\[v\\].*&.*candidates.*mis_popcount|neighbor_mask_within_candidates_degree",
+            "mis_adj|mis_add_edge|max_independent_set_graph_build"
+        ),
+        new PatternDef("mis_branch_bound", "max_independent_set_branch_and_bound_search", "high",
+            "candidates.*==.*0u.*cur_size.*>.*mis_best.*mis_best.*=.*cur_size|leaf_update_best_independent_set",
+            "cur_size.*\\+.*mis_popcount.*candidates.*<=.*mis_best.*return|upper_bound_prune_branch",
+            "mis_search|mis_solve|max_independent_set_branch_bound"
+        ),
+        new PatternDef("mis_popcount", "max_independent_set_popcount_bitmask", "medium",
+            "x.*=.*x.*-.*x.*>>.*1.*&.*0x55555555u.*0x33333333u.*0x0f0f0f0fu|parallel_popcount_32bit",
+            "x.*\\*.*0x01010101u.*>>.*24|popcount_multiply_shift_extract",
+            "mis_popcount|bitmask_popcount|run_mis_tests"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
