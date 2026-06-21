@@ -1802,6 +1802,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*i.*<.*ng.*if.*group_sizes.*i.*>.*maxg.*maxg.*=.*group_sizes.*i",
             "group_sizes|word_groups|anagram_cluster"
         ),
+        // Sprint 98 — skip list / treap
+        new PatternDef("skip_list_two_level", "skip_list_express_base", "high",
+            "express_idx.*\\[.*\\].*base.*\\[.*\\].*prev_base.*e.*<.*N_EXPRESS",
+            "base_scan.*start_idx.*target.*for.*i.*=.*start_idx.*i.*<.*N_ELEM",
+            "skip_list|express_lane|two_level_search"
+        ),
+        new PatternDef("skip_list_express_lane", "skip_list_forward_pointer", "high",
+            "for.*e.*=.*0.*e.*<.*N_EXPRESS.*idx.*=.*express_idx.*e.*base.*idx.*>.*target.*break",
+            "if.*base.*idx.*==.*target.*return.*1.*prev_base.*=.*idx",
+            "skip_list_fwd|express_search|skip_forward"
+        ),
+        new PatternDef("skip_list_fallback_scan", "skip_list_base_lane_scan", "medium",
+            "return.*base_scan.*prev_base.*target|base_scan.*after.*express.*lane",
+            "for.*i.*=.*start_idx.*i.*<.*N_ELEM.*if.*base.*i.*==.*target.*return.*1",
+            "base_scan|fallback_scan|skip_linear"
+        ),
+        // Sprint 99 — turbulent subarray / min cost staircase
+        new PatternDef("turbulent_subarray_dp", "alternating_dp_inc_dec", "high",
+            "dp_inc.*i.*=.*dp_dec.*i.*-.*1.*\\+.*1.*arr.*i.*>.*arr.*i.*-.*1",
+            "dp_dec.*i.*=.*dp_inc.*i.*-.*1.*\\+.*1.*arr.*i.*<.*arr.*i.*-.*1",
+            "turbulent|dp_inc.*dp_dec|alternating_dp"
+        ),
+        new PatternDef("min_cost_staircase", "minimum_cost_climb_dp", "high",
+            "dp.*i.*=.*cost.*i.*\\+.*prev.*dp.*i.*-.*1.*dp.*i.*-.*2",
+            "return.*dp.*n.*-.*1.*<.*dp.*n.*-.*2.*dp.*n.*-.*1.*dp.*n.*-.*2",
+            "min_cost_stair|staircase_dp|climb_cost"
+        ),
+        new PatternDef("turbulent_equal_reset", "turbulent_equal_element_break", "medium",
+            "dp_inc.*i.*=.*dp_dec.*i.*=.*1.*arr.*i.*==.*arr.*i.*-.*1",
+            "equal.*arr.*i.*==.*arr.*i.*-.*1.*reset.*dp_inc.*dp_dec.*1",
+            "turbulent_reset|equal_reset|turbulent_equal"
+        ),
+        // Sprint 100 — longest valid parens / count digit 1s
+        new PatternDef("longest_valid_parens_dp", "valid_parens_dp_stack", "high",
+            "if.*s.*i.*==.*')'.*s.*i.*-.*1.*==.*'('.*dp.*i.*=.*dp.*i.*-.*2.*\\+.*2",
+            "if.*dp.*i.*-.*1.*>.*0.*j.*=.*i.*-.*dp.*i.*-.*1.*-.*1.*s.*j.*==.*'('",
+            "valid_parens|longest_parens_dp|paren_dp"
+        ),
+        new PatternDef("count_digit_ones", "count_1s_digit_position", "high",
+            "for.*pos.*=.*1.*pos.*<=.*n.*pos.*\\*=.*10.*higher.*=.*n.*pos.*\\*.*10",
+            "if.*current.*>.*1.*count.*\\+=.*higher.*\\+.*1.*pos|if.*current.*==.*1.*lower",
+            "count_digit_1|digit_ones_pos|ones_each_pos"
+        ),
+        new PatternDef("digit_position_hcl", "higher_current_lower_formula", "medium",
+            "higher.*=.*n.*pos.*10.*current.*=.*n.*pos.*%.*10.*lower.*=.*n.*%.*pos",
+            "current.*>.*1.*higher.*\\+.*1.*pos|current.*==.*1.*higher.*pos.*lower.*1",
+            "digit_hcl|higher_current_lower|pos_digit_formula"
+        ),
+        // Sprint 101 — Pascal's triangle / largest divisible subset
+        new PatternDef("pascals_triangle_row", "pascals_row_inplace_update", "high",
+            "row.*0.*=.*1.*for.*i.*=.*0.*n.*for.*j.*=.*i.*\\+.*1.*j.*>=.*1.*j.*--",
+            "row.*j.*\\+=.*row.*j.*-.*1.*in.*place.*binomial|row.*j.*\\+=.*row.*j.*-.*1",
+            "pascals_row|pascal_triangle|binomial_row"
+        ),
+        new PatternDef("largest_div_subset_dp", "divisible_subset_sort_dp", "high",
+            "if.*arr.*i.*%.*arr.*j.*==.*0.*dp.*j.*\\+.*1.*>.*dp.*i.*dp.*i.*=.*dp.*j.*\\+.*1",
+            "sort.*arr.*dp.*i.*=.*1.*parent.*i.*=.*-1.*for.*j.*<.*i.*arr.*i.*%.*arr.*j",
+            "div_subset|largest_div|divisible_dp"
+        ),
+        new PatternDef("div_subset_reconstruct", "divisible_subset_trace_parent", "medium",
+            "idx.*=.*best_idx.*while.*idx.*!=.*-1.*xor_sub.*\\^=.*arr.*idx.*idx.*=.*parent.*idx",
+            "trace.*back.*subset.*via.*parent.*array|reconstruct.*divisible.*subset",
+            "div_trace|subset_reconstruct|trace_div"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

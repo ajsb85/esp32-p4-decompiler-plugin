@@ -180,6 +180,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_palindrome_num.c` | Digit-reversal palindrome; 6 nums, count=4, xor_low=0x53 | `0x00060453` | |
 | `test_balanced_partition.c` | Equal subset sum DP; 4 arrays, 3 balanced, len_sum=14 | `0x0004030E` | |
 | `test_anagram_groups.c` | Freq-vector anagram grouping; 6 words, 3 groups max=3 | `0x00030300` | |
+| `test_skip_list.c` | Two-level skip list; 8 elems express-lane search; found=2 xor=30 | `0x0003021E` | |
+| `test_treap.c` | Treap BST+max-heap; 7 nodes via rotate-up; root=key4 sum=34 | `0x00072204` | |
+| `test_turbulent.c` | Longest turbulent subarray dp_inc/dp_dec; n=9 max=5 xor=10 | `0x0009050A` | |
+| `test_min_cost_staircase.c` | Min cost staircase DP; 3 tests, sum=23, xor=11 | `0x0003170B` | |
+| `test_longest_valid_parens.c` | Longest valid parens DP; 3 strings, sum=6, xor=6 | `0x00030606` | |
+| `test_count_digit_ones.c` | Count digit-1s via position formula; n=13/50/100; sum=42 xor=28 | `0x00032A1C` | |
+| `test_pascals_row.c` | Pascal row7 in-place; sum=128, C(7,3)=35 | `0x00078023` | |
+| `test_largest_div_subset.c` | Largest divisible subset sort+DP; n=6 best={1,2,6,24} xor=29 | `0x0006041D` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.

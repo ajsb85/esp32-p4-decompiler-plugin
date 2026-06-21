@@ -253,6 +253,14 @@ declare -A EXPECTED_RESULT=(
     [test_palindrome_num]=0x00060453
     [test_balanced_partition]=0x0004030E
     [test_anagram_groups]=0x00030300
+    [test_skip_list]=0x0003021E
+    [test_treap]=0x00072204
+    [test_turbulent]=0x0009050A
+    [test_min_cost_staircase]=0x0003170B
+    [test_longest_valid_parens]=0x00030606
+    [test_count_digit_ones]=0x00032A1C
+    [test_pascals_row]=0x00078023
+    [test_largest_div_subset]=0x0006041D
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -337,7 +345,11 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_two_sum_pairs test_task_scheduler \
        test_consecutive_seq test_dice_combinations \
        test_max_points_line test_palindrome_num \
-       test_balanced_partition test_anagram_groups)
+       test_balanced_partition test_anagram_groups \
+       test_skip_list test_treap \
+       test_turbulent test_min_cost_staircase \
+       test_longest_valid_parens test_count_digit_ones \
+       test_pascals_row test_largest_div_subset)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

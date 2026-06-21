@@ -200,6 +200,16 @@ static int tr2_ch[60][26],tr2_end[60],tr2_sz;
 static void tr2_init(void){tr2_sz=1;} /* BSS zero-initializes all nodes */
 static void tr2_ins(const char*s){int cur=0;for(;*s;s++){int c=*s-'a';if(!tr2_ch[cur][c]){int n=tr2_sz++;tr2_ch[cur][c]=n;}cur=tr2_ch[cur][c];}tr2_end[cur]=1;}
 static int tr2_srch(const char*s){int cur=0;for(;*s;s++){int c=*s-'a';if(!tr2_ch[cur][c])return 0;cur=tr2_ch[cur][c];}return tr2_end[cur];}
+/* Sprint 98: treap helpers (recursive — must be static before CHECK) */
+typedef struct{int key,pri,left,right;}TNode2;
+static TNode2 tp2[16];static int tp2sz;
+static int tp2_new(int k,int p){tp2[tp2sz].key=k;tp2[tp2sz].pri=p;tp2[tp2sz].left=-1;tp2[tp2sz].right=-1;return tp2sz++;}
+static int tp2_rr(int r){int l=tp2[r].left;tp2[r].left=tp2[l].right;tp2[l].right=r;return l;}
+static int tp2_lr(int r){int ri=tp2[r].right;tp2[r].right=tp2[ri].left;tp2[ri].left=r;return ri;}
+static int tp2_ins(int r,int k,int p){if(r==-1)return tp2_new(k,p);if(k<tp2[r].key){tp2[r].left=tp2_ins(tp2[r].left,k,p);if(tp2[tp2[r].left].pri>tp2[r].pri)r=tp2_rr(r);}else{tp2[r].right=tp2_ins(tp2[r].right,k,p);if(tp2[tp2[r].right].pri>tp2[r].pri)r=tp2_lr(r);}return r;}
+static int tp2_sum;static void tp2_io(int r){if(r==-1)return;tp2_io(tp2[r].left);tp2_sum+=tp2[r].key;tp2_io(tp2[r].right);}
+/* Sprint 100: longest valid parens helper */
+static int lv_plen(const char*s,int n){int dp[64],best=0,i;for(i=0;i<n;i++)dp[i]=0;for(i=1;i<n;i++){if(s[i]==')'){if(s[i-1]=='('){dp[i]=(i>=2?dp[i-2]:0)+2;}else if(dp[i-1]>0){int j=i-dp[i-1]-1;if(j>=0&&s[j]=='(')dp[i]=dp[i-1]+2+(j>=1?dp[j-1]:0);}if(dp[i]>best)best=dp[i];}}return best;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -1257,6 +1267,56 @@ int main(void){
     aggsz[agng++]=gsz;}
    for(int i=0;i<agng;i++){if(aggsz[i]>agmx)agmx=aggsz[i];agxr^=(uint32_t)aggsz[i];}
    CHECK("test_anagram_groups",((uint32_t)agng<<16)|((uint32_t)agmx<<8)|(agxr&0xFFu),0x00030300u);}
+  /* Sprint 98: test_skip_list — {2,5,9,12,17,23,31,45} express:{2,9,17,31}; find(9,23,15); found=2 xor=30 */
+  {static const int slb[]={2,5,9,12,17,23,31,45},sle[]={0,2,4,6};int slf=0;uint32_t slx=0;
+   static const int slq[]={9,23,15};
+   for(int i=0;i<3;i++){int tgt=slq[i],pb=0,ok=0;
+    for(int e=0;e<4;e++){int idx=sle[e];if(slb[idx]>tgt)break;if(slb[idx]==tgt){ok=1;break;}pb=idx;}
+    if(!ok){for(int j=pb;j<8;j++){if(slb[j]==tgt){ok=1;break;}if(slb[j]>tgt)break;}}
+    if(ok){slf++;slx^=(uint32_t)tgt;}}
+   CHECK("test_skip_list",(3u<<16)|((uint32_t)slf<<8)|(slx&0xFFu),0x0003021Eu);}
+  /* Sprint 98: test_treap — keys={5,3,7,1,4,6,8} pris={10,40,20,30,50,15,25}; root=4 sum=34 */
+  {static const int tk[]={5,3,7,1,4,6,8},tp[]={10,40,20,30,50,15,25};int tn=7,tr=-1;tp2sz=0;
+   for(int i=0;i<tn;i++)tr=tp2_ins(tr,tk[i],tp[i]);
+   tp2_sum=0;tp2_io(tr);
+   CHECK("test_treap",((uint32_t)tn<<16)|((uint32_t)tp2_sum<<8)|((uint32_t)tp2[tr].key&0xFFu),0x00072204u);}
+  /* Sprint 99: test_turbulent — {9,4,2,10,7,8,8,1,9} n=9 max=5 xor=10 */
+  {static const int ta[]={9,4,2,10,7,8,8,1,9};int tn2=9,tdi[16],tdd[16],tmx=1;uint32_t txr=0;
+   tdi[0]=tdd[0]=1;
+   for(int i=1;i<tn2;i++){if(ta[i]>ta[i-1]){tdi[i]=tdd[i-1]+1;tdd[i]=1;}else if(ta[i]<ta[i-1]){tdd[i]=tdi[i-1]+1;tdi[i]=1;}else{tdi[i]=tdd[i]=1;}int b=tdi[i]>tdd[i]?tdi[i]:tdd[i];if(b>tmx)tmx=b;}
+   for(int i=0;i<tn2;i++)txr^=(uint32_t)ta[i];
+   CHECK("test_turbulent",((uint32_t)tn2<<16)|((uint32_t)tmx<<8)|(txr&0xFFu),0x0009050Au);}
+  /* Sprint 99: test_min_cost_staircase — {10,15,20}->15 {1,100,...}->6 {0,2,2,1}->2; sum=23 xor=11 */
+  {static const int mc0[]={10,15,20},mc1[]={1,100,1,1,1,100,1,1,100,1},mc2[]={0,2,2,1};int mcd[16];
+   int mcr[3];static const int*mca[]={mc0,mc1,mc2};static const int mcn[]={3,10,4};
+   for(int s=0;s<3;s++){int n=mcn[s];const int*c=mca[s];mcd[0]=c[0];mcd[1]=c[1];
+    for(int i=2;i<n;i++){int pv=mcd[i-1]<mcd[i-2]?mcd[i-1]:mcd[i-2];mcd[i]=c[i]+pv;}
+    mcr[s]=mcd[n-1]<mcd[n-2]?mcd[n-1]:mcd[n-2];}
+   int mcs=mcr[0]+mcr[1]+mcr[2],mcx=mcr[0]^mcr[1]^mcr[2];
+   CHECK("test_min_cost_staircase",(3u<<16)|((uint32_t)mcs<<8)|((uint32_t)mcx&0xFFu),0x0003170Bu);}
+  /* Sprint 100: test_longest_valid_parens — "(("->2 ")()())"->4 ""->0; sum=6 xor=6 */
+  {static const char*lvs[]={"(()",")()()",")()())",""}; int lvn[]={3,5,6,0};(void)lvn;
+   int lvr[3];lvr[0]=lv_plen("(()",3);lvr[1]=lv_plen(")()())",6);lvr[2]=lv_plen("",0);
+   int lvsum=lvr[0]+lvr[1]+lvr[2],lvx=lvr[0]^lvr[1]^lvr[2];(void)lvs;
+   CHECK("test_longest_valid_parens",(3u<<16)|((uint32_t)lvsum<<8)|((uint32_t)lvx&0xFFu),0x00030606u);}
+  /* Sprint 100: test_count_digit_ones — n=13->6 n=50->15 n=100->21; sum=42 xor=28 */
+  {static const int cdn[]={13,50,100};int cdr[3];
+   for(int s=0;s<3;s++){int n=cdn[s],cnt=0;for(int pos=1;pos<=n;pos*=10){int hi=n/(pos*10),cur=(n/pos)%10,lo=n%pos;if(cur>1)cnt+=(hi+1)*pos;else if(cur==1)cnt+=hi*pos+lo+1;else cnt+=hi*pos;}cdr[s]=cnt;}
+   int cds=cdr[0]+cdr[1]+cdr[2],cdx=cdr[0]^cdr[1]^cdr[2];
+   CHECK("test_count_digit_ones",(3u<<16)|((uint32_t)cds<<8)|((uint32_t)cdx&0xFFu),0x00032A1Cu);}
+  /* Sprint 101: test_pascals_row — row7={1,7,21,35,35,21,7,1}; sum=128 row[3]=35 */
+  {int pr[16];for(int i=0;i<16;i++)pr[i]=0;pr[0]=1;
+   for(int i=0;i<7;i++)for(int j=i+1;j>=1;j--)pr[j]+=pr[j-1];
+   int prs=0;for(int j=0;j<=7;j++)prs+=pr[j];
+   CHECK("test_pascals_row",(7u<<16)|((uint32_t)prs<<8)|((uint32_t)pr[3]&0xFFu),0x00078023u);}
+  /* Sprint 101: test_largest_div_subset — {1,2,3,6,24,8} sorted {1,2,3,6,8,24}; best={1,2,6,24} len=4 xor=29 */
+  {int lda[]={1,2,3,6,24,8};int ldn=6,lddp[16],ldpar[16],ldbest=1,ldbidx=0;
+   for(int i=1;i<ldn;i++){int t=lda[i],j=i-1;while(j>=0&&lda[j]>t){lda[j+1]=lda[j];j--;}lda[j+1]=t;}
+   for(int i=0;i<ldn;i++){lddp[i]=1;ldpar[i]=-1;}
+   for(int i=1;i<ldn;i++)for(int j=0;j<i;j++)if(lda[i]%lda[j]==0&&lddp[j]+1>lddp[i]){lddp[i]=lddp[j]+1;ldpar[i]=j;}
+   for(int i=1;i<ldn;i++)if(lddp[i]>ldbest){ldbest=lddp[i];ldbidx=i;}
+   uint32_t ldx=0;for(int idx=ldbidx;idx!=-1;idx=ldpar[idx])ldx^=(uint32_t)lda[idx];
+   CHECK("test_largest_div_subset",((uint32_t)ldn<<16)|((uint32_t)ldbest<<8)|(ldx&0xFFu),0x0006041Du);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
