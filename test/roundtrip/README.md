@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 62 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 64 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -74,6 +74,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_floyd_cycle.c` | Floyd tortoise-hare; next={1,2,3,4,2,6,2}; cycle_start=2, len=3 | `0x00070203` | |
 | `test_sliding_window.c` | Sliding window max monotonic deque; {1,3,-1,-3,5,3,6,7} w=3; sum=29 xor=1 | `0x00081D01` | |
 | `test_bitmask_enum.c` | Bitmask enumeration 2^n subsets; {2,3,7,5} div-by-3; count=6 max=15 | `0x0004060F` | |
+| `test_two_pointer.c` | Two-pointer pair sum {1..10} target=11; 5 pairs; xor of lo-values=1 | `0x000A0501` | |
+| `test_min_stack.c` | Min-stack dual array; push{5,3,7,2}; getMin seq={2,3,3,5}; sum=13 xor=7 | `0x00040D07` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -156,7 +158,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-135 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+138 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -225,6 +227,8 @@ Pattern families currently covered (51 patterns):
 | Floyd cycle detection | phase1: do{slow=f; fast=f(f)}while≠; phase2: slow=0,advance; phase3: count |
 | Sliding window max | pop-back while arr[back]<=arr[i]; pop-front stale; emit arr[deq[head]] |
 | Bitmask enumeration | for mask=0..1<<n: for b=0..n: if(mask&(1<<b)) sum+=items[b] |
+| Two-pointer pair sum | lo/hi converge; s==target: lo++,hi--; s<target: lo++; else hi-- |
+| Minimum stack | push: min_stk[top]=min(x,min_stk[top-1]); getMin: min_stk[top-1] |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

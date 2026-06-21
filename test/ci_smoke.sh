@@ -462,6 +462,22 @@ int main(void){
    for(int mask=0;mask<16;mask++){int s=0;for(int b=0;b<4;b++)if(mask&(1<<b))s+=bmi[b];
      if(s%3==0){bmcnt++;if(s>bmms)bmms=s;}}
    CHECK("test_bitmask_enum",(4u<<16)|((uint32_t)bmcnt<<8)|(uint32_t)bmms,0x0004060Fu);}
+  /* test_two_pointer: sorted {1..10} target=11; 5 pairs; xor lo-vals=1 */
+  {static const int tpa[]={1,2,3,4,5,6,7,8,9,10};int tplo=0,tphi=9,tpcnt=0;uint32_t tpx=0;
+   while(tplo<tphi){int s=tpa[tplo]+tpa[tphi];if(s==11){tpcnt++;tpx^=(uint32_t)tpa[tplo];tplo++;tphi--;}else if(s<11)tplo++;else tphi--;}
+   CHECK("test_two_pointer",(10u<<16)|((uint32_t)tpcnt<<8)|(tpx&0xFFu),0x000A0501u);}
+  /* test_min_stack: push{5,3,7,2}; getMin seq={2,3,3,5}; sum=13 xor=7 */
+  {int msmain[8],msmin[8],mstop=1;msmin[0]=0x7fffffff;
+   uint32_t mssum=0,msxorv=0;
+   #define MSPUSH(x) do{msmain[mstop-1]=(x);msmin[mstop]=((x)<msmin[mstop-1])?(x):msmin[mstop-1];mstop++;}while(0)
+   #define MSPOP()   do{mstop--;}while(0)
+   #define MSMIN()   (msmin[mstop-1])
+   MSPUSH(5);MSPUSH(3);MSPUSH(7);MSPUSH(2);
+   mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();MSPOP();
+   mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();MSPOP();
+   mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();MSPOP();
+   mssum+=(uint32_t)MSMIN();msxorv^=(uint32_t)MSMIN();
+   CHECK("test_min_stack",(4u<<16)|(mssum<<8)|(msxorv&0xFFu),0x00040D07u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

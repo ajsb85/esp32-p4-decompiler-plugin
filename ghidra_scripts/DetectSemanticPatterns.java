@@ -892,6 +892,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count\\+\\+.*max_sum|if.*sum.*>.*max",           // count and track max
             "bitmask_enum|div_filter|max_sum"                 // naming
         ),
+
+        // ── Sprint 46: Two-pointer pair sum ─────────────────────────────────
+        new PatternDef("two_pointer_pairs", "two_pointer_sum", "high",
+            "lo.*<.*hi.*arr.*lo.*\\+.*arr.*hi|two_ptr.*lo.*hi", // lo/hi convergence + sum
+            "lo\\+\\+.*hi--|s.*==.*target.*lo\\+\\+",           // simultaneous advance on match
+            "two_pointer|lo_val|pair_sum|two_ptr"             // naming
+        ),
+
+        // ── Sprint 46: Minimum Stack ─────────────────────────────────────────
+        new PatternDef("min_stack_push", "min_stack_dual", "high",
+            "ms_min.*ms_top.*=.*x.*<.*ms_min.*ms_top.*-.*1",  // dual-array: min[top]=min(x,prev)
+            "ms_main.*ms_top.*=.*x|main.*top.*=.*x",          // main stack write
+            "ms_min|ms_main|min_stk|aux_min"                 // naming
+        ),
+        new PatternDef("min_stack_query", "min_stack_get", "medium",
+            "ms_min.*ms_top.*-.*1|min_stk.*top.*-.*1",        // read from min_stk[top-1]
+            "ms_top--|--.*ms_top",                             // single decrement for both
+            "ms_get_min|getMin|ms_min"                        // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
