@@ -3518,6 +3518,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "pr_excess\\[pr_S\\].*-=.*res.*pr_excess\\[v\\].*\\+=.*res.*pr_cur\\[i\\].*=.*pr_head\\[i\\]|pr_discharge_source",
             "pr_max_flow|push_relabel_max_flow|pr_highest_label|max_flow_push_relabel"
         ),
+
+        // ── 2D Binary Indexed Tree (2D Fenwick) ──────────────────────────────
+        new PatternDef("bit2_update_nested", "2d_fenwick_nested_loop_update", "high",
+            "for.*i.*=.*x.*i.*<=.*BIT2_N.*i.*\\+=.*i.*&.*-i.*for.*j.*=.*y.*j.*<=.*BIT2_M.*j.*\\+=.*j.*&.*-j",
+            "bit2_arr.*i.*j.*\\+=.*v|2d_bit_update.*outer.*inner.*fenwick",
+            "bit2_update|2d_fenwick_update|bit2d_update|fenwick2d"
+        ),
+        new PatternDef("bit2_query_nested", "2d_fenwick_nested_loop_prefix_query", "high",
+            "for.*i.*=.*x.*i.*>.*0.*i.*-=.*i.*&.*-i.*for.*j.*=.*y.*j.*>.*0.*j.*-=.*j.*&.*-j",
+            "s.*\\+=.*bit2_arr.*i.*j|2d_bit_query.*sum.*prefix",
+            "bit2_query|2d_fenwick_query|bit2d_prefix|fenwick2d_query"
+        ),
+
+        // ── Matrix rank over GF(2) (XOR Gaussian elimination) ────────────────
+        new PatternDef("gf2_bit_pivot", "gf2_rank_bit_column_pivot_test", "high",
+            "if.*gf2_m.*row.*>>.*col.*&.*1u.*pivot.*=.*row.*break",
+            "\\(m\\[row\\].*>>.*col\\).*&.*1.*|.*gf2_col_pivot_bit",
+            "gf2_bit_pivot|gf2_pivot|matrix_rank_gf2_bit"
+        ),
+        new PatternDef("gf2_xor_eliminate", "gf2_rank_xor_row_elimination", "high",
+            "gf2_m.*row.*\\^=.*gf2_m.*rank|row.*\\^=.*m.*rank.*xor.*elimination.*gf2",
+            "if.*row.*!=.*rank.*&&.*gf2_m.*row.*>>.*col.*&.*1u.*gf2_m.*row.*\\^=",
+            "gf2_xor|gf2_eliminate|matrix_rank_xor|gf2_row_elim"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
