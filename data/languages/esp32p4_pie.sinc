@@ -174,6 +174,12 @@ define pcodeop esp_orq;
 define pcodeop esp_xorq;
 define pcodeop esp_movi_32_q;
 
+# ECO2-confirmed ops whose binary encoding is not yet hardware-captured for the
+# 3-register form.  Kept as pcodeops until reference encodings are measured.
+define pcodeop esp_vcmp_eq_s8;  # per-byte s8 equality → 0xFF if eq, 0x00 if ne
+define pcodeop esp_vunzip_8;    # byte de-interleave: even bytes→qz, odd bytes→companion
+define pcodeop esp_src_q_qup;   # 128-bit sliding-window extraction from {qx, qy}
+
 # Catch-all for unrecognised PIE encodings in each opcode space
 define pcodeop esp_pie_op1b;   # xespv2p2 0x1B arithmetic — unrecognised subtype
 define pcodeop esp_pie_op1f;   # xespv2p2 0x1F load/store — unrecognised subtype
@@ -280,6 +286,13 @@ with : op0001=0x3 & op0204=0x6 & op0506=0x0 {
     :esp.notq      qu1013  is op2531=0x20 & op1214=0x3 & qu1013  { qu1013 = ~qu1013; }
     :esp.zero.q    qu1013  is op2531=0x22 & op1214=0x0 & qu1013  { qu1013 = qu1013 ^ qu1013; }
     :esp.movi.32.q qu1013  is op2531=0x22 & op1214=0x1 & qu1013  { esp_movi_32_q(); }
+
+    # --- ECO2-confirmed: compare and de-interleave (encoding estimated, marked ESTIMATED) ---
+    :esp.vcmp.eq.s8 qu1013  is op2531=0x24 & op1214=0x0 & qu1013  { esp_vcmp_eq_s8(); }
+    :esp.vunzip.8   qu1013  is op2531=0x26 & op1214=0x0 & qu1013  { esp_vunzip_8(); }
+
+    # --- ECO2-confirmed: complex s16 multiply (encoding estimated from cmul group) ---
+    :esp.cmul.s16   qu1013  is op2531=0x28 & op1214=0x0 & qu1013  { esp_cmul_s16(); }
 
     # --- Vector add/sub (all share op2531=0x03 in xespv2p2) ---
     # Specific op0711 sub-type discriminator estimated from pattern analysis.
@@ -403,6 +416,7 @@ with : op0001=0x3 & op0204=0x6 & op0506=0x2 {
     :esp.vsr.s32         is op2531=0x40 & op1214=0x3   { esp_vsr_s32(); }
 
     :esp.src.q           is op2531=0x41 & op1214=0x0   { esp_src_q(); }
+    :esp.src.q.qup       is op2531=0x41 & op1214=0x1   { esp_src_q_qup(); }
 
     :esp.slci.2q         is op2531=0x00 & op1214=0x4   { esp_slci_2q(); }
     :esp.srci.2q         is op2531=0x04 & op1214=0x4   { esp_srci_2q(); }

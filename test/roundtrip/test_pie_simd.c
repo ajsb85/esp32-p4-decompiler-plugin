@@ -92,7 +92,7 @@ static void vst_q0(void *ptr)
  * The exact word is: 0x?? — not yet confirmed from hardware.
  * We leave this as a pcodeop call hint instead of a .word directive.
  */
-static void zero_q0_pcodeop_hint(void)
+__attribute__((unused)) static void zero_q0_pcodeop_hint(void)
 {
     /*
      * esp.zero.q q0 encoding TBD; use esp.xorq q0,q0,q0 as equivalent:
