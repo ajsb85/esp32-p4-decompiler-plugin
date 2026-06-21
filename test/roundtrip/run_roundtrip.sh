@@ -75,9 +75,15 @@ declare -A EXPECTED_RESULT=(
     [test_math]=0x000000F9
     [test_state_machine]=0x00000244
     [test_crypto]=0xABCD65DD
+    [test_linked_list]=0x0000781E
+    [test_matrix]=0x0000003A
+    [test_lfsr]=0x2F34BC35
+    [test_fifo_queue]=0x00000000
+    [test_bitops]=0x87A97826
 )
 
-TESTS=(hello test_sorting test_math test_state_machine test_crypto)
+TESTS=(hello test_sorting test_math test_state_machine test_crypto \
+       test_linked_list test_matrix test_lfsr test_fifo_queue test_bitops)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

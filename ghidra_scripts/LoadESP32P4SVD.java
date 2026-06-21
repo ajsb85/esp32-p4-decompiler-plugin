@@ -158,7 +158,7 @@ public class LoadESP32P4SVD extends GhidraScript {
                 try {
                     symTable.createLabel(regAddr, label, SourceType.IMPORTED);
                     if (regDesc != null && !regDesc.isEmpty()) {
-                        setPlateComment(regAddr, regDesc.trim());
+                        applyPlateComment(regAddr, regDesc.trim());
                     }
                     regCount++;
                 } catch (Exception ignore) {}
@@ -189,7 +189,8 @@ public class LoadESP32P4SVD extends GhidraScript {
         return n.getTextContent().trim();
     }
 
-    private void setPlateComment(Address addr, String comment) {
+    @SuppressWarnings("deprecation")
+    private void applyPlateComment(Address addr, String comment) {
         try {
             currentProgram.getListing().setComment(addr,
                 CodeUnit.PLATE_COMMENT, comment);

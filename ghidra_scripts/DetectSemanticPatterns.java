@@ -49,6 +49,14 @@
 //  init_struct     Multiple field zero-assignments       init_struct
 //  uart_write      Write to UART FIFO address           uart_write
 //  gpio_toggle     Read-modify-write on GPIO reg        gpio_toggle
+//  linked_list_traverse  ->next pointer-following while   linked_list_op
+//  matrix_multiply Triple nested for + [i][j] += a*b   matrix_mul
+//  lfsr_galois     >>1 + polynomial XOR + LSB test      lfsr_galois_step
+//  lfsr_fibonacci  >>1 + multiple tap XOR + <<31 inject lfsr_fib_step
+//  gray_code       XOR-decode while(mask) loop          gray_code_op
+//  gcd_euclid      while(b) + modulo + swap pattern     gcd_euclid
+//  sat_arith       0xFFFFFFFF + overflow check           sat_add_or_sub
+//  endian_swap     0xFF000000 byte masks + <<24 / >>24  bswap
 //
 // ── Output format ────────────────────────────────────────────────────────────
 //
@@ -197,6 +205,48 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x400[Aa][0-9A-Fa-f]{4}",       // GPIO register range
             "\\|=|&=|\\^=",                  // bitwise modify
             "(?:GPIO|gpio|pin|PIN)"
+        ),
+
+        // ── New patterns (Sprint 15) ──────────────────────────────────────
+        new PatternDef("linked_list_traverse", "linked_list_op", "high",
+            "->next",                         // pointer-following
+            "while\\s*\\(.*!?=?\\s*0",        // while (cur != NULL) or while (p)
+            "->\\w"                           // struct member access via pointer
+        ),
+        new PatternDef("matrix_multiply", "matrix_mul", "high",
+            "for\\s*\\(.*for\\s*\\(.*for\\s*\\(",  // triple nested for
+            "\\+=.*\\*",                           // accumulate: += a * b
+            "\\[\\w+\\]\\[\\w+\\]"                 // 2D array indexing
+        ),
+        new PatternDef("lfsr_galois", "lfsr_galois_step", "high",
+            ">>\\s*1",                        // right shift by 1
+            "0x80200003|0xB8|0xD008|0xB400",  // common LFSR polynomials
+            "if\\s*\\(.*&\\s*1"               // LSB test
+        ),
+        new PatternDef("lfsr_fibonacci", "lfsr_fib_step", "high",
+            ">>\\s*1",                        // right shift by 1
+            ">>\\s*\\d+.*\\^",                // multiple taps XOR'd
+            "<<\\s*31"                        // inject feedback bit at MSB
+        ),
+        new PatternDef("gray_code", "gray_code_op", "medium",
+            ">>\\s*1",
+            "\\^=.*>>=",                      // decode loop: g ^= mask; mask >>= 1
+            "while\\s*\\(.*mask\\|m\\b"       // while(mask) pattern
+        ),
+        new PatternDef("gcd_euclid", "gcd_euclid", "high",
+            "while\\s*\\(",                   // while loop
+            "%",                              // modulo remainder
+            "=.*[ab].*%;\\s*\\n.*=\\s*[ab]"  // swap pattern: t=b; b=a%b; a=t
+        ),
+        new PatternDef("sat_arith", "sat_add_or_sub", "medium",
+            "0xffffffff|0xFFFFFFFF",          // saturation ceiling
+            "if\\s*\\(.*<",                   // overflow check
+            "return\\s+0x[Ff][Ff]"            // return saturated value
+        ),
+        new PatternDef("endian_swap", "bswap", "high",
+            "0xFF000000",                     // byte-swap masks
+            "0x00FF0000",
+            "<<\\s*24|>>\\s*24"              // extreme byte shift
         ),
     };
 
