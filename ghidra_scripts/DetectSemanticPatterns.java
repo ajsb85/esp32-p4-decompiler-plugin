@@ -2767,6 +2767,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "j1.*=.*way.*j1|path.*reversal.*way|p.*j1.*=.*p.*j2",
             "do.*\\{.*j2.*=.*way.*j1.*p.*j1.*=.*p.*j2|hungarian.*path.*reverse"
         ),
+        new PatternDef("dinic_bfs_level_v2", "dinic_bfs_level_graph_sink_reachable", "high",
+            "level.*\\[.*\\].*=.*-1|bfs.*level.*init|dinic.*level.*graph",
+            "level.*u.*=.*level.*v.*\\+.*1|bfs.*level.*assign|level.*sink.*>=.*0",
+            "cap.*>.*0.*&&.*level.*<.*0|dinic.*bfs.*reachable|augmenting.*path.*bfs"
+        ),
+        new PatternDef("dinic_dfs_blocking_v2", "dinic_dfs_blocking_flow_current_edge_opt", "high",
+            "iter.*\\[.*\\].*=.*head|current.*edge.*optimisation|dinic.*iter.*ptr",
+            "dfs.*blocking.*flow|d.*=.*dfs.*u.*t.*f.*cap|dinic.*blocking.*augment",
+            "cap.*-=.*d|rev.*cap.*\\+=.*d|dinic.*flow.*update.*reverse"
+        ),
+        new PatternDef("dinic_phase_loop", "dinic_max_flow_bfs_dfs_phase_accumulate", "medium",
+            "while.*bfs.*s.*t|dinic.*phase.*loop|max_flow.*bfs.*dfs",
+            "flow.*\\+=.*f|dinic.*total.*flow.*accumulate|f.*=.*dfs.*s.*t.*INF",
+            "dinic.*max.*flow.*return|flow.*network.*augment.*repeat|dinic.*while.*bfs"
+        ),
+        new PatternDef("splay_rotate", "splay_tree_single_rotation_parent_fix", "high",
+            "ch.*opp.*=.*inner|splay.*rotate.*inner.*child|splay.*rotate.*dir.*opp",
+            "parent.*=.*g|splay.*link.*grandparent|splay.*rotate.*grandparent.*fix",
+            "ch.*0.*==.*p|ch.*1.*==.*p|splay.*rotate.*direction.*detect"
+        ),
+        new PatternDef("splay_splay", "splay_tree_zig_zig_zag_to_root", "high",
+            "while.*parent.*!=.*-1|splay.*to.*root.*loop|splay.*zig.*zig.*zag",
+            "xdir.*==.*pdir.*rotate.*p|zig.*zig.*rotate.*parent.*first|splay.*double.*rotation",
+            "rotate.*x.*splay.*root|splay.*root.*=.*x|splay.*single.*zig.*rotation"
+        ),
+        new PatternDef("splay_find", "splay_tree_find_and_splay_to_root", "medium",
+            "key.*==.*pool.*cur.*key.*splay.*cur|splay.*find.*splay.*on.*hit|splay.*search.*and.*splay",
+            "cur.*=.*ch.*0.*key.*<|cur.*=.*ch.*1.*key.*>|splay.*bst.*traverse.*find",
+            "return.*1.*splay.*find.*success|splay.*find.*return.*found|splay.*find.*miss"
+        ),
+        new PatternDef("sam_extend", "suffix_automaton_extend_state_clone", "high",
+            "cur.*=.*sam_sz\\+\\+|sam.*new.*state.*extend|sam.*extend.*len.*last.*\\+.*1",
+            "while.*p.*!=.*-1.*next.*c.*==.*-1|sam.*suffix.*link.*walk|sam.*extend.*suffix.*link",
+            "clone.*=.*sam_sz\\+\\+|sam.*clone.*state.*split|sam.*link.*q.*=.*clone"
+        ),
+        new PatternDef("sam_suffix_link", "suffix_automaton_suffix_link_update", "high",
+            "sam_st.*link.*=.*0|sam.*link.*initial.*state|sam.*suffix.*link.*root",
+            "sam_st.*q.*len.*\\+.*1.*==.*sam_st.*q.*len|sam.*no.*clone.*needed|sam.*link.*q.*direct",
+            "sam_st.*p.*next.*c.*=.*clone|sam.*redirect.*transitions.*clone|sam.*clone.*next.*copy"
+        ),
+        new PatternDef("sam_contains", "suffix_automaton_substring_membership_query", "medium",
+            "cur.*=.*0.*sam.*contains|sam.*traverse.*pattern|sam.*query.*substring",
+            "next.*c.*==.*-1.*return.*0|sam.*missing.*transition.*reject|sam.*contains.*walk",
+            "cur.*=.*next.*c|sam.*follow.*transition|sam.*accept.*substring.*return.*1"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
