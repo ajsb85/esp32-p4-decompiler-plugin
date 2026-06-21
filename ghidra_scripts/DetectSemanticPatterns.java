@@ -5511,6 +5511,54 @@ public class DetectSemanticPatterns extends GhidraScript {
             "total_odd.*65.*xor_k.*15|sier_expected_vals",
             "sierpinski.*0x41.*0x0f|sier_byte_check"
         ),
+        // ── Rabbit/Fibonacci sequence ─────────────────────────────────────────
+        new PatternDef("rabbit_fib_recurrence", "rabbit_fib_two_var_recurrence", "high",
+            "seq\\[i\\]\\s*=\\s*seq\\[i\\s*-\\s*1u?\\]\\s*\\+\\s*seq\\[i\\s*-\\s*2u?\\]|rf_array_fill",
+            "seq\\[0\\]\\s*=\\s*1u?.*seq\\[1\\]\\s*=\\s*1u?|rf_seed_vals",
+            "rabbit_fibonacci.*RF_N|rf_init_loop"
+        ),
+        new PatternDef("rabbit_fib_even_count", "rabbit_fib_even_detector", "high",
+            "seq\\[i\\]\\s*&\\s*1u?\\s*\\)\\s*==\\s*0u?.*count_even|rf_even_detect",
+            "count_even\\+\\+.*xor_even_idx\\s*\\^=|rf_dual_accum",
+            "rabbit_fibonacci.*count_even.*xor_even_idx|rf_accum_loop"
+        ),
+        new PatternDef("rabbit_fib_result_pack", "rabbit_fib_result_pack", "medium",
+            "RF_N\\s*<<\\s*16.*count_even\\s*<<\\s*8.*xor_even_idx|rf_pack_result",
+            "count_even.*10.*xor_even_idx.*70|rf_expected_vals",
+            "rabbit_fibonacci.*0x1e.*0x0a.*0x46|rf_byte_check"
+        ),
+        // ── Dragon curve (paper folding sequence) ─────────────────────────────
+        new PatternDef("dragon_strip_zeros", "dragon_curve_v2_valuation", "high",
+            "while\\s*\\(\\s*\\(\\s*n\\s*&\\s*1u?\\s*\\)\\s*==\\s*0u?\\s*\\).*n\\s*>>=\\s*1|dc_strip_zeros",
+            "n\\s*>>=\\s*1.*\\(\\s*n\\s*&\\s*1u?\\s*\\)\\s*==\\s*0u?.*1u?.*0u?|dc_advance_check",
+            "dragon_term.*dragon_curve.*DC_N|dc_term_fn"
+        ),
+        new PatternDef("dragon_ones_xor", "dragon_curve_position_xor", "high",
+            "count_ones\\+\\+.*xor_pos\\s*\\^=.*i.*0xFFu?|dc_pos_xor_accum",
+            "for.*i\\s*=\\s*1u?.*i\\s*<=\\s*DC_N.*dragon_term|dc_main_loop",
+            "dragon_curve.*count_ones.*xor_pos|dc_accum_vars"
+        ),
+        new PatternDef("dragon_result_pack", "dragon_curve_result_pack", "medium",
+            "DC_N\\s*<<\\s*16.*count_ones\\s*<<\\s*8.*xor_pos|dc_pack_result",
+            "count_ones.*17.*xor_pos.*40|dc_expected_vals",
+            "dragon_curve.*0x20.*0x11.*0x28|dc_byte_check"
+        ),
+        // ── Pascal's triangle mod p (Lucas's theorem) ─────────────────────────
+        new PatternDef("pascal_mod_lucas_check", "pascal_mod_lucas_digit_check", "high",
+            "k\\s*%\\s*PT_P\\s*\\)\\s*>\\s*\\(\\s*n\\s*%\\s*PT_P|ptm_lucas_digit",
+            "while\\s*\\(\\s*k\\s*>\\s*0u?\\s*\\).*k\\s*%.*PT_P.*n\\s*%.*PT_P|ptm_lucas_loop",
+            "lucas_nonzero.*pascal_triangle_mod|ptm_lucas_fn"
+        ),
+        new PatternDef("pascal_mod_triangle_scan", "pascal_mod_double_loop_scan", "high",
+            "for.*n.*<.*PT_N.*for.*k.*<=.*n.*lucas_nonzero|ptm_triangle_loop",
+            "count_nonzero\\+\\+.*xor_nk\\s*\\^=.*n.*k.*0xFFu?|ptm_xor_accum",
+            "pascal_triangle_mod.*count_nonzero.*xor_nk|ptm_accum_vars"
+        ),
+        new PatternDef("pascal_mod_result_pack", "pascal_mod_result_pack", "medium",
+            "PT_N\\s*<<\\s*16.*count_nonzero\\s*<<\\s*8.*xor_nk|ptm_pack_result",
+            "count_nonzero.*117.*xor_nk.*26|ptm_expected_vals",
+            "pascal_triangle_mod.*0x14.*0x75.*0x1a|ptm_byte_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
