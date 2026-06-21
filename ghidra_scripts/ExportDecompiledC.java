@@ -30,11 +30,13 @@
 //    If the caller assigns the result, the C is invalid.  A two-pass scan
 //    detects this and promotes the return type to undefined4.
 //
-//  Fix 3 (improved in Sprint 7): Bare return in promoted functions
+//  Fix 3 (improved in Sprint 7 + P5 ClangAST): Bare return in promoted functions
 //    Bare "return;" in a promoted function is rewritten to "return <var>;"
 //    where <var> is the last Ghidra-local variable (uVar*, iVar*, param_*)
-//    assigned before the return.  Falls back to "return param_1;" if no
-//    local assignment is found in scope.
+//    assigned before the return.  When the backwards text scan finds nothing,
+//    a ClangAST walk over getCCodeMarkup() extracts the last variable token
+//    from the function body as a better fallback than always emitting
+//    "return param_1;".
 //
 // ── Semantic enrichments ─────────────────────────────────────────────────────
 //
@@ -56,9 +58,24 @@
 //    (static const char s_<hex>[] = "…") before the function block and
 //    rewrites DAT_<hex> references in function bodies to use the name.
 //
+//  P5: ClangAST bare-return fallback.
+//    When the backwards text scan produces no candidate variable (would emit
+//    "return param_1;" blindly), a secondary AST walk over getCCodeMarkup()
+//    collects all ClangVariableToken values and uses the last matching one as
+//    a more accurate fallback.
+//
+//  P6: Optional call-graph DOT output.
+//    Pass a second path argument to also emit a Graphviz digraph of the full
+//    firmware call graph alongside the .c file.
+//
 // ── Headless usage ───────────────────────────────────────────────────────────
 //   analyzeHeadless /project Prog \
 //     -postScript ExportDecompiledC.java /out/firmware.c
+//
+//   With optional DOT call graph (P6):
+//   analyzeHeadless /project Prog \
+//     -postScript ExportDecompiledC.java /out/firmware.c /out/firmware.dot
+//   Render: dot -Tsvg firmware.dot -o firmware.svg
 //
 // @category ESP32-P4
 // @menupath Analysis.ESP32-P4.Export Decompiled C
@@ -99,6 +116,10 @@ public class ExportDecompiledC extends GhidraScript {
     private static final Pattern LOCAL_ASSIGN =
             Pattern.compile("^\\s*((?:uVar|iVar|lVar|bVar|cVar|sVar|param_)\\d+)\\s*=(?!=)");
 
+    // ── P5: ClangAST variable name pattern (mirrors LOCAL_ASSIGN prefix) ─────
+    private static final Pattern AST_VAR_NAME =
+            Pattern.compile("^(?:uVar|iVar|lVar|bVar|cVar|sVar|param_)\\d+$");
+
     // ── Sprint 11: string constant references ────────────────────────────────
     // DAT_ or PTR_DAT_ label in decompiled text.
     private static final Pattern DAT_REF =
@@ -111,6 +132,9 @@ public class ExportDecompiledC extends GhidraScript {
     // Detect PIE Q-register references or PIE load/store intrinsic names.
     private static final Pattern PIE_QREF =
             Pattern.compile("\\bq[0-7]\\b|esp_vld|esp_vst|esp_zero_q|esp_vsub|esp_vadd");
+
+    // ── P6: ROM base address for node coloring ────────────────────────────────
+    private static final long ROM_BASE = 0x50000000L;
 
     // ── Sprint 8: peripheral address ranges (ESP32-P4) ───────────────────────
     // [start, end_inclusive, name]
@@ -165,6 +189,12 @@ public class ExportDecompiledC extends GhidraScript {
             }
         }
 
+        // ── P6: optional DOT call-graph output ───────────────────────────────
+        File dotFile = null;
+        if (args != null && args.length > 1 && !args[1].isEmpty()) {
+            dotFile = new File(args[1]);
+        }
+
         // ── decompile all functions, sorted by entry-point address ────────────
         DecompInterface decompiler = new DecompInterface();
         DecompileOptions opts = new DecompileOptions();
@@ -177,8 +207,10 @@ public class ExportDecompiledC extends GhidraScript {
             return;
         }
 
-        TreeMap<Address, Function> fnByAddr  = new TreeMap<>();
-        TreeMap<Address, String>   rawByAddr = new TreeMap<>();
+        TreeMap<Address, Function>        fnByAddr      = new TreeMap<>();
+        TreeMap<Address, String>          rawByAddr     = new TreeMap<>();
+        // P5: keep DecompileResults so we can walk ClangAST for bare-return fallback
+        TreeMap<Address, DecompileResults> resultsByAddr = new TreeMap<>();
         int failed = 0;
 
         try {
@@ -194,6 +226,7 @@ public class ExportDecompiledC extends GhidraScript {
                 if (res != null && res.decompileCompleted()) {
                     DecompiledFunction df = res.getDecompiledFunction();
                     rawByAddr.put(addr, df != null ? df.getC() : null);
+                    resultsByAddr.put(addr, res);
                     if (df == null) failed++;
                 } else {
                     rawByAddr.put(addr, null);
@@ -240,6 +273,7 @@ public class ExportDecompiledC extends GhidraScript {
         int gpStripped      = 0;
         int promoted        = 0;
         int bareReturnFixed = 0;
+        int astFallbacks    = 0;
         int romSkipped      = 0;
         String prevRegion   = null;   // for section-header tracking
 
@@ -252,11 +286,13 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" *   Fix 1 — gp = 0x<hex>; lines stripped");
             pw.println(" *   Fix 2 — void return promoted to undefined4 (caller-driven)");
             pw.println(" *   Fix 3 — bare return; -> return <last-local>; in promoted functions");
+            pw.println(" *           (text scan + ClangAST fallback via P5)");
             pw.println(" * Semantic enrichments:");
             pw.println(" *   Sprint 1  — sorted output, typed sig, callers, ROM extern");
             pw.println(" *   Sprint 7  — smart bare-return (backwards local-var scan)");
             pw.println(" *   Sprint 8  — peripheral access annotation, region sections");
             pw.println(" *   Sprint 11 — string constants extracted from DAT_ references");
+            pw.println(" *   P5        — ClangAST bare-return fallback (getCCodeMarkup walk)");
             pw.println(" * Compile with:");
             pw.println(" *   riscv32-esp-elf-gcc -march=rv32imafc_zicsr_zifencei \\");
             pw.println(" *     -mabi=ilp32f -O0 -include ghidra_types.h -c "
@@ -386,11 +422,21 @@ public class ExportDecompiledC extends GhidraScript {
                     Matcher lam = LOCAL_ASSIGN.matcher(line);
                     if (lam.find()) lastLocalVar = lam.group(1);
 
-                    // Fix 3: bare return → return <lastLocalVar or param_1>.
+                    // Fix 3: bare return → return <lastLocalVar or AST fallback or param_1>.
                     if (isPromoted) {
                         Matcher brm = BARE_RETURN.matcher(line);
                         if (brm.matches()) {
-                            String retVar = (lastLocalVar != null) ? lastLocalVar : "param_1";
+                            String retVar = lastLocalVar;
+                            // P5: when text scan found nothing, try ClangAST walk as fallback
+                            if (retVar == null) {
+                                DecompileResults dr = resultsByAddr.get(addr);
+                                String astVar = extractReturnVarFromAST(dr);
+                                if (astVar != null) {
+                                    retVar = astVar;
+                                    astFallbacks++;
+                                }
+                            }
+                            if (retVar == null) retVar = "param_1";
                             fixed.append(brm.group(1))
                                  .append("return ").append(retVar).append(";\n");
                             bareReturnFixed++;
@@ -415,14 +461,124 @@ public class ExportDecompiledC extends GhidraScript {
 
         println(String.format(
             "Export: %d written, %d ROM externs, %d failed | "
-            + "gp_stripped=%d promoted=%d bare_fixed=%d strings=%d → %s",
+            + "gp_stripped=%d promoted=%d bare_fixed=%d (ast_fallbacks=%d) strings=%d → %s",
             exported, romSkipped, failed,
-            gpStripped, promoted, bareReturnFixed,
+            gpStripped, promoted, bareReturnFixed, astFallbacks,
             stringDecls.size(),
             outFile.getAbsolutePath()));
 
         if (failed > 0)
             printerr(failed + " function(s) failed — check /* decompile failed */ markers.");
+
+        // ── P6: optional DOT call-graph generation ────────────────────────────
+        if (dotFile != null) {
+            try {
+                generateCallGraphDot(dotFile);
+                println("DOT call graph → " + dotFile.getAbsolutePath());
+                println("Render: dot -Tsvg " + dotFile.getName() + " -o firmware.svg");
+            } catch (Exception ex) {
+                printerr("DOT generation failed: " + ex.getMessage());
+            }
+        }
+    }
+
+    // ── P5: ClangAST bare-return variable extractor ───────────────────────────
+
+    /**
+     * Walk the ClangAST for a decompiled function and return the last
+     * ClangVariableToken whose name matches the Ghidra local-variable pattern
+     * (uVar*, iVar*, lVar*, bVar*, cVar*, sVar*, param_*).
+     *
+     * Used as a fallback for Fix 3 when the backwards text scan finds no
+     * local variable assignment before a bare "return;".
+     */
+    private String extractReturnVarFromAST(DecompileResults res) {
+        if (res == null || !res.decompileCompleted()) return null;
+        try {
+            ClangTokenGroup markup = res.getCCodeMarkup();
+            if (markup == null) return null;
+            String[] lastVar = {null};
+            collectAstVarTokens(markup, lastVar);
+            return lastVar[0];
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void collectAstVarTokens(ClangNode node, String[] lastVar) {
+        if (node == null) return;
+        // ClangVariableToken is a leaf: if its text matches our pattern, record it.
+        if (node instanceof ClangVariableToken) {
+            String text = node.toString().trim();
+            if (AST_VAR_NAME.matcher(text).matches()) {
+                lastVar[0] = text;
+            }
+        }
+        for (int i = 0; i < node.numChildren(); i++) {
+            collectAstVarTokens(node.Child(i), lastVar);
+        }
+    }
+
+    // ── P6: call-graph DOT output ─────────────────────────────────────────────
+
+    /**
+     * Generate a Graphviz digraph of the firmware call graph.
+     * Node colors: green = ROM/IDF (external or ROM address range),
+     *              grey  = anonymous (FUN_* names),
+     *              yellow = application code.
+     */
+    private void generateCallGraphDot(File dotFile) throws Exception {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(dotFile))) {
+            pw.println("/* ESP32-P4 firmware call graph */");
+            pw.println("/* Render: dot -Tsvg firmware.dot -o firmware.svg */");
+            pw.println("digraph firmware {");
+            pw.println("  rankdir=LR;");
+            pw.println("  node [shape=box fontname=\"Courier\" fontsize=9];");
+            pw.println("  edge [fontsize=8];");
+            pw.println("  // Node colors: green=ROM/IDF, yellow=app, grey=unknown (FUN_*)");
+
+            FunctionIterator it = currentProgram.getListing().getFunctions(true);
+            Set<String> declaredNodes = new HashSet<>();
+
+            while (it.hasNext()) {
+                monitor.checkCancelled();
+                Function fn = it.next();
+                String callerName = escapeForDot(fn.getName());
+
+                // Emit node declaration with color if not already declared.
+                if (declaredNodes.add(callerName)) {
+                    String color = nodeColor(fn);
+                    pw.printf("  \"%s\" [style=filled fillcolor=%s];%n",
+                              callerName, color);
+                }
+
+                // Emit edges.
+                Set<Function> callees = fn.getCalledFunctions(monitor);
+                for (Function callee : callees) {
+                    String calleeName = escapeForDot(callee.getName());
+                    if (declaredNodes.add(calleeName)) {
+                        String color = nodeColor(callee);
+                        pw.printf("  \"%s\" [style=filled fillcolor=%s];%n",
+                                  calleeName, color);
+                    }
+                    pw.printf("  \"%s\" -> \"%s\";%n", callerName, calleeName);
+                }
+            }
+            pw.println("}");
+        }
+    }
+
+    private String nodeColor(Function fn) {
+        if (fn.isExternal()) return "\"#90EE90\"";  // green — ROM/external
+        String name = fn.getName();
+        long   addr = fn.getEntryPoint().getOffset();
+        if (addr >= ROM_BASE) return "\"#90EE90\"";  // green — ROM address range
+        if (name.startsWith("FUN_")) return "\"#D3D3D3\"";  // grey — anonymous
+        return "\"#FFD700\"";  // yellow — named app code
+    }
+
+    private String escapeForDot(String name) {
+        return name.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     // ── Sprint 8: peripheral detection ───────────────────────────────────────
