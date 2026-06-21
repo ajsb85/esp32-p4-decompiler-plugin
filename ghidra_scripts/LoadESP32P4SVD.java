@@ -15,17 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Loads ESP32-P4 peripheral registers from an SVD (System View Description) file
+// Loads ESP32-P4 peripheral registers from the bundled SVD file (data/esp32p4.svd)
 // into the current Ghidra program.
 //
-// The SVD file defines all peripheral registers with names, offsets, and descriptions.
-// This script creates memory blocks for each peripheral and labels every register.
-//
-// Default SVD path: ~/.espressif/tools/... (not bundled) OR
-//   /mnt/c/Users/gbast/espressif-jtag/ghidra/esp32p4.svd
+// For each peripheral the script:
+//   1. Creates an uninitialized volatile memory block at the peripheral base address.
+//   2. Builds a C-style Structure in the DataTypeManager with one uint32_t field per register.
+//   3. Applies the structure at the base address so that decompiled code shows
+//      UART0->FIFO instead of *(uint *)(0x500c0000 + 0).
+//   4. Labels every register address in the Symbol Table for cross-reference.
 //
 // Usage: Run via Script Manager while viewing an ESP32-P4 firmware.
-//        Select the esp32p4.svd file when prompted.
+//        The bundled data/esp32p4.svd is used automatically; a file-chooser
+//        dialog appears if the bundled file cannot be found.
 //
 // @category ESP32-P4
 // @menupath Analysis.ESP32-P4.Load SVD Peripheral Registers
@@ -37,6 +39,7 @@ import org.w3c.dom.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -44,23 +47,15 @@ import ghidra.util.task.TaskMonitor;
 
 public class LoadESP32P4SVD extends GhidraScript {
 
-    private static final String DEFAULT_SVD =
-        "/mnt/c/Users/gbast/espressif-jtag/ghidra/esp32p4.svd";
-
     @Override
     public void run() throws Exception {
-        File svdFile = askFile("Select ESP32-P4 SVD file", "Load");
+        File svdFile = resolveBundledSvd();
         if (svdFile == null) {
-            File def = new File(DEFAULT_SVD);
-            if (def.exists()) {
-                int ans = askInt("Use default?",
-                    "SVD found at: " + DEFAULT_SVD + "\n\nEnter 1 to use it, 0 to cancel:");
-                if (ans == 1) svdFile = def;
-            }
-            if (svdFile == null) {
-                printerr("No SVD file selected.");
-                return;
-            }
+            svdFile = askFile("Select ESP32-P4 SVD file", "Load");
+        }
+        if (svdFile == null || !svdFile.exists()) {
+            printerr("No SVD file found. Place data/esp32p4.svd next to the ghidra_scripts/ directory.");
+            return;
         }
 
         println("Loading ESP32-P4 SVD from: " + svdFile.getAbsolutePath());
@@ -77,6 +72,10 @@ public class LoadESP32P4SVD extends GhidraScript {
         Memory mem = currentProgram.getMemory();
         SymbolTable symTable = currentProgram.getSymbolTable();
         AddressSpace space = currentProgram.getAddressFactory().getDefaultAddressSpace();
+        DataTypeManager dtm = currentProgram.getDataTypeManager();
+
+        // Category in DataTypeManager for all generated structs
+        CategoryPath svdCat = new CategoryPath("/ESP32P4_SVD");
 
         for (int i = 0; i < peripheralList.getLength(); i++) {
             monitor.checkCancelled();
@@ -97,23 +96,33 @@ public class LoadESP32P4SVD extends GhidraScript {
 
             Address periBase = space.getAddress(baseAddr);
 
-            // Determine peripheral size from registers
-            long maxOffset = 0x100; // minimum 256 bytes
+            // Collect registers for this peripheral
             NodeList regs = peripheral.getElementsByTagName("register");
+            List<long[]>   offsets   = new ArrayList<>();
+            List<String>   regNames  = new ArrayList<>();
+            List<String>   regDescs  = new ArrayList<>();
+
+            long maxOffset = 0x100;
             for (int r = 0; r < regs.getLength(); r++) {
                 Element reg = (Element) regs.item(r);
-                String offHex = getTagText(reg, "addressOffset");
-                if (offHex != null) {
-                    try {
-                        long off = Long.decode(offHex);
-                        if (off + 4 > maxOffset) maxOffset = off + 4;
-                    } catch (NumberFormatException ignore) {}
-                }
+                String regName = getTagText(reg, "name");
+                String offHex  = getTagText(reg, "addressOffset");
+                String regDesc = getTagText(reg, "description");
+                if (regName == null || offHex == null) continue;
+                try {
+                    long off = Long.decode(offHex);
+                    if (off + 4 > maxOffset) maxOffset = off + 4;
+                    offsets.add(new long[]{off});
+                    regNames.add(regName);
+                    regDescs.add(regDesc != null ? regDesc.trim() : "");
+                } catch (NumberFormatException ignore) {}
             }
-            // Round up to 4K or next power of 2
+
             long periSize = Math.max(0x1000, Long.highestOneBit(maxOffset - 1) << 1);
 
-            // Create or find memory block for this peripheral
+            // ------------------------------------------------------------------
+            // 1. Memory block
+            // ------------------------------------------------------------------
             MemoryBlock block = mem.getBlock(periBase);
             if (block == null) {
                 try {
@@ -123,77 +132,110 @@ public class LoadESP32P4SVD extends GhidraScript {
                     block.setRead(true);
                     block.setComment(periDesc != null ? periDesc.trim() : periName);
                 } catch (Exception e) {
-                    // Block may already exist (overlapping peripherals)
                     block = mem.getBlock(periBase);
                 }
             }
 
-            // Label the peripheral base address
+            // ------------------------------------------------------------------
+            // 2. DataTypeManager struct: one uint32_t field per register + padding
+            // ------------------------------------------------------------------
+            StructureDataType struct = new StructureDataType(svdCat, periName + "_t",
+                (int) periSize, dtm);
+            DataType u32 = dtm.getDataType(new CategoryPath("/"), "uint");
+            if (u32 == null) u32 = new DWordDataType();
+
+            // Fill the struct at exact offsets; gaps become padding arrays
+            long cursor = 0;
+            for (int r = 0; r < offsets.size(); r++) {
+                long off = offsets.get(r)[0];
+                if (off > cursor) {
+                    // insert padding
+                    ArrayDataType pad = new ArrayDataType(new ByteDataType(), (int)(off - cursor), 1);
+                    struct.insertAtOffset((int) cursor, pad, (int)(off - cursor),
+                        "_pad_" + Long.toHexString(cursor), "");
+                }
+                String fieldComment = regDescs.get(r);
+                struct.insertAtOffset((int) off, u32, 4, regNames.get(r),
+                    fieldComment.length() > 120 ? fieldComment.substring(0, 120) : fieldComment);
+                cursor = off + 4;
+            }
+
+            // Commit struct to DataTypeManager
+            try {
+                DataType existing = dtm.getDataType(svdCat, periName + "_t");
+                if (existing != null) {
+                    dtm.remove(existing, monitor);
+                }
+                dtm.addDataType(struct, DataTypeConflictHandler.REPLACE_HANDLER);
+            } catch (Exception ignore) {}
+
+            // ------------------------------------------------------------------
+            // 3. Apply struct at base address
+            // ------------------------------------------------------------------
+            try {
+                if (block != null) {
+                    DataType committed = dtm.getDataType(svdCat, periName + "_t");
+                    if (committed != null) {
+                        currentProgram.getListing().createData(periBase, committed);
+                    }
+                }
+            } catch (Exception ignore) {}
+
+            // ------------------------------------------------------------------
+            // 4. Symbol table labels
+            // ------------------------------------------------------------------
             try {
                 symTable.createLabel(periBase, periName + "_BASE", SourceType.IMPORTED);
             } catch (Exception ignore) {}
 
-            periCount++;
-
-            // Label each register
-            for (int r = 0; r < regs.getLength(); r++) {
+            for (int r = 0; r < regNames.size(); r++) {
                 monitor.checkCancelled();
-                Element reg = (Element) regs.item(r);
-                String regName = getTagText(reg, "name");
-                String regOff  = getTagText(reg, "addressOffset");
-                String regDesc = getTagText(reg, "description");
-
-                if (regName == null || regOff == null) continue;
-
-                long offset;
-                try {
-                    offset = Long.decode(regOff);
-                } catch (NumberFormatException e) {
-                    continue;
-                }
-
-                Address regAddr = space.getAddress(baseAddr + offset);
-                String label = periName + "_" + regName;
-
+                Address regAddr = space.getAddress(baseAddr + offsets.get(r)[0]);
+                String label = periName + "_" + regNames.get(r);
                 try {
                     symTable.createLabel(regAddr, label, SourceType.IMPORTED);
-                    if (regDesc != null && !regDesc.isEmpty()) {
-                        applyPlateComment(regAddr, regDesc.trim());
-                    }
+                    String desc = regDescs.get(r);
+                    if (!desc.isEmpty()) applyPlateComment(regAddr, desc);
                     regCount++;
                 } catch (Exception ignore) {}
             }
+
+            periCount++;
         }
 
-        println(String.format("SVD loaded: %d peripherals, %d registers labeled.", periCount, regCount));
-        println("Peripheral memory blocks created and labeled.");
-        println("Register labels are searchable in the Symbol Table (Window > Symbol Table).");
+        println(String.format(
+            "SVD loaded: %d peripherals, %d registers. Structs added to DataTypeManager under /ESP32P4_SVD.",
+            periCount, regCount));
+        println("Peripheral structs are now visible in the Data Type Manager (Window > Data Type Manager).");
+        println("Decompiled code will show PERIPHERAL->REGISTER instead of raw pointer arithmetic.");
+    }
+
+    /** Resolves data/esp32p4.svd relative to the script's source directory. */
+    private File resolveBundledSvd() {
+        try {
+            File scriptDir = getSourceFile().getParentFile();       // ghidra_scripts/
+            File dataDir   = new File(scriptDir.getParent(), "data");
+            File bundled   = new File(dataDir, "esp32p4.svd");
+            if (bundled.exists()) return bundled;
+        } catch (Exception ignore) {}
+        return null;
     }
 
     private String getTagText(Element parent, String tagName) {
-        NodeList nl = parent.getElementsByTagName(tagName);
-        if (nl.getLength() == 0) return null;
-        Node n = nl.item(0);
-        // Only get direct children, not descendants
-        if (n.getParentNode() != parent) {
-            // Search direct children only
-            NodeList children = parent.getChildNodes();
-            for (int i = 0; i < children.getLength(); i++) {
-                Node child = children.item(i);
-                if (child instanceof Element && tagName.equals(child.getNodeName())) {
-                    return child.getTextContent().trim();
-                }
+        NodeList children = parent.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (child instanceof Element && tagName.equals(child.getNodeName())) {
+                return child.getTextContent().trim();
             }
-            return null;
         }
-        return n.getTextContent().trim();
+        return null;
     }
 
     @SuppressWarnings("deprecation")
     private void applyPlateComment(Address addr, String comment) {
         try {
-            currentProgram.getListing().setComment(addr,
-                CodeUnit.PLATE_COMMENT, comment);
+            currentProgram.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
         } catch (Exception ignore) {}
     }
 }
