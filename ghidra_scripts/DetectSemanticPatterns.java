@@ -925,6 +925,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "merge_count|merge_inv|if.*arr.*i.*>.*arr.*j",    // merge idiom
             "inv_count|merge_count|count_inversions"         // naming
         ),
+
+        // ── Sprint 48: Jump Search ───────────────────────────────────────────
+        new PatternDef("jump_search_block", "jump_search", "high",
+            "step.*\\+=.*block|step.*\\+=.*sqrt|prev.*=.*step.*step.*\\+=", // block advance
+            "arr.*step.*-.*1.*<.*key|arr.*prev.*-.*1.*<.*key",               // overshoot test
+            "jump_search|block.*search|isqrt_js"              // naming
+        ),
+        new PatternDef("jump_search_linear", "jump_search_scan", "medium",
+            "for.*prev.*<.*limit.*arr.*prev.*==.*key",        // linear backward scan
+            "if.*arr.*prev.*>.*key.*break",                   // early-exit on overshoot
+            "jump_search|linear.*scan|js_prev"               // naming
+        ),
+
+        // ── Sprint 48: Longest Common Substring DP ───────────────────────────
+        new PatternDef("lc_substring_reset", "lc_substring_dp", "high",
+            "lcs_dp.*=.*lcs_dp.*-.*1.*-.*1.*\\+.*1",         // dp[i][j]=dp[i-1][j-1]+1
+            "else.*lcs_dp.*=.*0|else.*dp.*\\[.*\\].*=.*0",   // key: reset to 0 on mismatch
+            "lcs_dp|lc_substr|max_len.*lcs"                  // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

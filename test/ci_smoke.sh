@@ -489,6 +489,19 @@ int main(void){
   {int cia[]={6,5,4,3,2,1};uint32_t cixor=0;for(int i=0;i<6;i++)cixor^=(uint32_t)cia[i];
    int ciinv=merge_inv2(cia,0,6);
    CHECK("test_count_inversions",(6u<<16)|((uint32_t)ciinv<<8)|(cixor&0xFFu),0x00060F07u);}
+  /* test_jump_search: {1,3..19} n=10 step=3; find{7,13,19}→{3,6,9} count=3 xor=12 */
+  {static const int jsa[]={1,3,5,7,9,11,13,15,17,19};static const int jsq[]={7,13,19};
+   uint32_t jscnt=0,jsx=0;
+   for(int q=0;q<3;q++){int bk=3,prev=0,step=3,key=jsq[q];
+     while(step<10&&jsa[step-1]<key){prev=step;step+=bk;}
+     int lim=(step<10)?step:10;int found=-1;
+     for(int p=prev;p<lim;p++){if(jsa[p]==key){found=p;break;}if(jsa[p]>key)break;}
+     if(found>=0){jscnt++;jsx^=(uint32_t)found;}}
+   CHECK("test_jump_search",(10u<<16)|(jscnt<<8)|(jsx&0xFFu),0x000A030Cu);}
+  /* test_lc_substring: s1="ABABC" s2="BABCAB"; LCS=4 ("BABC") */
+  {static const char ls1[]="ABABC",ls2[]="BABCAB";int lsdp[6][7]={{0}};int lsmx=0;
+   for(int i=1;i<=5;i++)for(int j=1;j<=6;j++){if(ls1[i-1]==ls2[j-1]){lsdp[i][j]=lsdp[i-1][j-1]+1;if(lsdp[i][j]>lsmx)lsmx=lsdp[i][j];}else lsdp[i][j]=0;}
+   CHECK("test_lc_substring",(5u<<16)|(6u<<8)|(uint32_t)lsmx,0x00050604u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

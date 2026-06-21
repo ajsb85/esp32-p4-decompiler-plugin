@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 66 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 68 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -78,6 +78,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_min_stack.c` | Min-stack dual array; push{5,3,7,2}; getMin seq={2,3,3,5}; sum=13 xor=7 | `0x00040D07` | |
 | `test_boyer_moore_vote.c` | Boyer-Moore majority vote {3,2,3,1,3,3,2}; candidate=3, freq=4 | `0x00070304` | |
 | `test_count_inversions.c` | Count inversions merge sort {6,5,4,3,2,1}; inv=15 xor=7 | `0x00060F07` | |
+| `test_jump_search.c` | Jump search O(√n); {1,3..19} block=3; find{7,13,19}; xor_idx=12 | `0x000A030C` | |
+| `test_lc_substring.c` | Longest Common Substring DP; "ABABC"/"BABCAB"; lcs=4 ("BABC") | `0x00050604` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -160,7 +162,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-140 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+143 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -233,6 +235,8 @@ Pattern families currently covered (51 patterns):
 | Minimum stack | push: min_stk[top]=min(x,min_stk[top-1]); getMin: min_stk[top-1] |
 | Boyer-Moore majority vote | if(count==0) reset; else ==candidate count++; else count-- |
 | Count inversions (merge sort) | cnt+=mid-i when arr[right]<arr[left] in merge step |
+| Jump search | step forward by √n; linear scan back on overshoot |
+| Longest common substring DP | dp[i][j]=dp[i-1][j-1]+1 on match; else 0 (reset vs LCS) |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
