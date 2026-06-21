@@ -137,6 +137,8 @@ declare -A EXPECTED_RESULT=(
     [test_josephus]=0x000A0C02
     [test_quick_select]=0x00080D0D
     [test_matrix_chain]=0x00034018
+    [test_kruskal]=0x00050C04
+    [test_floyd_cycle]=0x00070203
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -163,7 +165,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_lps test_dutch_flag \
        test_prim_mst test_subset_sum \
        test_next_greater test_josephus \
-       test_quick_select test_matrix_chain)
+       test_quick_select test_matrix_chain \
+       test_kruskal test_floyd_cycle)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

@@ -844,6 +844,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dims.*\\[.*\\].*\\*.*dims.*\\[.*\\].*\\*.*dims", // triple dims product
             "matrix_chain|mc_dp|chain_mult"                  // naming
         ),
+
+        // ── Sprint 44: Kruskal's MST ─────────────────────────────────────────
+        new PatternDef("kruskal_union_find", "kruskal_mst", "high",
+            "find.*u.*!=.*find.*v|kr_find.*!=.*kr_find",      // find(u)!=find(v) check
+            "union.*u.*v|kr_union.*edges",                    // union call on edge
+            "kruskal|mst_weight|mst_edges|kr_edges"          // naming
+        ),
+        new PatternDef("kruskal_path_compress", "path_compression", "medium",
+            "parent.*\\[x\\].*=.*parent.*\\[parent.*\\[x\\]\\]", // path halving
+            "while.*parent.*x.*!=.*x|parent.*\\[x\\].*!=.*x",   // root-find loop
+            "kr_find|kr_parent|path_comp"                    // naming
+        ),
+
+        // ── Sprint 44: Floyd's Cycle Detection ───────────────────────────────
+        new PatternDef("floyd_cycle_detect", "tortoise_hare", "high",
+            "do.*slow.*=.*f.*fast.*=.*f.*f|slow.*fast.*=.*next.*next", // phase 1 loop
+            "slow.*!=.*fast|while.*slow.*!=.*fast",                    // meet condition
+            "floyd|tortoise|hare|cycle_start|cycle_len"      // naming
+        ),
+        new PatternDef("floyd_cycle_length", "cycle_length_count", "medium",
+            "len.*=.*1.*fast.*=.*f.*slow",                   // len=1; fast=f(slow)
+            "while.*fast.*!=.*slow.*fast.*=.*f.*fast.*len\\+\\+", // count loop
+            "cycle_len|cycle_length|floyd_cycle"             // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -435,6 +435,21 @@ int main(void){
    for(int l=2;l<=3;l++)for(int i=0;i<=3-l;i++){int j=i+l-1;mcdp[i][j]=0x7fffffff;
      for(int k=i;k<j;k++){int c=mcdp[i][k]+mcdp[k+1][j]+mcd[i]*mcd[k+1]*mcd[j+1];if(c<mcdp[i][j])mcdp[i][j]=c;}}
    CHECK("test_matrix_chain",(3u<<16)|((uint32_t)mcdp[0][2]<<8)|(uint32_t)mcdp[0][1],0x00034018u);}
+  /* test_kruskal: n=5 graph, edges sorted; MST weight=12, edges=4 */
+  {int kp[5]={0,1,2,3,4},kr[5]={0};
+   typedef struct{int u,v,w;}KE;static const KE ke[]={{0,1,1},{1,2,2},{2,3,3},{0,2,4},{1,3,5},{3,4,6},{0,3,7},{2,4,8}};
+   int kmw=0,kme=0;
+   for(int i=0;i<8&&kme<4;i++){
+     int a=ke[i].u,b=ke[i].v;
+     while(kp[a]!=a)a=kp[a]=kp[kp[a]];while(kp[b]!=b)b=kp[b]=kp[kp[b]];
+     if(a!=b){if(kr[a]<kr[b]){int t=a;a=b;b=t;}kp[b]=a;if(kr[a]==kr[b])kr[a]++;kmw+=ke[i].w;kme++;}}
+   CHECK("test_kruskal",(5u<<16)|((uint32_t)kmw<<8)|(uint32_t)kme,0x00050C04u);}
+  /* test_floyd_cycle: next={1,2,3,4,2,6,2} n=7; cycle_start=2, len=3 */
+  {static const int fcn[]={1,2,3,4,2,6,2};int sl=0,fa=0;
+   do{sl=fcn[sl];fa=fcn[fcn[fa]];}while(sl!=fa);
+   sl=0;while(sl!=fa){sl=fcn[sl];fa=fcn[fa];}int cs=sl;
+   int fl=1;fa=fcn[sl];while(fa!=sl){fa=fcn[fa];fl++;}
+   CHECK("test_floyd_cycle",(7u<<16)|((uint32_t)cs<<8)|(uint32_t)fl,0x00070203u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
