@@ -3169,6 +3169,35 @@ public class DetectSemanticPatterns extends GhidraScript {
             "& mask.*where.*mask.*W.*bits|bitset_clamp.*target.*width",
             "bitset_mask|bs_width_mask|dp_clamp"
         ),
+
+        // ── Shift-And pattern matching ────────────────────────────────────────
+        new PatternDef("shift_and_mask_build", "shift_and_character_bitmask_build", "high",
+            "sa_mask.*sa_p.*j.*|=.*1u.*<<.*j|mask.*P.*j.*\\|=.*1.*<<.*j",
+            "for.*j.*=.*0.*j.*<.*SA_M.*j\\+\\+.*mask.*p.*j.*\\|=.*1.*<<.*j|char_bitmask_build",
+            "shift_and_mask|sa_mask|char_bitmask"
+        ),
+        new PatternDef("shift_and_state_update", "shift_and_state_vector_shift_or_mask", "high",
+            "D.*=.*D.*<<.*1.*|.*1u.*&.*sa_mask.*sa_t.*i|D.*=.*D.*<<.*1.*\\|.*1.*&.*mask.*T.*i",
+            "state.*=.*shift_left.*or_one.*and_char_mask|shift_and_core_update",
+            "shift_and_update|sa_state|shift_or_one"
+        ),
+        new PatternDef("shift_and_match_check", "shift_and_match_top_bit_detection", "high",
+            "if.*D.*&.*1u.*<<.*SA_M.*-.*1.*matches\\+\\+|if.*D.*&.*1.*<<.*m.*-.*1.*count",
+            "top_bit.*set.*pattern.*match|shift_and.*bit.*m.*-.*1.*match",
+            "shift_and_match|sa_match|shift_and_top_bit"
+        ),
+
+        // ── Maximum clique (bitmask brute force) ─────────────────────────────
+        new PatternDef("clique_subset_enumerate", "max_clique_2n_subset_enumeration", "high",
+            "for.*S.*=.*0.*S.*<.*1.*<<.*CL_N.*S\\+\\+.*cl_pop.*S.*<=.*mc.*continue",
+            "for.*S.*<.*1.*<<.*n.*S.*popcount.*S.*<=.*mc.*continue|bitmask_clique_enum",
+            "clique_enum|max_clique_2n|clique_bitmask"
+        ),
+        new PatternDef("clique_pair_check", "max_clique_pairwise_adjacency_clique_test", "high",
+            "for.*u.*<.*CL_N.*S.*>>.*u.*&.*1.*for.*v.*=.*u.*\\+.*1.*S.*>>.*v.*&.*1.*!cl_adj.*u.*v",
+            "if.*!adj.*u.*v.*ok.*=.*0|check.*all.*pairs.*in.*subset.*clique",
+            "clique_pair|adjacency_check|clique_test"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
