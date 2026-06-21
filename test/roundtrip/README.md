@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 121 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 123 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -134,6 +134,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_edit_distance.c` | Levenshtein edit distance; kitten→sitting=3, abc→yabd=2 | `0x00030802` | |
 | `test_max_rect_sum.c` | Max sum sub-rectangle via 2D Kadane; 3×4 matrix; max=21 | `0x000C1501` | |
 | `test_fenwick_tree.c` | Fenwick BIT; p[0..4]=9; update[3]+=3; range[2..5]=12 | `0x0008090C` | |
+| `test_sliding_window_max.c` | Monotonic deque max; k=3 on {1,3,-1,-3,5,3,6,7}; sum=29 | `0x00061D01` | |
+| `test_count_distinct_window.c` | Freq-array distinct count; k=4; all windows=3 | `0x00050F03` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -216,7 +218,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-230 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+233 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -228,7 +230,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (96 patterns):
+Pattern families currently covered (99 patterns):
 
 | Family | Patterns |
 |--------|---------|

@@ -901,6 +901,25 @@ int main(void){
    int fwq3=0;for(int k=2;k>0;k-=k&(-k))fwq3+=fw2[k];  /* query(1) */
    int rng=fwq2-fwq3;  /* range[2..5]=12 */
    CHECK("test_fenwick_tree",(8u<<16)|((uint32_t)(fwq1&0xFF)<<8)|(uint32_t)(rng&0xFF),0x0008090Cu);}
+  /* test_sliding_window_max: arr={1,3,-1,-3,5,3,6,7} k=3; maxima={3,3,5,5,6,7} sum=29 xor=1 */
+  {int swm_a[]={1,3,-1,-3,5,3,6,7};int swm_dq[8],swf=0,swb=-1;
+   uint32_t swsum=0,swxr=0;int swol=0;
+   for(int i=0;i<8;i++){
+     if(swf<=swb&&swm_dq[swf]<=i-3)swf++;
+     while(swf<=swb&&swm_a[swm_dq[swb]]<=swm_a[i])swb--;
+     swm_dq[++swb]=i;
+     if(i>=2){int mx=swm_a[swm_dq[swf]];swsum+=(uint32_t)mx;swxr^=(uint32_t)mx;swol++;}
+   }
+   CHECK("test_sliding_window_max",((uint32_t)swol<<16)|((swsum&0xFFu)<<8)|(swxr&0xFFu),0x00061D01u);}
+  /* test_count_distinct_window: arr={1,2,1,3,2,1,1,4} k=4; all 5 windows distinct=3 */
+  {int cdw_a[]={1,2,1,3,2,1,1,4};int cdwf[8]={0,0,0,0,0,0,0,0};
+   int cdd=0;uint32_t cdsum=0,cdxr=0;int cdol=0;
+   for(int i=0;i<8;i++){
+     cdwf[cdw_a[i]]++;if(cdwf[cdw_a[i]]==1)cdd++;
+     if(i>=4){cdwf[cdw_a[i-4]]--;if(cdwf[cdw_a[i-4]]==0)cdd--;}
+     if(i>=3){cdsum+=(uint32_t)cdd;cdxr^=(uint32_t)cdd;cdol++;}
+   }
+   CHECK("test_count_distinct_window",((uint32_t)cdol<<16)|((cdsum&0xFFu)<<8)|(cdxr&0xFFu),0x00050F03u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

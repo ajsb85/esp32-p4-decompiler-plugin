@@ -1411,6 +1411,22 @@ public class DetectSemanticPatterns extends GhidraScript {
             "fw_query.*i.*-.*1|range.*query.*fw_range",
             "bit_query|fenwick_query|prefix_sum_bit"
         ),
+        // ── Sprint 76: sliding window max + count distinct window ─────────────
+        new PatternDef("sliding_window_deque_max", "monotonic_deque_max", "high",
+            "if.*front.*<=.*back.*dq.*front.*<=.*i.*-.*SWM_K.*front\\+\\+",
+            "while.*front.*<=.*back.*swm_arr.*dq.*back.*<=.*swm_arr.*i.*back--",
+            "sliding_max|deque_max|window_max"
+        ),
+        new PatternDef("sliding_distinct_freq", "count_distinct_sliding_window", "high",
+            "freq.*cdw_arr.*i.*\\+\\+.*if.*freq.*cdw_arr.*i.*==.*1.*distinct\\+\\+",
+            "freq.*cdw_arr.*i.*-.*CDW_K.*--.*if.*freq.*cdw_arr.*i.*-.*CDW_K.*==.*0.*distinct--",
+            "count_distinct|freq_window|distinct_slide"
+        ),
+        new PatternDef("sliding_window_pattern", "sliding_window_generic", "medium",
+            "if.*i.*>=.*CDW_K.*freq.*cdw_arr.*i.*-.*CDW_K.*--|if.*i.*>=.*k.*remove.*arr.*i.*-.*k",
+            "if.*i.*>=.*k.*-.*1.*sum.*\\+=.*out_len\\+\\+|window.*emit.*after.*k.*elements",
+            "sliding_window|window_slide|sw_generic"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
