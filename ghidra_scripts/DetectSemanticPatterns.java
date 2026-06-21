@@ -6196,6 +6196,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "tn_count.*0xFF.*last_tn.*0xFF|thabit_numbers_mask",
             "g_result.*n_tests.*metric_a.*metric_b|thabit_numbers_g_result"
         ),
+        new PatternDef("cullen_numbers_formula", "cullen_numbers_formula", "high",
+            "n\\s*[*]\\s*[(]1u\\s*<<\\s*n[)]\\s*[+]\\s*1u|cullen_formula",
+            "is_prime_cn.*cand|cullen_primality_check",
+            "CN_MAX.*20u|cullen_limit"
+        ),
+        new PatternDef("cullen_numbers_loop", "cullen_numbers_loop", "high",
+            "for.*n\\s*=\\s*1u.*n\\s*<=\\s*CN_MAX|cullen_outer_loop",
+            "count_comp[+][+].*cullen_sum\\s*[+]=\\s*cand|cullen_collect",
+            "count_comp.*CN_MAX|cullen_composite_guard"
+        ),
+        new PatternDef("cullen_numbers_pack", "cullen_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|cullen_numbers_pack",
+            "count_comp.*0xFF.*cullen_sum.*0xFF|cullen_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|cullen_numbers_g_result"
+        ),
+        new PatternDef("woodall_numbers_formula", "woodall_numbers_formula", "high",
+            "n\\s*[*]\\s*[(]1u\\s*<<\\s*n[)]\\s*-\\s*1u|woodall_formula",
+            "is_prime_wn.*cand|woodall_primality_check",
+            "WN_MAX.*20u|woodall_limit"
+        ),
+        new PatternDef("woodall_numbers_loop", "woodall_numbers_loop", "high",
+            "for.*n\\s*=\\s*1u.*n\\s*<=\\s*WN_MAX|woodall_outer_loop",
+            "count_prime[+][+].*last_prime_w\\s*=\\s*cand|woodall_collect",
+            "count_prime.*WN_MAX|woodall_prime_guard"
+        ),
+        new PatternDef("woodall_numbers_pack", "woodall_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|woodall_numbers_pack",
+            "count_prime.*0xFF.*last_prime_w.*0xFF|woodall_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|woodall_numbers_g_result"
+        ),
+        new PatternDef("fermat_numbers_formula", "fermat_numbers_formula", "high",
+            "exp\\s*=\\s*1u\\s*<<\\s*n.*cand\\s*=\\s*[(]1u\\s*<<\\s*exp[)]\\s*[+]\\s*1u|fermat_formula",
+            "is_prime_fn.*cand|fermat_primality_check",
+            "FN_MAX.*4u|fermat_limit"
+        ),
+        new PatternDef("fermat_numbers_loop", "fermat_numbers_loop", "high",
+            "for.*n\\s*=\\s*0u.*n\\s*<=\\s*FN_MAX|fermat_outer_loop",
+            "count_prime[+][+].*fermat_sum\\s*[+]=\\s*cand|fermat_collect",
+            "fermat_sum.*FN_MAX|fermat_sum_guard"
+        ),
+        new PatternDef("fermat_numbers_pack", "fermat_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|fermat_numbers_pack",
+            "count_prime.*0xFF.*fermat_sum.*0xFF|fermat_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|fermat_numbers_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
