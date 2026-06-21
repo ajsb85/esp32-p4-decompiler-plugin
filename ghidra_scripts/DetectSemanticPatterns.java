@@ -5325,6 +5325,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_tests.*=.*15|fuss_catalan_test_count",
             "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|fuss_catalan_pack"
         ),
+        new PatternDef("sylvester_recurrence", "sylvester_step_formula", "high",
+            "prev.*\\*.*prev.*-.*1.*\\+.*1|a_n.*=.*a_prev.*sq_minus|sylvester_recurrence",
+            "out\\[i\\].*=.*prev.*\\*.*prev.*-.*1.*%.*MOD|sylvester_mod_step",
+            "out\\[0\\].*=.*2|sylvester_seed"
+        ),
+        new PatternDef("sylvester_odd_count", "sylvester_parity_check", "medium",
+            "seq\\[i\\].*&.*1U|sylvester_odd_test",
+            "count\\+\\+.*odd|odd_count.*sylvester",
+            "sum.*odd_count.*&.*0xFF|sylvester_metric_a"
+        ),
+        new PatternDef("sylvester_result", "sylvester_result_encode", "medium",
+            "xor_acc.*\\^=.*seq\\[i\\]|sum.*\\+=.*seq\\[i\\]|sylvester_accumulate",
+            "n_tests.*=.*12|sylvester_test_count",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|sylvester_pack"
+        ),
+        new PatternDef("golomb_recurrence", "golomb_self_describe_step", "high",
+            "1.*\\+.*golomb_seq\\[idx\\]|golomb_step_formula",
+            "inner.*=.*golomb_seq\\[i.*-.*1\\]|golomb_inner_lookup",
+            "outer.*=.*golomb_seq\\[inner\\]|golomb_outer_lookup"
+        ),
+        new PatternDef("golomb_self_check", "golomb_self_describe_verify", "high",
+            "golomb_count_value.*v.*GOLOMB_N.*==.*golomb_seq\\[v\\]|golomb_verify",
+            "count.*golomb_seq\\[i\\].*times|golomb_occurrence_count",
+            "correct\\+\\+|golomb_correct_count"
+        ),
+        new PatternDef("golomb_result", "golomb_result_encode", "medium",
+            "xor_acc.*\\^=.*golomb_seq\\[i\\]|sum.*\\+=.*golomb_seq|golomb_accumulate",
+            "n_tests.*=.*32|golomb_test_count",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|golomb_pack"
+        ),
+        new PatternDef("vdc_digit_reflect", "vdc_base_digit_reverse", "high",
+            "digit.*=.*n.*%.*base|n.*\\/=.*base|vdc_digit_extract",
+            "num.*=.*num.*\\*.*base.*\\+.*digit|vdc_reflect_accumulate",
+            "denom.*\\*=.*base|vdc_denom_shift"
+        ),
+        new PatternDef("vdc_fixed_point", "vdc_fixed_point_scale", "high",
+            "num.*\\*.*SCALE.*\\/.*denom|vdc_fixed_divide",
+            "vdc_fixed.*i.*\\+.*1.*2|vdc_base2_call",
+            "vdc_fixed.*i.*\\+.*1.*3|vdc_base3_call"
+        ),
+        new PatternDef("vdc_result", "vdc_result_encode", "medium",
+            "sum2.*\\+=.*vdc2|sum3.*\\+=.*vdc3|vdc_sum_accumulate",
+            "xor_acc.*\\^=.*vdc2.*\\^.*vdc3|vdc_xor_combine",
+            "g_result.*n_tests.*<<.*16.*metric_a.*<<.*8.*metric_b|vdc_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
