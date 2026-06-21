@@ -1,0 +1,576 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# ESP32-P4 Ghidra Plugin
+# Copyright 2026 Alexander Salas Bastidas <ajsb85@firechip.dev>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# esp32p4_pie.sinc
+# Espressif PIE (Packed SIMD Integer Extension) for ESP32-P4
+#
+# TWO encoding generations exist:
+#   xesppie (old, 14.x toolchain) uses opcode spaces 0x3B / 0x5B / 0x5F / 0x7F
+#   xespv2p2 (new, 15.x toolchain / ESP-IDF 6.0.1) uses opcode spaces 0x1B / 0x1F
+#
+# This file handles BOTH so that firmware from either toolchain is recognised:
+#
+# xespv2p2 opcode spaces (production target — ESP-IDF 6.0.1 + 15.x toolchain):
+#   0x1B  op0001=3, op0204=6, op0506=0  -- vector arithmetic (vadd/vsub/vmulas, XP ld/st)
+#   0x1F  op0001=3, op0204=7, op0506=0  -- Q-reg load/store with immediate post-increment
+#
+# xesppie legacy opcode spaces (kept for older firmware compatibility):
+#   0x5B  op0001=3, op0204=6, op0506=2  -- vector shift / source ops (custom-2)
+#   0x5F  op0001=3, op0204=7, op0506=2  -- SIMD arithmetic (custom-3 region)
+#   0x7F  op0001=3, op0204=7, op0506=3  -- XP (register-offset) load/store
+#
+# NOTE: The 0x1B/0x1F spaces are free in Ghidra RV32: 0x1B is OP-IMM-32 (RV64I only,
+# disabled with #: in riscv.instr.sinc) and 0x1F is the 48-bit prefix (unused in RV32).
+#
+# Confirmed xespv2p2 encodings (assembled with riscv32-esp-elf-gcc esp-15.2.0_20251204):
+#   esp.vld.128.ip q0, a0, 0  -> 0x0311001F  (0x1F opcode, op2531=0x01)
+#   esp.vst.128.ip q0, a0, 0  -> 0x8311001F  (0x1F opcode, op2531=0x41, bit31=1 for store)
+#   esp.vadd.u32   q2, q0, q1 -> 0x06a2a31B  (0x1B opcode, op2531=0x03)
+#   esp.vmulas.s8.xacc q0, q1 -> 0x06a5a01B  (0x1B opcode, op2531=0x03)
+#   esp.lp.setup 0, t0, off   -> 0x0032c02B  (hardware loop, in esp32p4_hwlp.sinc)
+#
+# GCC defines __riscv_xesppie for BOTH encoding versions (the macro name didn't change).
+# Confirmed working on ESP32-P4 eco2: vld/vst.128.ip, andq, orq, xorq, notq, zero.q,
+# movi.32.q (FastLED project, 2026: github.com/fastled/fastled/issues/2535).
+
+# ---- pcodeop declarations ----
+
+# 128-bit vector load/store with post-increment (immediate offset)
+define pcodeop esp_vld_128_ip;
+define pcodeop esp_vst_128_ip;
+
+# 64-bit half-vector load/store (high / low half)
+define pcodeop esp_vld_h64_ip;
+define pcodeop esp_vst_h64_ip;
+define pcodeop esp_vld_l64_ip;
+define pcodeop esp_vst_l64_ip;
+
+# Broadcast narrow load with post-increment
+define pcodeop esp_vldbc_8_ip;
+define pcodeop esp_vldbc_16_ip;
+define pcodeop esp_vldbc_32_ip;
+
+# 128-bit vector load/store with register-offset (XP)
+define pcodeop esp_vld_128_xp;
+define pcodeop esp_vst_128_xp;
+define pcodeop esp_vld_h64_xp;
+define pcodeop esp_vst_h64_xp;
+define pcodeop esp_vld_l64_xp;
+define pcodeop esp_vst_l64_xp;
+
+# Load/store Q-accumulator (QACC) state
+define pcodeop esp_ld_qacc_h_h_128_ip;
+define pcodeop esp_ld_qacc_h_l_128_ip;
+define pcodeop esp_ld_qacc_l_h_128_ip;
+define pcodeop esp_ld_qacc_l_l_128_ip;
+define pcodeop esp_st_qacc_h_h_128_ip;
+define pcodeop esp_st_qacc_h_l_128_ip;
+define pcodeop esp_st_qacc_l_h_128_ip;
+define pcodeop esp_st_qacc_l_l_128_ip;
+define pcodeop esp_ld_ua_state_ip;
+define pcodeop esp_st_ua_state_ip;
+
+# Load/store indexed Q register (32-bit element)
+define pcodeop esp_ldxq_32;
+define pcodeop esp_stxq_32;
+
+# SIMD integer arithmetic (op 0x5F)
+define pcodeop esp_vadd_s8;
+define pcodeop esp_vadd_u8;
+define pcodeop esp_vadd_s16;
+define pcodeop esp_vadd_u16;
+define pcodeop esp_vadd_s32;
+define pcodeop esp_vadd_u32;
+define pcodeop esp_vsub_s8;
+define pcodeop esp_vsub_u8;
+define pcodeop esp_vsub_s16;
+define pcodeop esp_vsub_u16;
+define pcodeop esp_vsub_s32;
+define pcodeop esp_vsub_u32;
+
+# SIMD multiply-accumulate into QACC / XACC
+define pcodeop esp_vmulas_s8_qacc;
+define pcodeop esp_vmulas_s16_qacc;
+define pcodeop esp_vmulas_u8_qacc;
+define pcodeop esp_vmulas_u16_qacc;
+define pcodeop esp_vmulas_s8_xacc;
+define pcodeop esp_vmulas_s16_xacc;
+define pcodeop esp_vmulas_u8_xacc;
+define pcodeop esp_vmulas_u16_xacc;
+define pcodeop esp_vsmulas_s8_qacc;
+define pcodeop esp_vsmulas_s16_qacc;
+define pcodeop esp_vsmulas_u8_qacc;
+define pcodeop esp_vsmulas_u16_qacc;
+
+# SIMD complex multiply
+define pcodeop esp_cmul_s8;
+define pcodeop esp_cmul_s16;
+define pcodeop esp_cmul_u8;
+define pcodeop esp_cmul_u16;
+
+# SIMD cross-multiply-accumulate (complex)
+define pcodeop esp_vcmulas_s8_qacc_h;
+define pcodeop esp_vcmulas_s8_qacc_l;
+define pcodeop esp_vcmulas_s16_qacc_h;
+define pcodeop esp_vcmulas_s16_qacc_l;
+
+# Vector shift and source ops (0x5B opcode space)
+define pcodeop esp_vsl_32;
+define pcodeop esp_vsr_s32;
+define pcodeop esp_vsr_u32;
+define pcodeop esp_vsld_8;
+define pcodeop esp_vsld_16;
+define pcodeop esp_vsld_32;
+define pcodeop esp_vsrd_8;
+define pcodeop esp_vsrd_16;
+define pcodeop esp_vsrd_32;
+define pcodeop esp_src_q;
+define pcodeop esp_slci_2q;
+define pcodeop esp_srci_2q;
+define pcodeop esp_slcxxp_2q;
+define pcodeop esp_srcxxp_2q;
+define pcodeop esp_srcq_128_st_incp;
+define pcodeop esp_srcmb_s8_qacc;
+define pcodeop esp_srcmb_s16_qacc;
+define pcodeop esp_srcmb_u8_qacc;
+define pcodeop esp_srcmb_u16_qacc;
+
+# XACC read-out
+define pcodeop esp_srs_s_xacc;
+define pcodeop esp_srs_u_xacc;
+define pcodeop esp_st_s_xacc_ip;
+define pcodeop esp_st_u_xacc_ip;
+
+# Fused load+multiply-accumulate variants
+define pcodeop esp_vmulas_qacc_ld_ip;
+define pcodeop esp_vmulas_qacc_st_ip;
+define pcodeop esp_vmulas_qacc_ld_xp;
+define pcodeop esp_vmulas_qacc_st_xp;
+define pcodeop esp_vmulas_qacc_ldbc_incp;
+define pcodeop esp_vcmulas_qacc_ld_ip;
+define pcodeop esp_vcmulas_qacc_ld_xp;
+define pcodeop esp_vsmulas_qacc_ld_incp;
+
+# Q-register bitwise (confirmed working on P4 eco2)
+define pcodeop esp_andq;
+define pcodeop esp_orq;
+define pcodeop esp_xorq;
+define pcodeop esp_notq;
+define pcodeop esp_zero_q;
+define pcodeop esp_movi_32_q;
+
+# Catch-all for unrecognised PIE encodings in each opcode space
+define pcodeop esp_pie_op1b;   # xespv2p2 0x1B arithmetic — unrecognised subtype
+define pcodeop esp_pie_op1f;   # xespv2p2 0x1F load/store — unrecognised subtype
+define pcodeop esp_pie_op3b;   # xesppie legacy 0x3B
+define pcodeop esp_pie_op5b;   # xesppie legacy 0x5B
+define pcodeop esp_pie_op5f;   # xesppie legacy 0x5F
+define pcodeop esp_pie_op7f;   # xesppie legacy 0x7F
+
+
+# ===========================================================================
+# xespv2p2: Opcode 0x1F — Q-register load/store with immediate post-increment
+#   op0001=3 & op0204=7 & op0506=0
+#
+# Confirmed encodings (assembled with riscv32-esp-elf-gcc esp-15.2.0_20251204):
+#   esp.vld.128.ip q0, a0, 0  -> 0x0311001F  (op2531=0x01, op1214=0, op3131=0)
+#   esp.vst.128.ip q0, a0, 0  -> 0x8311001F  (op2531=0x41, op1214=0, op3131=1)
+#
+# Q register at bits[13:10] (4-bit field, 0x400 per step).
+# Base register at bits[17:15] (3-bit CL encoding, x8-x15 as 0-7).
+# Immediate offset: post-increment in units of 16 bytes (128-bit aligned).
+# Bit31 = 1: store variant of each op.
+# ===========================================================================
+
+with : op0001=0x3 & op0204=0x7 & op0506=0x0 {
+
+    # --- 128-bit Q-register load/store (CONFIRMED xespv2p2) ---
+    :esp.vld.128.ip  is op2531=0x01 & op1214=0x0  { esp_vld_128_ip(); }
+    :esp.vst.128.ip  is op2531=0x41 & op1214=0x0  { esp_vst_128_ip(); }
+
+    # --- 64-bit half-Q load/store (estimated sub-encodings; to be refined) ---
+    :esp.vld.h.64.ip is op2531=0x11 & op1214=0x0  { esp_vld_h64_ip(); }
+    :esp.vld.l.64.ip is op2531=0x09 & op1214=0x0  { esp_vld_l64_ip(); }
+    :esp.vst.h.64.ip is op2531=0x51 & op1214=0x0  { esp_vst_h64_ip(); }
+    :esp.vst.l.64.ip is op2531=0x49 & op1214=0x0  { esp_vst_l64_ip(); }
+
+    # --- Broadcast loads (estimated sub-encodings) ---
+    :esp.vldbc.8.ip  is op2531=0x03 & op1214=0x0  { esp_vldbc_8_ip(); }
+    :esp.vldbc.16.ip is op2531=0x23 & op1214=0x0  { esp_vldbc_16_ip(); }
+
+    # --- QACC accumulator load/store (FreeRTOS context switch uses these) ---
+    # sub-encodings estimated for xespv2p2; use op1214 + op3131 as discriminators
+    :esp.ld.qacc.l.l.128.ip is op3131=0x0 & op1214=0x4 & op0711=0x00  { esp_ld_qacc_l_l_128_ip(); }
+    :esp.ld.qacc.l.h.128.ip is op3131=0x0 & op1214=0x4 & op0711=0x02  { esp_ld_qacc_l_h_128_ip(); }
+    :esp.ld.qacc.h.l.128.ip is op3131=0x0 & op1214=0x4 & op0711=0x04  { esp_ld_qacc_h_l_128_ip(); }
+    :esp.ld.qacc.h.h.128.ip is op3131=0x0 & op1214=0x4 & op0711=0x06  { esp_ld_qacc_h_h_128_ip(); }
+    :esp.st.qacc.l.l.128.ip is op3131=0x1 & op1214=0x4 & op0711=0x00  { esp_st_qacc_l_l_128_ip(); }
+    :esp.st.qacc.l.h.128.ip is op3131=0x1 & op1214=0x4 & op0711=0x02  { esp_st_qacc_l_h_128_ip(); }
+    :esp.st.qacc.h.l.128.ip is op3131=0x1 & op1214=0x4 & op0711=0x04  { esp_st_qacc_h_l_128_ip(); }
+    :esp.st.qacc.h.h.128.ip is op3131=0x1 & op1214=0x4 & op0711=0x06  { esp_st_qacc_h_h_128_ip(); }
+
+    # --- UA state and XACC save/restore (FreeRTOS context switch) ---
+    :esp.ld.ua.state.ip is op1214=0x2 & op3131=0x0  { esp_ld_ua_state_ip(); }
+    :esp.st.ua.state.ip is op1214=0x2 & op3131=0x1  { esp_st_ua_state_ip(); }
+    :esp.st.u.xacc.ip   is op1214=0x3 & op3131=0x0  { esp_st_u_xacc_ip(); }
+    :esp.st.s.xacc.ip   is op1214=0x3 & op3131=0x1  { esp_st_s_xacc_ip(); }
+
+    # --- XP register-offset load/store ---
+    :esp.vld.128.xp  is op1214=0x1 & op3131=0x0  { esp_vld_128_xp(); }
+    :esp.vst.128.xp  is op1214=0x1 & op3131=0x1  { esp_vst_128_xp(); }
+
+    # Catch-all for any unrecognised 0x1F instruction
+    :esp.pie.0x1f    is op3131=0x0   { esp_pie_op1f(); }
+    :esp.pie.0x1f.st is op3131=0x1   { esp_pie_op1f(); }
+}
+
+
+# ===========================================================================
+# xespv2p2: Opcode 0x1B — vector arithmetic and XP load/store
+#   op0001=3 & op0204=6 & op0506=0
+#
+# Confirmed encodings (assembled with riscv32-esp-elf-gcc esp-15.2.0_20251204):
+#   esp.vadd.s8  q2,q0,q1: 0x06a3231B  -> op2531=0x03
+#   esp.vadd.u8  q2,q0,q1: 0x06a1231B  -> op2531=0x03
+#   esp.vadd.s16 q2,q0,q1: 0x06a7231B  -> op2531=0x03
+#   esp.vadd.u16 q2,q0,q1: 0x06a5231B  -> op2531=0x03
+#   esp.vadd.s32 q2,q0,q1: 0x06a6a31B  -> op2531=0x03
+#   esp.vadd.u32 q2,q0,q1: 0x06a2a31B  -> op2531=0x03, op0711=0x06
+#   esp.vmulas.s8.xacc q0,q1: 0x06a5a01B -> op2531=0x03
+#
+# All confirmed arithmetic ops share op2531=0x03. Specific subtypes distinguished
+# by bits in the rs1/rs2 fields (non-standard Q-register encoding) — see comments.
+# ===========================================================================
+
+with : op0001=0x3 & op0204=0x6 & op0506=0x0 {
+
+    # --- Q-register bitwise operations (confirmed working on P4 eco2) ---
+    # Sub-encodings estimated; to be refined from on-device measurement.
+    :esp.andq      is op2531=0x20 & op1214=0x0  { esp_andq(); }
+    :esp.orq       is op2531=0x20 & op1214=0x1  { esp_orq(); }
+    :esp.xorq      is op2531=0x20 & op1214=0x2  { esp_xorq(); }
+    :esp.notq      is op2531=0x20 & op1214=0x3  { esp_notq(); }
+    :esp.zero.q    is op2531=0x22 & op1214=0x0  { esp_zero_q(); }
+    :esp.movi.32.q is op2531=0x22 & op1214=0x1  { esp_movi_32_q(); }
+
+    # --- Vector add/sub (all share op2531=0x03 in xespv2p2) ---
+    # Specific op0711 sub-type discriminator estimated from pattern analysis.
+    # Confirmed: vadd.u32 q2,q0,q1 = 0x06a2a31b -> op0711=0x06 (q2 dest, non-standard enc).
+    :esp.vadd.u32  is op2531=0x03 & op0711=0x06 & op3131=0x0  { esp_vadd_u32(); }
+    :esp.vadd.s32  is op2531=0x03 & op0711=0x07 & op3131=0x0  { esp_vadd_s32(); }
+    # vsub.u32/s32: estimated op0711 values removed to avoid pattern conflict with vsmulas.
+    # They fall through to :esp.pie.arith (generic catch-all) below.
+
+    # --- Multiply-accumulate (vmulas) (op2531=0x03, op0711 distinguishes variant) ---
+    :esp.vmulas.u8.xacc  is op2531=0x03 & op0711=0x18  { esp_vmulas_u8_xacc(); }
+    :esp.vmulas.s8.xacc  is op2531=0x03 & op0711=0x19  { esp_vmulas_s8_xacc(); }
+    :esp.vmulas.u16.xacc is op2531=0x03 & op0711=0x1a  { esp_vmulas_u16_xacc(); }
+    :esp.vmulas.s16.xacc is op2531=0x03 & op0711=0x1b  { esp_vmulas_s16_xacc(); }
+    :esp.vmulas.u8.qacc  is op2531=0x03 & op0711=0x1c  { esp_vmulas_u8_qacc(); }
+    :esp.vmulas.s8.qacc  is op2531=0x03 & op0711=0x1d  { esp_vmulas_s8_qacc(); }
+    :esp.vmulas.u16.qacc is op2531=0x03 & op0711=0x1e  { esp_vmulas_u16_qacc(); }
+    :esp.vmulas.s16.qacc is op2531=0x03 & op0711=0x1f  { esp_vmulas_s16_qacc(); }
+    :esp.vsmulas.u8.qacc  is op2531=0x03 & op0711=0x0c  { esp_vsmulas_u8_qacc(); }
+    :esp.vsmulas.s8.qacc  is op2531=0x03 & op0711=0x0d  { esp_vsmulas_s8_qacc(); }
+    :esp.vsmulas.u16.qacc is op2531=0x03 & op0711=0x0e  { esp_vsmulas_u16_qacc(); }
+    :esp.vsmulas.s16.qacc is op2531=0x03 & op0711=0x0f  { esp_vsmulas_s16_qacc(); }
+
+    # --- Shift and rotate ---
+    :esp.vsl.32   is op2531=0x20 & op1214=0x4  { esp_vsl_32(); }
+    :esp.vsr.u32  is op2531=0x20 & op1214=0x5  { esp_vsr_u32(); }
+    :esp.vsr.s32  is op2531=0x20 & op1214=0x6  { esp_vsr_s32(); }
+    :esp.slci.2q  is op2531=0x00 & op1214=0x4  { esp_slci_2q(); }
+    :esp.srci.2q  is op2531=0x04 & op1214=0x4  { esp_srci_2q(); }
+
+    # --- XACC shift-right-and-saturate ---
+    :esp.srs.u.xacc is op2531=0x42 & op1214=0x7  { esp_srs_u_xacc(); }
+    :esp.srs.s.xacc is op2531=0x4a & op1214=0x7  { esp_srs_s_xacc(); }
+
+    # Broad catch-all for arithmetic group (op2531=0x03 = all confirmed arith ops)
+    :esp.pie.arith   is op2531=0x03  { esp_pie_op1b(); }
+    # Catch-all for any other 0x1B instruction not matched above
+    :esp.pie.0x1b    is op1214=0x0   { esp_pie_op1b(); }
+    :esp.pie.0x1b.f2 is op1214=0x2   { esp_pie_op1b(); }
+    :esp.pie.0x1b.f4 is op1214=0x4   { esp_pie_op1b(); }
+}
+
+
+# ===========================================================================
+# xesppie (legacy): Opcode 0x3B — Q-reg load/store, acc ops
+# These are the OLD encodings from the 14.x toolchain (xesppie -march=...xesppie).
+# They will appear in firmware compiled BEFORE ESP-IDF 6.0.1 / 15.x toolchain.
+# Kept here for backwards-compatible firmware analysis.
+# Representative encodings from test_rv_decode.cpp (14.x toolchain):
+#   esp.vld.128.ip  0x4200203b: op2531=0x21, op1214=2
+#   esp.vst.128.ip  0xc200203b: op2531=0x61, op1214=2
+#   esp.ld.qacc.l.l.128.ip 0x2080403b: op2531=0x10, op1214=4
+#   esp.st.qacc.l.l.128.ip 0xa080403b: op2531=0x50, op1214=4
+# ===========================================================================
+
+with : op0001=0x3 & op0204=0x6 & op0506=0x1 {
+
+    # --- 128-bit vector load/store (xesppie 0x3B opcode) ---
+    :esp.vld.128.ip.v1  is op2531=0x21 & op1214=0x2   { esp_vld_128_ip(); }
+    :esp.vst.128.ip.v1  is op2531=0x61 & op1214=0x2   { esp_vst_128_ip(); }
+
+    # --- 64-bit half-vector load/store ---
+    :esp.vld.h.64.ip.v1 is op2531=0x32 & op1214=0x2   { esp_vld_h64_ip(); }
+    :esp.vld.l.64.ip.v1 is op2531=0x12 & op1214=0x2   { esp_vld_l64_ip(); }
+    :esp.vst.h.64.ip.v1 is op2531=0x72 & op1214=0x2   { esp_vst_h64_ip(); }
+    :esp.vst.l.64.ip.v1 is op2531=0x52 & op1214=0x2   { esp_vst_l64_ip(); }
+
+    # --- Broadcast load ---
+    :esp.vldbc.8.ip.v1  is op2531=0x03 & op1214=0x2   { esp_vldbc_8_ip(); }
+    :esp.vldbc.16.ip.v1 is op2531=0x43 & op1214=0x2   { esp_vldbc_16_ip(); }
+
+    # --- QACC load/store ---
+    :esp.ld.qacc.l.h.128.ip.v1 is op2531=0x00 & op1214=0x4 & op0711=0x0   { esp_ld_qacc_l_h_128_ip(); }
+    :esp.ld.qacc.l.l.128.ip.v1 is op2531=0x10 & op1214=0x4 & op0711=0x0   { esp_ld_qacc_l_l_128_ip(); }
+    :esp.ld.qacc.h.h.128.ip.v1 is op2531=0x20 & op1214=0x4 & op0711=0x0   { esp_ld_qacc_h_h_128_ip(); }
+    :esp.ld.qacc.h.l.128.ip.v1 is op2531=0x30 & op1214=0x4 & op0711=0x0   { esp_ld_qacc_h_l_128_ip(); }
+    :esp.st.qacc.l.h.128.ip.v1 is op2531=0x40 & op1214=0x4 & op0711=0x0   { esp_st_qacc_l_h_128_ip(); }
+    :esp.st.qacc.l.l.128.ip.v1 is op2531=0x50 & op1214=0x4 & op0711=0x0   { esp_st_qacc_l_l_128_ip(); }
+    :esp.st.qacc.h.h.128.ip.v1 is op2531=0x60 & op1214=0x4 & op0711=0x0   { esp_st_qacc_h_h_128_ip(); }
+    :esp.st.qacc.h.l.128.ip.v1 is op2531=0x70 & op1214=0x4 & op0711=0x0   { esp_st_qacc_h_l_128_ip(); }
+    :esp.ld.ua.state.ip.v1 is op2531=0x30 & op1214=0x4 & op0711=0x2   { esp_ld_ua_state_ip(); }
+    :esp.st.ua.state.ip.v1 is op2531=0x70 & op1214=0x4 & op0711=0x2   { esp_st_ua_state_ip(); }
+
+    # --- SRCMB ---
+    :esp.srcmb.s8.qacc.v1  is op2531=0x2c & op1214=0x2   { esp_srcmb_s8_qacc(); }
+    :esp.srcmb.u8.qacc.v1  is op2531=0x0c & op1214=0x2   { esp_srcmb_u8_qacc(); }
+    :esp.srcmb.s16.qacc.v1 is op2531=0x6c & op1214=0x2   { esp_srcmb_s16_qacc(); }
+    :esp.srcmb.u16.qacc.v1 is op2531=0x4c & op1214=0x2   { esp_srcmb_u16_qacc(); }
+
+    # Catch-all for other legacy 0x3B instructions
+    :esp.pie.0x3b    is op1214=0x2  { esp_pie_op3b(); }
+    :esp.pie.0x3b.f4 is op1214=0x4  { esp_pie_op3b(); }
+}
+
+
+# ============================================================
+# Opcode 0x5B  (op0204=6, op0506=2, i.e. custom-2): vector shift / source ops
+# These override the generic custom2 definitions in esp32p4_hwlp.sinc because
+# they are more specific (additional funct3/funct7 constraints).
+#
+# Representative encodings (test_rv_decode.cpp):
+#   esp.vsl.32           0x8004005b: op2531=0x40, op1214=0
+#   esp.vsr.s32          0x8004035b: op2531=0x40, op1214=3
+#   esp.vsr.u32          0x8004015b: op2531=0x40, op1214=1
+#   esp.src.q            0x8024005b: op2531=0x41, op1214=0
+#   esp.src.q.qup        0x8024105b: op2531=0x41, op1214=1 (different funct3)
+#   esp.slci.2q          0x0000485b: op2531=0x00, op1214=4  (op0711 encodes imm)
+#   esp.srci.2q          0x0080485b: op2531=0x04, op1214=4
+#   esp.slcxxp.2q        0x0000405f  (uses 0x5F, see SIMD section)
+#   esp.srcq.128.st.incp 0x0000405b: op2531=0x00, op1214=4, op0711 variant
+#   esp.srcmb.s8.q.qacc  0x8864005b: op2531=0x43, op1214=0
+#   esp.srcmb.u8.q.qacc  0x8064005b: op2531=0x40, op1214=4 variant
+#   esp.srcmb.s16.q.qacc 0x9864005b: op2531=0x4c, op1214=0 variant
+#   esp.srcmb.u16.q.qacc 0x9064005b: op2531=0x48, op1214=0
+# ============================================================
+
+with : op0001=0x3 & op0204=0x6 & op0506=0x2 {
+
+    :esp.vsl.32          is op2531=0x40 & op1214=0x0   { esp_vsl_32(); }
+    :esp.vsr.u32         is op2531=0x40 & op1214=0x1   { esp_vsr_u32(); }
+    :esp.vsr.s32         is op2531=0x40 & op1214=0x3   { esp_vsr_s32(); }
+
+    :esp.src.q           is op2531=0x41 & op1214=0x0   { esp_src_q(); }
+
+    :esp.slci.2q         is op2531=0x00 & op1214=0x4   { esp_slci_2q(); }
+    :esp.srci.2q         is op2531=0x04 & op1214=0x4   { esp_srci_2q(); }
+
+    :esp.srcq.128.st.incp  is op2531=0x00 & op1214=0x0 { esp_srcq_128_st_incp(); }
+
+    :esp.srcmb.s8.q.qacc  is op2531=0x43 & op1214=0x0  { esp_srcmb_s8_qacc(); }
+    :esp.srcmb.u8.q.qacc  is op2531=0x40 & op1214=0x2  { esp_srcmb_u8_qacc(); }
+    :esp.srcmb.s16.q.qacc is op2531=0x4c & op1214=0x0  { esp_srcmb_s16_qacc(); }
+    :esp.srcmb.u16.q.qacc is op2531=0x48 & op1214=0x0  { esp_srcmb_u16_qacc(); }
+
+    # Fused variants with inline load (vmulas + ldbc)
+    :esp.vmulas.s8.qacc.ldbc.incp  is op2531=0x00 & op1214=0x6  { esp_vmulas_qacc_ldbc_incp(); }
+    :esp.vmulas.u8.qacc.ldbc.incp  is op2531=0x02 & op1214=0x6  { esp_vmulas_qacc_ldbc_incp(); }
+    :esp.vmulas.s16.qacc.ldbc.incp is op2531=0x06 & op1214=0x6  { esp_vmulas_qacc_ldbc_incp(); }
+    :esp.vmulas.u16.qacc.ldbc.incp is op2531=0x04 & op1214=0x6  { esp_vmulas_qacc_ldbc_incp(); }
+
+    # Vsmulas fused variants
+    :esp.vsmulas.s8.qacc.ld.incp   is op2531=0x18 & op1214=0x6  { esp_vsmulas_qacc_ld_incp(); }
+    :esp.vsmulas.u8.qacc.ld.incp   is op2531=0x10 & op1214=0x6  { esp_vsmulas_qacc_ld_incp(); }
+    :esp.vsmulas.s16.qacc.ld.incp  is op2531=0x38 & op1214=0x6  { esp_vsmulas_qacc_ld_incp(); }
+
+    # ST XACC with post-increment
+    :esp.st.s.xacc.ip is op2531=0x70 & op1214=0x4   { esp_st_s_xacc_ip(); }
+    :esp.st.u.xacc.ip is op2531=0x30 & op1214=0x4   { esp_st_u_xacc_ip(); }
+
+    # Unrecognised 0x5B PIE instructions fall through to the generic custom2
+    # handlers defined in esp32p4_hwlp.sinc (no duplicate catch-alls needed here).
+}
+
+
+# ============================================================
+# Opcode 0x5F  (op0204=7, op0506=2): SIMD arithmetic
+# Field layout: op2531=funct7, op1214=funct3
+#
+# From objdump of test assemblies:
+#   esp.vadd.s8   q2,q0,q1  0x06a0065f: op2531=0x03, op1214=0x0, op0711=0x06_field
+#   esp.vadd.u8               0x06a0045f: op2531=0x03, op1214=0x0 (bit 9 clear)
+#   esp.vadd.s16              0x06a4065f: op2531=0x03 (bit10 set), op1214=0x0
+#   esp.vadd.u16              0x06a4045f
+#   esp.vadd.s32              0x06a4055f: op1214=0x0
+#   esp.vadd.u32              0x06a0055f
+#   esp.vsub.s8               0x06a006df: opcode byte 0xDF → [6:0]=1011111=0x5F, bit7=1
+#   esp.vsub.s16              0x06a406df
+#   esp.vsub.s32              0x06a405df
+#
+# The arithmetic instructions share opcode 0x5F, distinguished further by funct7+funct3
+# and internal type bits.  Since the encoding is complex, we use coarser grouping
+# by op3131 (load vs store) and op2531 clusters.
+#
+# vmulas representative encodings:
+#   esp.vmulas.s8.qacc   q0,q1  0x06c5005f: op2531=0x03 (partial), variant
+#   esp.vmulas.s16.qacc         0x06c7005f
+#   esp.vmulas.u8.qacc          0x06c4005f
+#   esp.vmulas.u16.qacc         0x06c6005f
+#   esp.vmulas.s8.xacc          0x06c1005f
+#   esp.vmulas.s16.xacc         0x06c3005f
+#   esp.vmulas.u8.xacc          0x06c0005f
+#   esp.vmulas.u16.xacc         0x06c2005f
+#
+# Use a simplified grouping: identify by op1214 (funct3) + upper bit clusters.
+# ============================================================
+
+with : op0001=0x3 & op0204=0x7 & op0506=0x2 {
+
+    # --- SIMD integer add (vadd) ---
+    # All vadd: [31:28]=0000, [27:25]=110, [14:12]=0 (varies), internal type in [11:8]
+    # Simplified: match op2531=0x03 region (upper funct7 bits consistent for vadd)
+    # vadd/vsub: op0711 encodes destination Q register in a non-standard way.
+    # Only the 32/8-bit variants are enumerated here; 16-bit fall to catch-all.
+    # (op0711 is a 5-bit field, max value 31; 0x24-0x27 are out of range.)
+    :esp.vadd.u32  is op2531=0x03 & op1214=0x0 & op0711=0x00  { esp_vadd_u32(); }
+    :esp.vadd.u8   is op2531=0x03 & op1214=0x0 & op0711=0x04  { esp_vadd_u8(); }
+    :esp.vadd.s8   is op2531=0x03 & op1214=0x0 & op0711=0x06  { esp_vadd_s8(); }
+    :esp.vadd.s32  is op2531=0x03 & op1214=0x0 & op0711=0x14  { esp_vadd_s32(); }
+
+    # --- SIMD integer subtract (vsub) ---
+    :esp.vsub.u32  is op2531=0x03 & op1214=0x0 & op0711=0x01  { esp_vsub_u32(); }
+    :esp.vsub.u8   is op2531=0x03 & op1214=0x0 & op0711=0x05  { esp_vsub_u8(); }
+    :esp.vsub.s8   is op2531=0x03 & op1214=0x0 & op0711=0x07  { esp_vsub_s8(); }
+    :esp.vsub.s32  is op2531=0x03 & op1214=0x0 & op0711=0x15  { esp_vsub_s32(); }
+
+    # --- Multiply-accumulate into QACC (vmulas.*.qacc) ---
+    # From test: 0x06c5005f (s8.qacc), 0x06c7005f (s16.qacc), etc.
+    # op2531 for these: 0x06c? → [31:25] = 0000011 = 0x03 with [24:20] = 01100=12?
+    # Simplify: key is op1214=0x0 and the rd-field cluster:
+    :esp.vmulas.u8.xacc  is op2531=0x03 & op1214=0x0 & op0711=0x18  { esp_vmulas_u8_xacc(); }
+    :esp.vmulas.s8.xacc  is op2531=0x03 & op1214=0x0 & op0711=0x19  { esp_vmulas_s8_xacc(); }
+    :esp.vmulas.u16.xacc is op2531=0x03 & op1214=0x0 & op0711=0x1a  { esp_vmulas_u16_xacc(); }
+    :esp.vmulas.s16.xacc is op2531=0x03 & op1214=0x0 & op0711=0x1b  { esp_vmulas_s16_xacc(); }
+    :esp.vmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x1c  { esp_vmulas_u8_qacc(); }
+    :esp.vmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x1d  { esp_vmulas_s8_qacc(); }
+    :esp.vmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x1e  { esp_vmulas_u16_qacc(); }
+    :esp.vmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x1f  { esp_vmulas_s16_qacc(); }
+
+    # --- Scalar multiply-accumulate into QACC (vsmulas) ---
+    :esp.vsmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x0c  { esp_vsmulas_u8_qacc(); }
+    :esp.vsmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x0d  { esp_vsmulas_s8_qacc(); }
+    :esp.vsmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x0e  { esp_vsmulas_u16_qacc(); }
+    :esp.vsmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x0f  { esp_vsmulas_s16_qacc(); }
+
+    # --- XACC read-out / shift-right ---
+    :esp.srs.u.xacc is op2531=0x42 & op1214=0x7   { esp_srs_u_xacc(); }
+    :esp.srs.s.xacc is op2531=0x4a & op1214=0x7   { esp_srs_s_xacc(); }
+
+    # --- Load/store indexed Q element ---
+    :esp.ldxq.32 is op2531=0x00 & op1214=0x4 & op3131=0x0   { esp_ldxq_32(); }
+    :esp.stxq.32 is op2531=0x40 & op1214=0x4 & op3131=0x1   { esp_stxq_32(); }
+
+    # --- SIMD vector shifts (0x5F) ---
+    :esp.vsld.8  is op2531=0x00 & op1214=0x0 & op0711=0x00  { esp_vsld_8(); }
+    :esp.vsld.16 is op2531=0x00 & op1214=0x1 & op0711=0x00  { esp_vsld_16(); }
+    :esp.vsld.32 is op2531=0x00 & op1214=0x2 & op0711=0x00  { esp_vsld_32(); }
+    :esp.vsrd.8  is op2531=0x00 & op1214=0x3 & op0711=0x00  { esp_vsrd_8(); }
+    :esp.vsrd.16 is op2531=0x00 & op1214=0x4 & op0711=0x00  { esp_vsrd_16(); }
+    :esp.vsrd.32 is op2531=0x00 & op1214=0x5 & op0711=0x00  { esp_vsrd_32(); }
+
+    # --- SLC/SRC cross-pane shifts (XP variants) ---
+    :esp.slcxxp.2q is op2531=0x00 & op1214=0x0 & op0711=0x10  { esp_slci_2q(); }
+    :esp.srcxxp.2q is op2531=0x00 & op1214=0x2 & op0711=0x10  { esp_srcxxp_2q(); }
+
+    # Fused vmulas+load/store variants fall through to the catch-all below
+    # (exact op2531 discriminators not yet mapped for all combinations)
+
+    # --- Cross-multiply-accumulate (vcmulas variants, complex math) ---
+    :esp.vcmulas.s8.qacc.h  is op2531=0x14 & op1214=0x5   { esp_vcmulas_s8_qacc_h(); }
+    :esp.vcmulas.s8.qacc.l  is op2531=0x10 & op1214=0x5   { esp_vcmulas_s8_qacc_l(); }
+    :esp.vcmulas.s16.qacc.h is op2531=0x1c & op1214=0x5   { esp_vcmulas_s16_qacc_h(); }
+    :esp.vcmulas.s16.qacc.l is op2531=0x18 & op1214=0x5   { esp_vcmulas_s16_qacc_l(); }
+
+    # --- Catch-all for remaining 0x5F instructions ---
+    :esp.pie.0x5f is op1214=0x0  { esp_pie_op5f(); }
+    :esp.pie.0x5f.f5 is op1214=0x5 { esp_pie_op5f(); }
+    :esp.pie.0x5f.f6 is op1214=0x6 { esp_pie_op5f(); }
+    :esp.pie.0x5f.f7 is op1214=0x7 { esp_pie_op5f(); }
+}
+
+
+# ============================================================
+# Opcode 0x7F  (op0204=7, op0506=3): XP (register-offset) load/store
+#
+# Representative encodings (test_rv_decode.cpp):
+#   esp.vld.128.xp       0x8200405f (note: test file uses 0x5F not 0x7F here)
+#   esp.vst.128.xp       0x9200405f
+#   ...
+# NOTE: The test representative for .xp ops ends in 0x5f, not 0x7f.
+# The 0x7f opcode group covers a different variant.  The .xp instructions
+# above were already covered in the 0x5F block.  This block handles true 0x7F.
+#
+# Representative (xesppie.S vcmulas with xp):
+#   esp.vcmulas.s16.qacc.h.ld.xp  0x0300207f: op2531=0x01, op1214=0
+#   esp.vcmulas.s16.qacc.l.ld.xp  0x0100207f: op2531=0x00, op1214=0
+#   esp.vcmulas.s8.qacc.h.ld.xp   0x0200207f: op2531=0x01(variant), op1214=0
+#   esp.vmulas.s8.qacc.ld.xp      0x020022ff: last byte=0xff → opcode[6:0]=0x7f?
+#
+# Similarly 0xFF last byte instructions: [6:0]=0x7F with bit7=1.
+# ============================================================
+
+with : op0001=0x3 & op0204=0x7 & op0506=0x3 {
+
+    :esp.vcmulas.s16.qacc.h.ld.xp is op2531=0x01 & op1214=0x0  { esp_vcmulas_qacc_ld_xp(); }
+    :esp.vcmulas.s16.qacc.l.ld.xp is op2531=0x00 & op1214=0x0  { esp_vcmulas_qacc_ld_xp(); }
+    :esp.vcmulas.s8.qacc.h.ld.xp  is op2531=0x01 & op1214=0x2  { esp_vcmulas_qacc_ld_xp(); }
+    :esp.vcmulas.s8.qacc.l.ld.xp  is op2531=0x00 & op1214=0x2  { esp_vcmulas_qacc_ld_xp(); }
+
+    :esp.vmulas.s8.qacc.ld.xp   is op2531=0x00 & op1214=0x1 & op0711=0x01  { esp_vmulas_qacc_ld_xp(); }
+    :esp.vmulas.s16.qacc.ld.xp  is op2531=0x00 & op1214=0x1 & op0711=0x04  { esp_vmulas_qacc_ld_xp(); }
+    :esp.vmulas.u8.qacc.ld.xp   is op2531=0x00 & op1214=0x1 & op0711=0x00  { esp_vmulas_qacc_ld_xp(); }
+    :esp.vmulas.u16.qacc.ld.xp  is op2531=0x00 & op1214=0x1 & op0711=0x02  { esp_vmulas_qacc_ld_xp(); }
+
+    :esp.vmulas.s8.xacc.ld.xp   is op2531=0x00 & op1214=0x3 & op0711=0x00  { esp_vmulas_qacc_ld_xp(); }
+    :esp.vmulas.s16.xacc.ld.xp  is op2531=0x00 & op1214=0x3 & op0711=0x04  { esp_vmulas_qacc_ld_xp(); }
+
+    :esp.vmulas.s8.qacc.st.xp   is op2531=0x00 & op1214=0x5 & op0711=0x01  { esp_vmulas_qacc_st_ip(); }
+    :esp.vmulas.s16.qacc.st.xp  is op2531=0x00 & op1214=0x5 & op0711=0x04  { esp_vmulas_qacc_st_ip(); }
+
+    # Catch-all for remaining 0x7F instructions
+    :esp.pie.0x7f is op1214=0x0  { esp_pie_op7f(); }
+    :esp.pie.0x7f.f1 is op1214=0x1 { esp_pie_op7f(); }
+    :esp.pie.0x7f.f2 is op1214=0x2 { esp_pie_op7f(); }
+    :esp.pie.0x7f.f3 is op1214=0x3 { esp_pie_op7f(); }
+    :esp.pie.0x7f.f5 is op1214=0x5 { esp_pie_op7f(); }
+    :esp.pie.0x7f.f6 is op1214=0x6 { esp_pie_op7f(); }
+    :esp.pie.0x7f.f7 is op1214=0x7 { esp_pie_op7f(); }
+}
