@@ -1990,6 +1990,65 @@ public class DetectSemanticPatterns extends GhidraScript {
             "lcs.*integer.*arrays.*uncrossed.*lines.*dp",
             "uncrossed_lines|lcs_int|int_lcs"
         ),
+        /* Sprint 110 — Dinic's max flow */
+        new PatternDef("dinic_bfs_level", "dinic_bfs_level_graph", "high",
+            "mf_level.*v.*=.*mf_level.*u.*\\+.*1|level.*v.*=.*level.*u.*\\+.*1.*cap.*>.*0",
+            "q.*back\\+\\+.*=.*s.*while.*front.*<.*back.*u.*=.*q.*front\\+\\+",
+            "dinic|max_flow|level_graph|mf_level"
+        ),
+        new PatternDef("dinic_dfs_iter", "dinic_dfs_blocking_flow", "high",
+            "mf_iter.*u.*=.*mf_nxt.*i|iter.*u.*=.*nxt.*i.*dead.*end.*advance",
+            "mf_cap.*i.*\\^.*1.*\\+=.*f|cap.*i.*\\^.*1.*\\+=.*f.*reverse.*edge",
+            "dinic_dfs|blocking_flow|iter_advance"
+        ),
+        new PatternDef("dinic_main_loop", "dinic_outer_bfs_dfs_cycle", "medium",
+            "while.*mf_bfs.*s.*t|while.*bfs.*s.*t.*level.*graph",
+            "for.*i.*=.*0.*MF_NODES.*mf_iter.*i.*=.*mf_head.*i|iter.*=.*head.*reset",
+            "dinic_outer|max_flow_loop|bfs_dfs_cycle"
+        ),
+        /* Sprint 110 — Line segment intersection */
+        new PatternDef("cross2d_product", "cross_product_2d_wedge", "high",
+            "ax.*\\*.*by.*-.*ay.*\\*.*bx|cross2d.*=.*ax.*by.*-.*ay.*bx",
+            "d1.*=.*cross2d|d1.*=.*cross.*bx.*-.*ax.*by.*-.*ay",
+            "cross2d|wedge_product|line_cross"
+        ),
+        new PatternDef("seg_intersect_proper", "segment_proper_intersection", "high",
+            "sign_of.*d1.*!=.*sign_of.*d2.*&&.*d1.*!=.*0.*&&.*d2.*!=.*0",
+            "d3.*=.*cross2d.*d4.*=.*cross2d.*sign.*d3.*!=.*sign.*d4",
+            "seg_intersect|proper_cross|line_segment_test"
+        ),
+        new PatternDef("seg_sign_check", "segment_orientation_signs", "medium",
+            "sign_of.*x.*=.*x.*>.*0.*-.*x.*<.*0|signum.*ax.*by.*ay.*bx",
+            "d1.*d2.*d3.*d4.*cross.*orientation.*CCW|segment_orientation",
+            "sign_of|orientation|ccw_cw"
+        ),
+        /* Sprint 110 — Modular multiplicative inverse (more specific) */
+        new PatternDef("mod_inv_normalize", "modular_inverse_normalization", "high",
+            "x.*%.*m.*\\+.*m.*%.*m|norm.*=.*x.*%.*m.*\\+.*m.*%.*m",
+            "if.*g.*!=.*1.*return.*-1|return.*-1.*not.*coprime.*inverse.*absent",
+            "mod_inv|modinv|modular_inverse"
+        ),
+        new PatternDef("mod_inv_ext_gcd_call", "modinv_via_extgcd_bezout", "medium",
+            "mi_ext_gcd.*a.*m.*&.*x.*&.*y|ext_gcd.*a.*m.*x.*y.*modinv",
+            "g.*=.*mi_ext_gcd|g.*=.*ext_gcd.*m.*x.*y.*g.*!=.*1",
+            "mi_ext_gcd|modinv_gcd|ext_gcd_inv"
+        ),
+        /* Sprint 110 — Treap (randomised BST with heap priority) */
+        new PatternDef("treap_rotate_right", "treap_right_rotation", "high",
+            "temp.*=.*root.*left.*root.*left.*=.*temp.*right.*temp.*right.*=.*root",
+            "right_rotate.*treap|rotate_right.*bst.*priority|temp.*=.*node.*left",
+            "treap_rrot|right_rotate|rotate_right"
+        ),
+        new PatternDef("treap_rotate_left", "treap_left_rotation", "high",
+            "temp.*=.*root.*right.*root.*right.*=.*temp.*left.*temp.*left.*=.*root",
+            "left_rotate.*treap|rotate_left.*bst.*priority|temp.*=.*node.*right",
+            "treap_lrot|left_rotate|rotate_left"
+        ),
+        new PatternDef("treap_insert_priority", "treap_insert_heap_rebalance", "high",
+            "if.*key.*<.*root.*key.*root.*left.*=.*insert|if.*key.*>.*root.*key.*root.*right.*=.*insert",
+            "if.*root.*left.*&&.*root.*left.*priority.*>.*root.*priority.*right_rotate",
+            "treap_insert|treap_priority|bst_heap_insert"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
