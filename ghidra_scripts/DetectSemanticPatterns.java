@@ -590,6 +590,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "--cs_count.*arr|--count\\[arr\\[i\\]\\]",         // pre-decrement index
             "cs_out.*--.*count|out.*--.*count.*arr"            // stable output write
         ),
+
+        // ── Floyd-Warshall all-pairs SP (87, 88) ─────────────────────────────
+        new PatternDef("floyd_warshall_k", "fw_intermediate", "high",
+            "for.*k.*<.*FW_N|for.*k.*=.*0.*k.*<.*n",          // k outer loop (intermediate)
+            "fw_d.*i.*k.*fw_d.*k.*j|d\\[i\\]\\[k\\].*d\\[k\\]\\[j\\]", // 2D access pattern
+            "floyd_warshall|fw_d|all_pairs"                   // naming
+        ),
+        new PatternDef("floyd_warshall_relax", "fw_relax", "high",
+            "via_k.*=.*fw_d.*i.*k.*\\+|via.*=.*d.*\\+.*d",    // via_k intermediate sum
+            "if.*via_k.*<.*fw_d|if.*d.*i.*j.*k.*<.*d",        // relaxation condition
+            "FW_INF|fw_init|fw_n"                             // INF constant / naming
+        ),
+
+        // ── Bitset word operations (89, 90) ──────────────────────────────────
+        new PatternDef("bitset_set_bit", "bitset_membership", "high",
+            "\\*bs.*\\|=.*1u.*<<.*pos|bs.*|=.*1.*<<",         // set bit with shift
+            "\\(\\*bs\\).*>>.*pos.*&.*1|bs.*>>.*b.*&.*1",     // test bit with shift
+            "bs_set|bs_test|bitset"                           // function names
+        ),
+        new PatternDef("bitset_ops", "bitset_wordops", "medium",
+            "union_bs|bitset_a.*|.*bitset_b",                  // union variable
+            "isect_bs|bitset_a.*&.*bitset_b",                  // intersection variable
+            "bs_popcount|pop_union|pop_isect"                  // popcount result
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

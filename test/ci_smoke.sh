@@ -290,6 +290,21 @@ int main(void){
    for(int i=9;i>=0;i--)cso2[--cnt2[csa2[i]]]=csa2[i];
    uint32_t css2=0,csx2=0;for(int i=0;i<10;i++){css2+=(uint32_t)cso2[i];csx2^=(uint32_t)cso2[i];}
    CHECK("test_counting_sort",(10u<<16)|(css2<<8)|(csx2&0xFFu),0x000A2400u);}
+  /* test_floyd_warshall: 4 nodes, sum_off_diag=46, xor=2 */
+  {static const int fwi[4][4]={{0,3,16383,5},{2,0,16383,4},{16383,1,0,16383},{16383,16383,2,0}};
+   int fwd[4][4];for(int i=0;i<4;i++)for(int j=0;j<4;j++)fwd[i][j]=fwi[i][j];
+   for(int k=0;k<4;k++)for(int i=0;i<4;i++)for(int j=0;j<4;j++)
+     if(fwd[i][k]<16383&&fwd[k][j]<16383&&fwd[i][k]+fwd[k][j]<fwd[i][j])fwd[i][j]=fwd[i][k]+fwd[k][j];
+   uint32_t fws=0,fwx=0;for(int i=0;i<4;i++)for(int j=0;j<4;j++)if(i!=j&&fwd[i][j]<16383){fws+=(uint32_t)fwd[i][j];fwx^=(uint32_t)fwd[i][j];}
+   CHECK("test_floyd_warshall",(4u<<16)|(fws<<8)|(fwx&0xFFu),0x00042E02u);}
+  /* test_bitset: A={1,3,5,7,9,11}, B={3,5,7,11,13,17}, pop_union=8, pop_isect=4, xor_pos=30 */
+  {uint32_t bsa2=0,bsb2=0;
+   static const int aa2[]={1,3,5,7,9,11},bb2[]={3,5,7,11,13,17};
+   for(int i=0;i<6;i++){bsa2|=(1u<<aa2[i]);bsb2|=(1u<<bb2[i]);}
+   uint32_t u2=bsa2|bsb2,n2=bsa2&bsb2,pu2=u2,pi3=n2,cu2=0,ci2=0;
+   while(pu2){pu2&=pu2-1;cu2++;}while(pi3){pi3&=pi3-1;ci2++;}
+   uint32_t xu2=0;for(int b=0;b<32;b++)if((u2>>b)&1)xu2^=(uint32_t)b;
+   CHECK("test_bitset",(cu2<<16)|(ci2<<8)|(xu2&0xFFu),0x0008041Eu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
