@@ -1,0 +1,19 @@
+idf_component_register(
+    SRCS "main.c"
+    REQUIRES
+        esp_hw_support
+        esp_system
+        esp_timer
+        freertos
+        heap
+        log
+        nvs_flash
+        driver
+        console
+        vfs
+        esp_partition
+        efuse
+        spi_flash
+        esp_rom
+        mbedtls
+)
