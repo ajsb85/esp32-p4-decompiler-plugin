@@ -102,8 +102,6 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
             // Use defaults
         }
 
-        Msg.info(this, "ESP32-P4 Firmware Analyzer: started on " + program.getName()
-                + " [lang=" + program.getLanguageID().getIdAsString() + "]");
         int txId = program.startTransaction("ESP32-P4 Analysis");
         boolean success = false;
         try {
@@ -239,17 +237,13 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
 
             String mnem = instr.getMnemonicString();
             if (mnem != null && (mnem.startsWith("esp.lp.setup") || mnem.startsWith("esp.lp.setupi"))) {
-                Msg.info(this, "ESP32-P4 HWLP: found " + mnem + " at " + instr.getAddress()
-                        + " numOps=" + instr.getNumOperands()
-                        + " op0=" + instr.getDefaultOperandRepresentation(0)
-                        + " op1=" + instr.getDefaultOperandRepresentation(1)
-                        + " op2=" + instr.getDefaultOperandRepresentation(2));
                 annotateLoopSetup(program, instr, log);
                 found++;
             }
         }
-        Msg.info(this, "ESP32-P4 HWLP: scanned " + set.getNumAddressRanges()
-                + " ranges, found " + found + " hardware loop setup instructions");
+        if (found > 0) {
+            log.appendMsg("ESP32-P4 HWLP: annotated " + found + " hardware loop(s)");
+        }
     }
 
     private void annotateLoopSetup(Program program, Instruction instr, MessageLog log) {
@@ -268,8 +262,6 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
 
             // Extract lp_end address from pcode: find COPY to HWLP_END virtual register
             Address loopEnd = extractLoopEndFromPcode(program, instr, loopId);
-            Msg.info(this, "ESP32-P4 HWLP: loopStart=" + loopStart
-                    + " loopEnd=" + loopEnd + " loopId=" + loopId);
 
             // Annotate setup instruction
             String setupComment = (loopEnd != null)
@@ -287,30 +279,48 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
                 program.getSymbolTable().createLabel(loopStart, lbl, SourceType.ANALYSIS);
             } catch (Exception ignore) {}
 
-            // Add a back-edge reference loopEnd → loopStart so the CFG shows the cycle.
-            // CONDITIONAL_JUMP: the loop either falls through (count exhausted) or jumps back.
-            program.getReferenceManager().addMemoryReference(
-                loopEnd, loopStart, RefType.CONDITIONAL_JUMP, SourceType.ANALYSIS, 0);
+            // ESP32-P4 hardware loop semantics:
+            //   lp_end  = first instruction AFTER the loop body (not part of the body).
+            //   lastBody = instruction immediately before lp_end = last loop body instr.
+            //
+            // The hardware implicitly decrements HWLP_COUNT at the end of each loop
+            // body iteration and branches to HWLP_START if count > 0, else falls through
+            // to lp_end.  This is NOT modeled in the SLEIGH pcode (the CALLOTHER fixup
+            // only models the setup, not the per-iteration decrement+branch).
+            //
+            // Full decompiler loop reconstruction requires SLEIGH context-based pcode
+            // injection: a context bit set by esp.lp.setup and tested at each instruction
+            // to emit "HWLP_COUNT--; if (HWLP_COUNT != 0) goto HWLP_START;" pcode.
+            // This is the same mechanism used by Ghidra's ARC and DSP processor specs.
+            // Until that is implemented, we add a CONDITIONAL_JUMP reference (visible
+            // in the listing view) and a comment on the last loop body instruction.
+            Listing listing = program.getListing();
+            Instruction lastBodyInstr = listing.getInstructionBefore(loopEnd);
+            if (lastBodyInstr != null &&
+                    lastBodyInstr.getAddress().getOffset() >= loopStart.getOffset()) {
+                Address lastBodyAddr = lastBodyInstr.getAddress();
 
-            // Annotate the loop-end instruction and inject back-edge fall-through.
-            Instruction lpEndInstr = program.getListing().getInstructionAt(loopEnd);
-            if (lpEndInstr != null) {
                 String backEdge = String.format(
-                    "[xesploop%d] Hardware loop back-edge → %s (decrement count; jump if count≠0)",
-                    loopId, loopStart);
-                lpEndInstr.setComment(CommentType.POST, backEdge);
+                    "[xesploop%d] Hardware loop back-edge → %s" +
+                    " | hardware: HWLP%d_COUNT--; branch if ≠0, else fall-through to lp_end" +
+                    " | decompiler loop requires SLEIGH context pcode injection (future work)",
+                    loopId, loopStart, loopId);
+                lastBodyInstr.setComment(CommentType.POST, backEdge);
 
-                // Override the fall-through of the loop-end instruction to create a
-                // back-edge in the decompiler's CFG.  setFallThrough() is a method
-                // on Instruction (not Listing) — it overrides the natural fall-through
-                // so the CFG shows a back-edge, enabling the decompiler to reconstruct
-                // a loop structure (for/while) rather than a goto-tangle.
-                try {
-                    lpEndInstr.setFallThrough(loopStart);
-                } catch (Exception ex) {
-                    log.appendMsg("Could not set fall-through at " + loopEnd
-                            + " → " + loopStart + ": " + ex.getMessage());
-                }
+                // CONDITIONAL_JUMP reference is visible in the listing / xref view.
+                // It does NOT affect the decompiler's pcode-based CFG.
+                program.getReferenceManager().addMemoryReference(
+                    lastBodyAddr, loopStart, RefType.CONDITIONAL_JUMP, SourceType.ANALYSIS, 0);
+
+            }
+
+            // Annotate lp_end (loop exit point).
+            Instruction lpEndInstr = listing.getInstructionAt(loopEnd);
+            if (lpEndInstr != null) {
+                String exitComment = String.format(
+                    "[xesploop%d] Hardware loop exit — reached when HWLP%d_COUNT=0",
+                    loopId, loopId);
+                lpEndInstr.setComment(CommentType.PRE, exitComment);
             }
         } catch (Exception e) {
             log.appendMsg("Could not annotate loop at " + instr.getAddress() + ": " + e.getMessage());
