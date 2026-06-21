@@ -111,6 +111,8 @@ declare -A EXPECTED_RESULT=(
     [test_binary_search]=0x000A0104
     [test_toposort]=0x00060F01
     [test_fib_memo]=0x000A2236
+    [test_sieve]=0x000F2F1A
+    [test_edit_dist]=0x00060703
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -124,7 +126,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_quicksort test_dp test_mergesort test_union_find \
        test_bfs test_knapsack test_dfs test_kmp \
        test_dijkstra test_binary_search \
-       test_toposort test_fib_memo)
+       test_toposort test_fib_memo \
+       test_sieve test_edit_dist)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

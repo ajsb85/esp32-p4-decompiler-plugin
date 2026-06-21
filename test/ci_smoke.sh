@@ -263,6 +263,20 @@ int main(void){
   {int fc2[10];fc2[0]=0;fc2[1]=1;for(int i=2;i<10;i++)fc2[i]=fc2[i-1]+fc2[i-2];
    uint32_t fx=0;for(int i=0;i<10;i++)fx^=(uint32_t)fc2[i];
    CHECK("test_fib_memo",(10u<<16)|((uint32_t)fc2[9]<<8)|(fx&0xFFu),0x000A2236u);}
+  /* test_sieve: primes<=50, n=15, last=47, xor=26=0x1A */
+  {char sv2[51];for(int i=0;i<=50;i++)sv2[i]=1;sv2[0]=sv2[1]=0;
+   for(int i=2;i*i<=50;i++)if(sv2[i])for(int j=i*i;j<=50;j+=i)sv2[j]=0;
+   int np2=0,lp2=0;uint32_t xp2=0;
+   for(int i=2;i<=50;i++)if(sv2[i]){np2++;lp2=i;xp2^=(uint32_t)i;}
+   CHECK("test_sieve",((uint32_t)np2<<16)|((uint32_t)lp2<<8)|(xp2&0xFFu),0x000F2F1Au);}
+  /* test_edit_dist: "KITTEN" vs "SITTING", dist=3 */
+  {static const char ed1[]="KITTEN",ed2[]="SITTING";int la=6,lb=7;
+   static int dp3[7][8];
+   for(int i=0;i<=la;i++)dp3[i][0]=i;for(int j=0;j<=lb;j++)dp3[0][j]=j;
+   for(int i=1;i<=la;i++)for(int j=1;j<=lb;j++){
+     if(ed1[i-1]==ed2[j-1])dp3[i][j]=dp3[i-1][j-1];
+     else{int a=dp3[i-1][j]+1,b=dp3[i][j-1]+1,c=dp3[i-1][j-1]+1;dp3[i][j]=a<b?(a<c?a:c):(b<c?b:c);}}
+   CHECK("test_edit_dist",(6u<<16)|(7u<<8)|(uint32_t)dp3[la][lb],0x00060703u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

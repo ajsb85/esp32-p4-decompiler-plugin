@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 32 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 34 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -44,6 +44,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_binary_search.c` | Range binary search on {2,4,4,4,4,8…}; target=4, first=1, count=4 | `0x000A0104` | |
 | `test_toposort.c` | Kahn's topological sort on 6-node DAG; order=[4,5,0,2,3,1], sum=15, xor=1 | `0x00060F01` | |
 | `test_fib_memo.c` | Top-down memoized Fibonacci fib(0..9); fib(9)=34, xor_all=54 | `0x000A2236` | |
+| `test_sieve.c` | Sieve of Eratosthenes ≤50; 15 primes, last=47, xor=26 | `0x000F2F1A` | |
+| `test_edit_dist.c` | Levenshtein edit distance "KITTEN"→"SITTING" via 2D DP; dist=3 | `0x00060703` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -126,7 +128,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-77 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+81 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -165,6 +167,8 @@ Pattern families currently covered (51 patterns):
 | Binary search variants | lo/hi/mid bisection frame, leftmost/rightmost range convergence |
 | Topological sort | Kahn's in-degree decrement + BFS queue, topo order output |
 | Memoization DP | Fibonacci cache-check hit, recursive memoize-before-return |
+| Number theory | Sieve outer i*i bound + composite marking, prime scan |
+| Edit distance DP | Levenshtein 2D fill with 3-way min, character equality check |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

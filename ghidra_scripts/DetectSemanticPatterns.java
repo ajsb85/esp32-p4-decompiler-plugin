@@ -542,6 +542,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cache\\[n\\].*=.*fib|memo\\[n\\].*=",              // memoize before return
             "fib_cache\\[n\\].*=|fib_memo\\[n\\].*="           // cache write
         ),
+
+        // ── Sieve of Eratosthenes (79, 80) ───────────────────────────────────
+        new PatternDef("sieve_mark", "sieve_outer", "high",
+            "for.*i.*i.*<=.*N|i\\s*\\*\\s*i\\s*<=.*LIMIT",     // outer: i*i bound
+            "for.*j.*=.*i.*\\*.*i|j\\s*=\\s*i\\s*\\*\\s*i",    // inner: j starts at i*i
+            "sieve\\[j\\].*=.*0|is_prime\\[j\\]"               // mark composite
+        ),
+        new PatternDef("sieve_count", "sieve_prime_scan", "medium",
+            "sieve\\[0\\].*=.*0|sieve\\[1\\].*=.*0",           // exclude 0 and 1
+            "for.*i.*sieve\\[i\\]|if.*sieve\\[i\\].*prime",    // prime scan
+            "n_primes|last_prime|eratosthenes"                 // naming
+        ),
+
+        // ── Levenshtein edit distance (81, 82) ───────────────────────────────
+        new PatternDef("edit_dist_dp", "levenshtein_fill", "high",
+            "dp_ed|dp.*i-1.*j-1|edit.*dist",                   // dp table name / diagonal
+            "1.*\\+.*min3|1.*\\+.*min.*dp.*i-1|cost.*=.*1",    // substitute cost = 1+min3
+            "s1.*i-1.*==.*s2.*j-1|a\\[i-1\\].*==.*b\\[j-1\\]" // character comparison
+        ),
+        new PatternDef("edit_dist_min3", "levenshtein_3way", "medium",
+            "min3|min.*a.*b.*c|int ab.*=.*a.*<.*b",             // 3-way minimum helper
+            "dp.*i-1.*j.*dp.*i.*j-1.*dp.*i-1.*j-1",           // three dp cells in min
+            "edit_dist|levenshtein|lev_dp"                     // function/var name
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
