@@ -133,6 +133,9 @@ static void ms_merge(int *a,int lo,int mid,int hi){int i=lo,j=mid+1,k=lo;while(i
 static void ms_sort(int *a,int lo,int hi){if(lo<hi){int m=(lo+hi)/2;ms_sort(a,lo,m);ms_sort(a,m+1,hi);ms_merge(a,lo,m,hi);}}
 static int uf_find2(int *p,int x){int r=x;while(p[r]!=r)r=p[r];while(p[x]!=r){int n=p[x];p[x]=r;x=n;}return r;}
 static void uf_union2(int *p,int *rk,int a,int b){a=uf_find2(p,a);b=uf_find2(p,b);if(a==b)return;if(rk[a]<rk[b]){int t=a;a=b;b=t;}p[b]=a;if(rk[a]==rk[b])rk[a]++;}
+static const int dadj2[6][6]={{0,1,1,0,0,0},{0,0,0,1,0,0},{0,0,0,1,0,0},{0,0,0,0,1,0},{0,0,0,0,0,1},{0,0,0,0,0,0}};
+static int dvis2[6],dfin2[6],dtim2;
+static void dfsr2(int v){dvis2[v]=1;for(int u=0;u<6;u++)if(dadj2[v][u]&&!dvis2[u])dfsr2(u);dfin2[v]=++dtim2;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -219,6 +222,17 @@ int main(void){
   {static const int kw[4]={2,3,4,5},kv[4]={3,4,5,6};static int kdp[9];for(int i=0;i<9;i++)kdp[i]=0;
    for(int i=0;i<4;i++)for(int j=8;j>=kw[i];j--){int nv2=kdp[j-kw[i]]+kv[i];if(nv2>kdp[j])kdp[j]=nv2;}
    CHECK("test_knapsack",(4u<<16)|(8u<<8)|(uint32_t)kdp[8],0x0004080Au);}
+  /* test_dfs: DAG 6 nodes, DFS from 0, finish={6,4,5,3,2,1}, sum=21, xor=7 */
+  {for(int i=0;i<6;i++){dvis2[i]=0;dfin2[i]=0;}dtim2=0;dfsr2(0);
+   uint32_t sf=0,xf=0;for(int i=0;i<6;i++){sf+=(uint32_t)dfin2[i];xf^=(uint32_t)dfin2[i];}
+   CHECK("test_dfs",(6u<<16)|(sf<<8)|(xf&0xFFu),0x00061507u);}
+  /* test_kmp: text "ABABABABC" (9), pattern "ABABC" (5), match at pos 4 */
+  {static const char ktxt[]="ABABABABC",kpat[]="ABABC";
+   int kf[5]={0},kk=0;
+   for(int i=1;i<5;i++){while(kk>0&&kpat[kk]!=kpat[i])kk=kf[kk-1];if(kpat[kk]==kpat[i])kk++;kf[i]=kk;}
+   int ki=0,km=-1;kk=0;
+   while(ki<9&&km<0){while(kk>0&&ktxt[ki]!=kpat[kk])kk=kf[kk-1];if(ktxt[ki]==kpat[kk])kk++;if(kk==5){km=ki-4;kk=kf[kk-1];}ki++;}
+   CHECK("test_kmp",(9u<<16)|(5u<<8)|(uint32_t)(km>=0?km:0xFF),0x00090504u);}
   /* test_union_find: 8 nodes, 7 unions, sum_rank=7, xor_roots=0 */
   {int ufp[8],ufrk[8];for(int i=0;i<8;i++){ufp[i]=i;ufrk[i]=0;}
    static const int uops[7][2]={{0,1},{2,3},{4,5},{6,7},{1,2},{5,6},{3,4}};

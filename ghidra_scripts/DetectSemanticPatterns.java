@@ -470,6 +470,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dp\\[j.*-.*w\\[i\\]\\].*\\+.*v\\[i\\]",          // dp[j-w[i]] + v[i]
             "if.*with_item.*>.*dp|dp\\[j\\].*=.*with_item"    // value update condition
         ),
+
+        // ── DFS (67, 68) ──────────────────────────────────────────────────────
+        new PatternDef("dfs_recursive", "dfs_visit", "high",
+            "dfs_visited|visited\\[v\\].*=.*1",                // visited-mark write
+            "for.*u.*<.*N|for.*u.*adj|for.*neighbor",          // neighbor iteration loop
+            "if.*adj.*&&.*!.*visited|if.*edge.*!.*vis"        // unvisited neighbor check
+        ),
+        new PatternDef("dfs_finish_time", "dfs_postorder", "medium",
+            "dfs_finish|finish_time|finish\\[v\\]",            // finish-time array
+            "\\+\\+.*timer|timer\\+\\+|post.*order",           // incrementing timer
+            "dfs_finish\\[v\\].*=|f\\[v\\].*=.*\\+\\+t"       // post-order assignment
+        ),
+
+        // ── KMP string search (69, 70) ────────────────────────────────────────
+        new PatternDef("kmp_failure", "kmp_prefix", "high",
+            "fail\\[k.*-.*1\\]|failure.*k.*-.*1",              // failure function backtrack
+            "fail\\[i\\]\\s*=\\s*k|kf\\[i\\].*=",             // failure table assignment
+            "kmp_failure|build_fail|prefix_func"              // function name
+        ),
+        new PatternDef("kmp_match", "kmp_search", "high",
+            "k\\s*=\\s*fail\\[k.*-.*1\\]|k=kf\\[k-1\\]",     // KMP mismatch backtrack
+            "if.*k\\s*==\\s*m|if.*kk\\s*==.*pat_len",         // full-match detection
+            "kmp_search|kmp_find|pattern_search"              // search function name
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

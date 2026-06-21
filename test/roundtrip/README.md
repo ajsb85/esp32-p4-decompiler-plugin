@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 26 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 28 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -38,6 +38,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_union_find.c` | Union-Find with path compression + union by rank; 8 nodes, 7 unions | `0x00080700` | |
 | `test_bfs.c` | BFS on 7-node tree graph; shortest-path distances from source 0 | `0x00070B01` | |
 | `test_knapsack.c` | 0/1 Knapsack 1D DP with reverse iteration; 4 items, W=8, optimal=10 | `0x0004080A` | |
+| `test_dfs.c` | Recursive DFS on 6-node DAG; finish times: {6,4,5,3,2,1}, sum=21, xor=7 | `0x00061507` | |
+| `test_kmp.c` | KMP pattern matching: "ABABABABC" / "ABABC", match at pos 4 | `0x00090504` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -120,7 +122,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-65 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+69 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -153,7 +155,8 @@ Pattern families currently covered (51 patterns):
 | Codecs | RLE encode/decode run scanning, Base64 6-bit extraction + table |
 | Divide & conquer | Quicksort Lomuto partition + recursive sub-range split, merge sort two-pointer merge + mid-split |
 | Dynamic programming | 2D DP table fill, LCS diagonal/max pattern |
-| Graph algorithms | Union-Find path compression, union by rank, BFS queue + distance relaxation |
+| Graph algorithms | Union-Find path compression, union by rank, BFS queue + distance relaxation, DFS visited-mark + finish-time |
+| String algorithms | KMP failure function backtrack, KMP full-match detection |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---
