@@ -1001,6 +1001,25 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*mi.*==.*size.*-.*1.*continue",              // skip-if-in-place guard
             "pancake_sort|mi.*size|ps_arr"                   // naming
         ),
+
+        // ── Sprint 52: Comb Sort ─────────────────────────────────────────────
+        new PatternDef("comb_sort_gap", "comb_sort", "high",
+            "gap.*=.*gap.*\\*.*10.*\\/.*13|gap.*=.*gap.*10.*13", // 1.3 shrink in integer arithmetic
+            "while.*gap.*>.*1.*||.*!.*sorted|gap.*>.*1.*sorted", // outer while with both conditions
+            "comb_sort|comb_arr|comb_gap"                    // naming
+        ),
+
+        // ── Sprint 52: Cycle Sort ────────────────────────────────────────────
+        new PatternDef("cycle_sort_position", "cycle_sort", "high",
+            "pos.*=.*cs.*for.*i.*=.*cs.*\\+.*1.*arr.*i.*<.*item.*pos\\+\\+", // position count
+            "while.*pos.*!=.*cs.*pos.*=.*cs.*for.*i.*=.*cs.*\\+.*1", // nested cycle rotation
+            "cycle_sort|writes|cycleStart|cs.*pos"           // naming
+        ),
+        new PatternDef("cycle_skip_duplicates", "cycle_skip_dup", "medium",
+            "while.*item.*==.*arr.*pos.*pos\\+\\+",          // skip-duplicates guard
+            "arr.*pos.*=.*item.*writes\\+\\+|tmp.*arr.*pos.*arr.*pos.*=.*item", // write + count
+            "cycle_sort|writes|cs.*dup"                      // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 74 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 76 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -86,6 +86,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_n_queens.c` | N-Queens backtrack; N=4:2,N=5:10,N=6:4; sum=16 xor=12 | `0x0006100C` | |
 | `test_rabin_karp.c` | Rabin-Karp rolling hash; "aaabaabaab" pat="aab" BASE=26 MOD=101; matches 1,4,7; count=3 xor=2 | `0x000A0302` | |
 | `test_pancake_sort.c` | Pancake sort; {3,6,1,5,2,4} n=6; sorted last=6 xor=7 | `0x00060607` | |
+| `test_comb_sort.c` | Comb sort gap*10/13; {5,2,8,1,9,3,6} n=7; sorted last=9 xor=2 | `0x00070902` | |
+| `test_cycle_sort.c` | Cycle sort min-writes; {3,1,5,4,2} n=5; writes=4 xor=1 | `0x00050401` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -168,7 +170,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-154 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+158 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -249,6 +251,8 @@ Pattern families currently covered (51 patterns):
 | N-Queens backtracking | three-array col/diag1/diag2; anti-diag index row-c+n-1; triple set/unset |
 | Rabin-Karp rolling hash | h_pow=BASE^(m-1)%MOD; rolling: remove-leading-and-slide; char verify on collision |
 | Pancake sort | find-max in [0..size); double flip; skip-if-in-place guard |
+| Comb sort | gap=gap*10/13 shrink; while(gap>1 || !sorted) outer condition |
+| Cycle sort | position count loop; nested cycle rotation; explicit writes counter; skip-duplicates guard |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

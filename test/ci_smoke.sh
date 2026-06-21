@@ -539,6 +539,18 @@ int main(void){
      {int lo=0,hi=sz-1;while(lo<hi){int t=ps[lo];ps[lo++]=ps[hi];ps[hi--]=t;}}}
    uint32_t psx=0;for(int i=0;i<pn;i++)psx^=(uint32_t)ps[i];
    CHECK("test_pancake_sort",((uint32_t)pn<<16)|((uint32_t)ps[pn-1]<<8)|(psx&0xFFu),0x00060607u);}
+  /* test_comb_sort: {5,2,8,1,9,3,6} n=7; gap*10/13; sorted last=9 xor=2 */
+  {int cb[]={5,2,8,1,9,3,6},cbn=7,cbg=7,cbs=0;
+   while(cbg>1||!cbs){cbg=cbg*10/13;if(cbg<1)cbg=1;cbs=1;for(int i=0;i+cbg<cbn;i++)if(cb[i]>cb[i+cbg]){int t=cb[i];cb[i]=cb[i+cbg];cb[i+cbg]=t;cbs=0;}}
+   uint32_t cbx=0;for(int i=0;i<cbn;i++)cbx^=(uint32_t)cb[i];
+   CHECK("test_comb_sort",((uint32_t)cbn<<16)|((uint32_t)cb[cbn-1]<<8)|(cbx&0xFFu),0x00070902u);}
+  /* test_cycle_sort: {3,1,5,4,2} n=5; writes=4 xor_sorted=1 */
+  {int cy[]={3,1,5,4,2},cyn=5,cyw=0;
+   for(int cs=0;cs<cyn-1;cs++){int item=cy[cs],pos=cs;for(int i=cs+1;i<cyn;i++)if(cy[i]<item)pos++;
+     if(pos==cs)continue;while(item==cy[pos])pos++;int t=cy[pos];cy[pos]=item;item=t;cyw++;
+     while(pos!=cs){pos=cs;for(int i=cs+1;i<cyn;i++)if(cy[i]<item)pos++;while(item==cy[pos])pos++;t=cy[pos];cy[pos]=item;item=t;cyw++;}}
+   uint32_t cyx=0;for(int i=0;i<cyn;i++)cyx^=(uint32_t)cy[i];
+   CHECK("test_cycle_sort",((uint32_t)cyn<<16)|((uint32_t)cyw<<8)|(cyx&0xFFu),0x00050401u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

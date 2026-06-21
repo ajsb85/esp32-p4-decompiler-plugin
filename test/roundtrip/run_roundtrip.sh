@@ -153,6 +153,8 @@ declare -A EXPECTED_RESULT=(
     [test_n_queens]=0x0006100C
     [test_rabin_karp]=0x000A0302
     [test_pancake_sort]=0x00060607
+    [test_comb_sort]=0x00070902
+    [test_cycle_sort]=0x00050401
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -187,7 +189,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_jump_search test_lc_substring \
        test_catalan test_shell_sort \
        test_interpolation_search test_n_queens \
-       test_rabin_karp test_pancake_sort)
+       test_rabin_karp test_pancake_sort \
+       test_comb_sort test_cycle_sort)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
