@@ -4055,6 +4055,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "mc_cap.*e.*-=.*d.*mc_cap.*e.*\\^.*1.*\\+=.*d|residual_cap_update",
             "mc_maxflow|mc_dfs|mc_iter|pos_sum.*-.*mc_maxflow.*s.*t"
         ),
+        new PatternDef("eph_hierholzer_stack", "euler_path_hierholzer_stack_dfs", "high",
+            "eph_stk.*eph_stk_top.*eph_hierholzer|hierholzer_iterative_stack",
+            "eph_used.*e.*=.*1.*eph_used.*e.*\\^.*1.*=.*1|euler_edge_used_reverse",
+            "eph_path.*eph_path_len.*eph_stk.*--eph_stk_top|euler_path_append"
+        ),
+        new PatternDef("eph_adj_list_init", "euler_path_adjacency_list_init", "high",
+            "eph_head.*=.*-1.*eph_enum.*=.*0|euler_adj_list_reset",
+            "eph_to.*eph_used.*eph_next.*eph_head|euler_edge_struct_fields",
+            "eph_add_edge.*eph_to.*eph_enum.*=.*v.*eph_used.*eph_enum.*=.*0|euler_add_half_edge"
+        ),
+        new PatternDef("eph_circuit_verify", "euler_path_circuit_all_edges_used", "medium",
+            "eph_all_used|euler_path_completeness_check",
+            "eph_used.*i.*!eph_used|euler_unused_edge_check",
+            "eph_path_len.*eph_hierholzer.*eph_all_used|euler_path_length_verify"
+        ),
+        new PatternDef("nfs_scaling_phase", "network_flow_scaling_delta_phase", "high",
+            "delta.*=.*1.*while.*delta.*<=.*max_cap.*delta.*<<=.*1.*delta.*>>=.*1|capacity_scaling_delta_init",
+            "nfs_max_flow.*delta.*>>=.*1.*while.*delta.*>=.*1|scaling_phase_halve_delta",
+            "nfs_dfs.*s.*t.*NFS_INF.*delta.*nfs_iter.*nfs_visited|scaling_augment_dfs"
+        ),
+        new PatternDef("nfs_residual_update", "network_flow_scaling_residual_cap_update", "high",
+            "nfs_cap.*e.*-=.*d.*nfs_cap.*e.*\\^.*1.*\\+=.*d|scaling_residual_cap_pair",
+            "nfs_to.*nfs_cap.*nfs_nxt.*nfs_head.*nfs_iter|scaling_flow_edge_fields",
+            "nfs_add_edge.*nfs_cap.*=.*cap.*nfs_cap.*=.*0|scaling_forward_reverse_edge"
+        ),
+        new PatternDef("nfs_dfs_threshold", "network_flow_scaling_dfs_delta_threshold", "medium",
+            "nfs_cap.*e.*<.*delta.*continue|scaling_dfs_skip_below_delta",
+            "nfs_visited.*nfs_dfs.*u.*t.*pushed.*<.*nfs_cap|scaling_dfs_pushed_min",
+            "nfs_iter.*v.*!=.*-1.*nfs_iter.*v.*=.*nfs_nxt.*nfs_iter.*v|scaling_current_arc"
+        ),
+        new PatternDef("mvc_augment_dfs", "min_vertex_cover_augmenting_path_dfs", "high",
+            "mvc_dfs.*mvc_ml.*u.*=.*v.*mvc_mr.*v.*=.*u|konig_matching_augment",
+            "mvc_visited.*v.*=.*1.*mvc_mr.*v.*==.*-1.*mvc_dfs.*mvc_mr.*v|mvc_alternating_path",
+            "mvc_max_matching.*mvc_dfs|konig_bipartite_max_matching"
+        ),
+        new PatternDef("mvc_konig_reachability", "min_vertex_cover_konig_alternating_reach", "high",
+            "mvc_reach_l.*mvc_reach_r.*mvc_ml.*u.*==.*-1|konig_unmatched_left_seed",
+            "mvc_reach_r.*v.*=.*1.*qr.*qr_t.*mvc_reach_l.*u.*=.*1.*ql.*ql_t|konig_alternating_bfs",
+            "mvc_ml.*u.*!=.*v.*mvc_reach_r.*v.*=.*1|konig_unmatched_edge_reachable"
+        ),
+        new PatternDef("mvc_cover_construct", "min_vertex_cover_konig_cover_set", "medium",
+            "!mvc_reach_l.*u.*mvc_ml.*u.*!=.*-1.*cover\\+\\+|konig_left_not_reachable_in_cover",
+            "mvc_reach_r.*v.*cover\\+\\+|konig_right_reachable_in_cover",
+            "mvc_vertex_cover.*mvc_max_matching.*mvc_reach_l.*mvc_reach_r|konig_theorem_cover"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
