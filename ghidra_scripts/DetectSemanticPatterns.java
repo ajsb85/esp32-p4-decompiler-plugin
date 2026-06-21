@@ -2100,6 +2100,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "else.*mu.*x.*=.*-mu.*i.*distinct.prime|mobius_parity_flip",
             "mu_negate|mobius_alternating|distinct_prime_mu"
         ),
+
+        // ── Shoelace (polygon area) ─────────────────────────────────────────
+        new PatternDef("shoelace_cross_sum", "shoelace_polygon_area_formula", "high",
+            "sum.*\\+=.*vx.*j.*\\*.*vy.*i.*-.*vx.*i.*\\*.*vy.*j|cross.*acc.*x.*y.*polygon",
+            "sl_vx.*j.*sl_vy.*i.*sl_vx.*i.*sl_vy.*j|shoelace.*2.*area",
+            "shoelace|polygon_area|gauss_area"
+        ),
+        new PatternDef("shoelace_abs_half", "shoelace_abs_and_half_area", "medium",
+            "return.*sum.*<.*0.*?.*-sum.*:.*sum|abs.*two_area.*>>.*1",
+            "two_area.*>>.*1.*area|shoelace.*area.*half",
+            "shoelace_abs|area_positive|two_area_halve"
+        ),
+        new PatternDef("shoelace_vertex_pair", "shoelace_consecutive_vertex_pair", "medium",
+            "for.*i.*=.*0.*j.*=.*SL_N.*-.*1|for.*i.*j.*n.*-.*1.*j.*=.*i\\+\\+.*polygon",
+            "sl_vx.*sl_vy.*consecutive.*j.*=.*i|vertex.*pair.*cross.*accumulate",
+            "shoelace_pair|polygon_vertex_loop|gauss_pair"
+        ),
+
+        // ── Segment tree with lazy propagation ─────────────────────────────
+        new PatternDef("lazy_segtree_pushdown", "lazy_segtree_push_down_propagate", "high",
+            "if.*!.*lazy.*node.*return|lst_lazy.*node.*==.*0.*return.*push",
+            "tree.*lc.*\\+=.*lazy.*node.*\\*.*mid.*-.*l.*\\+.*1|lazy_propagate_child",
+            "lazy_push_down|segtree_lazy|defer_propagate"
+        ),
+        new PatternDef("lazy_segtree_bulk_update", "lazy_segtree_range_add_bulk", "high",
+            "tree.*node.*\\+=.*val.*\\*.*r.*-.*l.*\\+.*1|bulk.*update.*lazy.*\\+=.*val",
+            "lst_update.*ql.*<=.*l.*&&.*r.*<=.*qr.*tree.*node.*\\+=.*val|range_add_lazy",
+            "lazy_bulk_add|segtree_range_add|lst_update"
+        ),
+        new PatternDef("lazy_segtree_merge", "lazy_segtree_child_merge_after_update", "medium",
+            "tree.*node.*=.*tree.*2.*node.*\\+.*tree.*2.*node.*\\+.*1|segtree.*merge.*after.*update",
+            "lst_tree.*2.*node.*\\+.*lst_tree.*2.*node.*\\+.*1|child.sum.merge",
+            "segtree_merge|tree_sum_children|lst_merge"
+        ),
+
+        // ── Aho-Corasick multi-pattern search ───────────────────────────────
+        new PatternDef("ac_trie_insert", "aho_corasick_trie_insert", "high",
+            "ac_goto.*cur.*c.*==.*-1.*ac_new_node|goto.*\\[cur\\]\\[c\\].*=.*new_node",
+            "for.*pat.*i.*c.*=.*pat.*i.*-.*a.*goto.*cur.*c.*ac_insert",
+            "ac_insert|trie_insert|aho_corasick_build"
+        ),
+        new PatternDef("ac_fail_link_bfs", "aho_corasick_failure_link_bfs", "high",
+            "fail.*v.*=.*ac_goto.*fail.*u.*c|ac_fail.*v.*=.*goto.*fail.*u.*c",
+            "output.*v.*\\|=.*output.*fail.*v|ac_output.*merge.*fail.link",
+            "ac_fail|failure_link|ac_bfs_build"
+        ),
+        new PatternDef("ac_goto_complete", "aho_corasick_goto_completion", "medium",
+            "ac_goto.*u.*c.*=.*ac_goto.*fail.*u.*c|goto.*u.*c.*=.*goto.*fail.*u.*c.*missing",
+            "if.*v.*==.*-1.*goto.*u.*c.*=.*goto.*fail|ac_redirect_missing",
+            "ac_goto_fill|ac_goto_complete|aho_corasick_search"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
