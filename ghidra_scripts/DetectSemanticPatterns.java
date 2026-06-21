@@ -5694,6 +5694,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x0A021F|count.*2.*sum_mod.*31|fib_sq_result",
             "n_tests.*10.*count.*2|squares_fibonacci.*0x0A.*0x02.*0x1F"
         ),
+        new PatternDef("binary_carry_sequence_core", "binary_carry_seq", "high",
+            "trailing_ones|trailing.*1.*bits|carries.*add.*1.*binary",
+            "while.*v.*&.*1.*cnt\\+\\+.*v.*>>=|trailing_1_count",
+            "bcs_sum|bcs_xor|binary_carry.*accumulate"
+        ),
+        new PatternDef("binary_carry_sequence_range", "binary_carry_range", "high",
+            "BCS_N.*12|n.*1.*BCS_N|carry_seq_loop",
+            "bcs_sum.*10|bcs_xor.*2|binary_carry.*0x0C0A02",
+            "i.*1.*BCS_N.*trailing_ones|carry_seq_sum_xor"
+        ),
+        new PatternDef("binary_carry_sequence_pack", "binary_carry_pack", "medium",
+            "BCS_N\\s*<<\\s*16.*bcs_sum.*<<.*8.*bcs_xor|carry_pack",
+            "0x0C0A02|BCS_N.*12.*sum.*10.*xor.*2|binary_carry_result",
+            "g_result.*0x0C.*0x0A.*0x02|bcs_g_result"
+        ),
+        new PatternDef("primes_arith_prog_core", "primes_arith_prog", "high",
+            "AP_FIRST.*AP_STEP|ap_first.*ap_step|arithmetic_progression_prime",
+            "val.*AP_FIRST.*i.*AP_STEP|val.*5.*i.*6|ap_generate",
+            "is_prime_trial|trial_div.*ap|prime_ap_filter"
+        ),
+        new PatternDef("primes_arith_prog_dirichlet", "primes_ap_dirichlet", "high",
+            "count_p.*xor_p|prime_count.*xor_accumulate|ap_prime_accum",
+            "xor_p\\s*\\^=.*val|count_p\\+\\+.*xor_p.*val|ap_prime_xor",
+            "count_p.*7|xor_p.*27|xor_p.*0x1B|prime_ap_result"
+        ),
+        new PatternDef("primes_arith_prog_pack", "primes_ap_pack", "medium",
+            "AP_N\\s*<<\\s*16.*count_p.*<<.*8.*xor_p|ap_prime_pack",
+            "0x08071B|AP_N.*8.*count_p.*7.*xor_p.*27|ap_pack_result",
+            "g_result.*0x08.*0x07.*0x1B|ap_g_result"
+        ),
+        new PatternDef("waring_problem_dp", "waring_squares_dp", "high",
+            "wp_dp|waring_dp|min_squares_dp|lagrange_four_square",
+            "wp_dp\\[n\\].*=.*n|dp\\[n\\].*n.*worst.*case|waring_init_sentinel",
+            "k.*k.*<=.*n.*wp_dp.*n.*k.*k|inner.*loop.*squares.*dp"
+        ),
+        new PatternDef("waring_problem_sum_max", "waring_sum_max", "high",
+            "dp_sum|dp_max|waring_sum.*max|min_sq_sum",
+            "dp_sum.*\\+=.*wp_dp|dp_max.*wp_dp|waring_accumulate",
+            "dp_sum.*21|dp_max.*4|waring.*0x0A1504"
+        ),
+        new PatternDef("waring_problem_pack", "waring_pack", "medium",
+            "WP_N\\s*<<\\s*16.*dp_sum.*<<.*8.*dp_max|waring_pack",
+            "0x0A1504|WP_N.*10.*dp_sum.*21.*dp_max.*4|waring_result",
+            "g_result.*0x0A.*0x15.*0x04|wp_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
