@@ -4190,6 +4190,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "expected.*1.*1.*2.*5.*14.*42.*132|catalan_known_sequence_check",
             "catalan\\[5\\].*\\+.*catalan\\[6\\].*\\+.*catalan\\[7\\]|catalan_sum_verification"
         ),
+        new PatternDef("prim_root_factor", "primitive_root_factorize_pm1", "high",
+            "while.*rem.*%.*f.*==.*0.*rem.*\\/=.*f|primitive_root_trial_division_pm1",
+            "factors\\[nf\\+\\+\\].*=.*f|primitive_root_prime_factor_collect",
+            "for.*f.*\\*.*f.*<=.*rem.*f\\+\\+|primitive_root_factor_loop_bound"
+        ),
+        new PatternDef("prim_root_check", "primitive_root_order_check", "high",
+            "pr_pow.*g.*pm1.*\\/.*factors.*i.*p.*==.*1|primitive_root_order_test_fermat",
+            "for.*g.*=.*2.*g.*<.*p.*g\\+\\+|primitive_root_candidate_scan",
+            "ok.*=.*0.*break|primitive_root_refutation_break"
+        ),
+        new PatternDef("prim_root_verify", "primitive_root_result_xor", "medium",
+            "xor_roots.*\\^=.*r|primitive_root_xor_accumulate",
+            "primitive_root.*pr_primes.*i|primitive_root_test_prime_array",
+            "sum_roots.*\\+=.*r|primitive_root_sum_accumulate"
+        ),
+        new PatternDef("poly_interp_num", "polynomial_interpolation_numerator", "high",
+            "num.*=.*num.*\\*.*q.*\\+.*p.*-.*xs.*j.*%.*p.*%.*p|lagrange_numerator_product",
+            "for.*j.*=.*0.*j.*<.*n.*j\\+\\+.*if.*j.*==.*i.*continue|lagrange_skip_self_index",
+            "num.*=.*1.*den.*=.*1|lagrange_init_num_den_per_term"
+        ),
+        new PatternDef("poly_interp_inv", "polynomial_interpolation_fermat_inverse", "high",
+            "interp_pow.*den.*p.*-.*2.*p|lagrange_fermat_inverse_denominator",
+            "den.*=.*den.*\\*.*xs.*i.*\\+.*p.*-.*xs.*j.*%.*p.*%.*p|lagrange_denominator_product",
+            "result.*=.*result.*\\+.*ys.*i.*\\*.*num.*%.*p.*\\*.*inv_den.*%.*p|lagrange_accumulate_term"
+        ),
+        new PatternDef("poly_interp_query", "polynomial_interpolation_multiquery", "medium",
+            "lagrange_eval.*xs.*ys.*3.*5.*INTERP_MOD|polynomial_interpolation_query_at_5",
+            "lagrange_eval.*xs.*ys.*3.*7.*INTERP_MOD|polynomial_interpolation_query_at_7",
+            "n_queries.*<<.*16.*r5.*&.*0xFF.*<<.*8.*r7|polynomial_interpolation_result_pack"
+        ),
+        new PatternDef("stl_swap_merge", "small_to_large_size_swap", "high",
+            "if.*stl_sz.*rx.*<.*stl_sz.*ry|small_to_large_size_guard_swap",
+            "stl_sz.*rx.*\\+=.*stl_sz.*ry|small_to_large_size_accumulate",
+            "stl_par.*ry.*=.*rx|small_to_large_parent_redirect"
+        ),
+        new PatternDef("stl_rehash", "small_to_large_element_rehash", "high",
+            "for.*i.*=.*0.*i.*<.*stl_nelem.*b.*i\\+\\+|small_to_large_iterate_smaller_set",
+            "stl_freq.*a.*elem.*\\+=.*stl_freq.*b.*elem|small_to_large_frequency_merge",
+            "stl_elems.*a.*stl_nelem.*a\\+\\+.*=.*elem|small_to_large_elem_list_append"
+        ),
+        new PatternDef("stl_path_compress", "small_to_large_path_compression", "medium",
+            "stl_par.*x.*=.*stl_par.*stl_par.*x|small_to_large_path_halving",
+            "while.*stl_par.*x.*!=.*x.*x.*=.*stl_par.*x|small_to_large_find_loop",
+            "stl_freq.*rx.*e.*>.*stl_max_freq.*stl_max_freq|small_to_large_max_freq_update"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
