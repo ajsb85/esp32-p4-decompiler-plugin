@@ -4100,6 +4100,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "mvc_reach_r.*v.*cover\\+\\+|konig_right_reachable_in_cover",
             "mvc_vertex_cover.*mvc_max_matching.*mvc_reach_l.*mvc_reach_r|konig_theorem_cover"
         ),
+        new PatternDef("ffm_ntt_butterfly", "fast_fourier_mod_ntt_butterfly_unit", "high",
+            "ffm_mulmod.*wn.*w|ntt_twiddle_factor_advance",
+            "ffm_bit_rev.*n.*>>.*1|ntt_bit_reversal_permutation",
+            "ffm_ntt.*invert.*ffm_inv.*FFM_G|ntt_inverse_primitive_root"
+        ),
+        new PatternDef("ffm_poly_multiply", "fast_fourier_mod_polynomial_convolution", "high",
+            "ffm_ntt.*ffm_fa.*0.*ffm_ntt.*ffm_fb.*0|ntt_forward_transform_pair",
+            "ffm_fc.*ffm_mulmod.*ffm_fa.*ffm_fb|ntt_pointwise_product",
+            "ffm_ntt.*ffm_fc.*1|ntt_inverse_transform_result"
+        ),
+        new PatternDef("ffm_modpow_inv", "fast_fourier_mod_modular_exponentiation", "medium",
+            "ffm_pow.*base.*FFM_MOD.*-.*2|ntt_fermat_inverse",
+            "ffm_mulmod.*result.*base|ntt_modular_square_accumulate",
+            "FFM_MOD.*-.*1.*len|ntt_order_divisor_twiddle"
+        ),
+        new PatternDef("hpq_heavy_child", "heavy_path_queries_heavy_child_select", "high",
+            "hpq_sz.*hpq_heavy.*hpq_sz.*hpq_heavy|hld_heavy_child_max_subtree",
+            "hpq_heavy.*u.*-1|hld_leaf_no_heavy_child",
+            "hpq_depth.*hpq_head_chain|hld_chain_head_depth_track"
+        ),
+        new PatternDef("hpq_path_climb", "heavy_path_queries_path_climb_chains", "high",
+            "hpq_head_chain.*u.*!=.*hpq_head_chain.*v|hld_different_chains_climb",
+            "hpq_par.*hpq_head_chain.*u|hld_jump_to_parent_of_chain_head",
+            "hpq_depth.*hpq_head_chain.*u.*<.*hpq_depth.*hpq_head_chain.*v|hld_swap_deeper_chain"
+        ),
+        new PatternDef("hpq_seg_query", "heavy_path_queries_segment_tree_range_sum", "medium",
+            "hpq_seg_query.*node.*2.*l.*mid|hld_segtree_left_child_query",
+            "hpq_pos.*hpq_head_chain.*hpq_pos.*u|hld_flat_position_range",
+            "hpq_seg.*node.*=.*hpq_seg.*node.*2.*\\+.*hpq_seg.*node.*2.*\\+.*1|hld_segtree_merge"
+        ),
+        new PatternDef("ort_merge_sort_tree", "offline_range_tree_merge_sort_build", "high",
+            "ort_merge.*ort_buf.*ort_off.*ort_len|range_tree_merge_children_ylists",
+            "ort_build.*node.*2.*l.*mid.*ort_build.*node.*2.*\\+.*1|range_tree_recursive_build",
+            "ort_bufpos.*ort_off.*node|range_tree_buffer_allocation"
+        ),
+        new PatternDef("ort_count_range", "offline_range_tree_binary_search_count", "high",
+            "ort_count_range.*a.*n.*lo.*hi|range_tree_sorted_ylist_count",
+            "lb.*ub.*m.*a.*m.*<.*lo.*lb.*=.*m.*\\+.*1|range_tree_lower_bound_bisect",
+            "lb.*-.*left|range_tree_count_in_interval"
+        ),
+        new PatternDef("ort_2d_query", "offline_range_tree_2d_range_query", "medium",
+            "ort_query.*xl.*xr.*yl.*yr|range_tree_2d_decomposition",
+            "xl.*>.*r.*xr.*<.*l.*return.*0|range_tree_x_range_prune",
+            "xl.*<=.*l.*r.*<=.*xr.*ort_count_range|range_tree_x_covered_y_search"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
