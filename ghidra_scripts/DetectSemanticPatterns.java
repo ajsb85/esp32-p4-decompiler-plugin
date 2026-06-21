@@ -6241,6 +6241,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count_prime.*0xFF.*fermat_sum.*0xFF|fermat_numbers_mask",
             "g_result.*n_tests.*metric_a.*metric_b|fermat_numbers_g_result"
         ),
+        new PatternDef("fibonacci_primes_recurrence", "fibonacci_primes_recurrence", "high",
+            "fib\\[i\\]\\s*=\\s*fib\\[i.*1\\]\\s*\\+\\s*fib\\[i.*2\\]|fibonacci_primes_recurrence",
+            "is_prime_fp.*fib\\[i\\]|fibonacci_primes_test",
+            "count_fp\\+\\+.*prime_sum.*fib|fibonacci_primes_accumulate"
+        ),
+        new PatternDef("fibonacci_primes_sieve", "fibonacci_primes_sieve", "high",
+            "FIB_N.*20|fibonacci_primes_size",
+            "fib\\[0\\].*0.*fib\\[1\\].*1|fibonacci_primes_seeds",
+            "count_fp.*0xFF.*checksum.*0xFF|fibonacci_primes_mask"
+        ),
+        new PatternDef("fibonacci_primes_pack", "fibonacci_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|fibonacci_primes_pack",
+            "prime_sum.*251|fibonacci_primes_mod",
+            "g_result.*n_tests.*metric_a.*metric_b|fibonacci_primes_g_result"
+        ),
+        new PatternDef("lucas_primes_recurrence", "lucas_primes_recurrence", "high",
+            "luc\\[i\\]\\s*=\\s*luc\\[i.*1\\]\\s*\\+\\s*luc\\[i.*2\\]|lucas_primes_recurrence",
+            "luc\\[0\\].*2.*luc\\[1\\].*1|lucas_primes_seeds",
+            "is_prime_lp.*luc\\[i\\]|lucas_primes_test"
+        ),
+        new PatternDef("lucas_primes_count", "lucas_primes_count", "high",
+            "count_lp\\+\\+.*prime_sum.*luc|lucas_primes_accumulate",
+            "LUC_N.*20|lucas_primes_size",
+            "prime_sum.*251|lucas_primes_mod"
+        ),
+        new PatternDef("lucas_primes_pack", "lucas_primes_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|lucas_primes_pack",
+            "count_lp.*0xFF.*checksum.*0xFF|lucas_primes_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|lucas_primes_g_result"
+        ),
+        new PatternDef("sierpinski_numbers_loop", "sierpinski_numbers_loop", "high",
+            "k.*K_MAX.*k.*2|sierpinski_numbers_odd_loop",
+            "k.*1u.*1u\\s*<<\\s*n.*1|sierpinski_numbers_candidate",
+            "all_composite.*0.*break|sierpinski_numbers_short_circuit"
+        ),
+        new PatternDef("sierpinski_numbers_check", "sierpinski_numbers_check", "high",
+            "is_prime_sn.*val|sierpinski_numbers_primality",
+            "count_s\\+\\+.*cand_sum.*k|sierpinski_numbers_accumulate",
+            "K_MAX.*99.*N_EXP.*6|sierpinski_numbers_bounds"
+        ),
+        new PatternDef("sierpinski_numbers_pack", "sierpinski_numbers_pack", "medium",
+            "n_tests\\s*<<\\s*16.*metric_a.*<<.*8.*metric_b|sierpinski_numbers_pack",
+            "count_s.*0xFF.*cand_sum.*0xFF|sierpinski_numbers_mask",
+            "g_result.*n_tests.*metric_a.*metric_b|sierpinski_numbers_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
