@@ -3050,6 +3050,40 @@ public class DetectSemanticPatterns extends GhidraScript {
             "check.*pass.*hi.*q.*=.*mid.*-.*1.*else.*lo.*q.*=.*mid.*\\+.*1|narrow_parallel_range",
             "pbs_narrow|pbs_lo_hi|parallel_binary_narrow"
         ),
+
+        // ── O(n log n) LIS via patience sorting ─────────────────────────────
+        new PatternDef("lis_patience_lb", "lis_patience_sort_lower_bound_tails", "high",
+            "pos.*=.*la_lb.*la_tails.*len.*la_a.*i|pos.*=.*lower_bound.*tails.*len.*a.*i",
+            "lower_bound.*tails.*len.*v.*patience.*sort|lis_patience.*lb.*tails",
+            "lis_patience|patience_lb|lis_tails_lb"
+        ),
+        new PatternDef("lis_tails_extend", "lis_patience_tails_array_extend_or_replace", "high",
+            "la_tails.*pos.*=.*la_a.*i.*if.*pos.*==.*len.*len\\+\\+|tails.*pos.*=.*a.*i.*pos.*==.*len",
+            "tails\\[pos\\].*=.*a\\[i\\].*if.*pos.*==.*len.*len\\+\\+|patience_extend_replace",
+            "lis_extend|tails_replace|patience_len"
+        ),
+
+        // ── Min-cost max-flow (SPFA) ─────────────────────────────────────────
+        new PatternDef("mcmf_reverse_edge", "mcmf_xor_based_reverse_edge_indexing", "high",
+            "mc_e.*mc_ec.*=.*McEdge.*u.*0.*-cost.*mc_hd.*v|reverse_edge.*cost.*neg.*xor",
+            "mc_e\\[mc_ec\\].*\\{.*u.*0.*-.*cost|backward_edge.*zero_cap.*neg_cost",
+            "mcmf_reverse|xor_reverse_edge|mcmf_backward"
+        ),
+        new PatternDef("mcmf_spfa_relax", "mcmf_spfa_capacity_gated_edge_relaxation", "high",
+            "if.*mc_e.*i.*cap.*>.*0.*&&.*mc_d.*u.*\\+.*mc_e.*i.*cost.*<.*mc_d.*v",
+            "cap.*>.*0.*dist.*u.*cost.*<.*dist.*v.*relax|spfa_residual_relax",
+            "mcmf_relax|spfa_cap_relax|mcmf_spfa"
+        ),
+        new PatternDef("mcmf_augment_xor", "mcmf_augment_path_via_xor_reverse_edge", "high",
+            "mc_e.*e.*cap.*-=.*flow.*mc_e.*e.*\\^.*1.*cap.*\\+=.*flow|e\\^1.*cap.*\\+",
+            "e.*\\^.*1.*to.*path.*reconstruction|mc_aug.*xor.*reverse|augment_xor",
+            "mcmf_aug_xor|mcmf_augment|xor_aug_path"
+        ),
+        new PatternDef("mcmf_cost_accumulate", "mcmf_cost_accumulate_per_augmentation", "high",
+            "flow.*\\+=.*pcap.*cost.*\\+=.*c.*\\*.*pcap|total_cost.*\\+=.*path_cost.*\\*.*flow",
+            "cost.*\\+=.*dist.*t.*\\*.*bottleneck|mcmf_cumulative_cost",
+            "mcmf_cost|mcmf_accumulate|mcmf_total_cost"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
