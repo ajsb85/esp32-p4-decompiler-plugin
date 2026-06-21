@@ -920,6 +920,18 @@ int main(void){
      if(i>=3){cdsum+=(uint32_t)cdd;cdxr^=(uint32_t)cdd;cdol++;}
    }
    CHECK("test_count_distinct_window",((uint32_t)cdol<<16)|((cdsum&0xFFu)<<8)|(cdxr&0xFFu),0x00050F03u);}
+  /* test_gcd_array: {12,18,24,36}; gcd=6 lcm=72 */
+  {int ga[]={12,18,24,36},n4=4,tg=12,tl=12;
+   for(int i=1;i<n4;i++){
+     int a=tg,b=ga[i];while(b){int t=b;b=a%b;a=t;}tg=a;
+     int p=tg;a=tl;b=ga[i];while(b){int t=b;b=a%b;a=t;}tl=tl/a*ga[i];(void)p;
+   }
+   CHECK("test_gcd_array",((uint32_t)n4<<16)|((uint32_t)(tg&0xFF)<<8)|(uint32_t)(tl&0xFF),0x00040648u);}
+  /* test_primorial: P(1..5)={2,6,30,210,2310}; sum%256=254 xor%256=206 */
+  {uint32_t prim2=1,psum=0,pxor=0;int ppc=0;
+   for(int n=2;ppc<5;n++){int ok=1;for(int i=2;i*i<=n;i++)if(n%i==0){ok=0;break;}
+     if(ok){prim2*=(uint32_t)n;psum+=prim2&0xFFu;pxor^=prim2&0xFFu;ppc++;}}
+   CHECK("test_primorial",(5u<<16)|((psum&0xFFu)<<8)|(pxor&0xFFu),0x0005FECEu);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

@@ -1427,6 +1427,22 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*i.*>=.*k.*-.*1.*sum.*\\+=.*out_len\\+\\+|window.*emit.*after.*k.*elements",
             "sliding_window|window_slide|sw_generic"
         ),
+        // ── Sprint 77: GCD array + primorial ─────────────────────────────────
+        new PatternDef("gcd_euclidean_array", "gcd_lcm_array_reduction", "high",
+            "while.*b.*int.*t.*=.*b.*b.*=.*a.*%.*b.*a.*=.*t.*return.*a|ga_gcd.*euclidean",
+            "for.*i.*=.*1.*n.*tg.*=.*ga_gcd.*tg.*arr.*i.*tl.*=.*ga_lcm.*tl.*arr.*i",
+            "gcd_array|lcm_array|gcd_reduce"
+        ),
+        new PatternDef("primorial_compute", "primorial_prime_product", "high",
+            "prim.*=.*prim.*\\*.*\\(uint32_t\\)primes.*k|primorial.*product.*primes",
+            "for.*n.*=.*2.*pc.*<.*5.*n\\+\\+.*if.*pr_is_prime.*n.*primes.*pc\\+\\+.*=.*n",
+            "primorial|prime_product|first_k_primes"
+        ),
+        new PatternDef("trial_division_prime", "is_prime_trial_division", "medium",
+            "for.*i.*=.*2.*i.*\\*.*i.*<=.*n.*i\\+\\+.*if.*n.*%.*i.*==.*0.*return.*0",
+            "if.*n.*<.*2.*return.*0.*trial.*division|pr_is_prime.*trial",
+            "is_prime|trial_division|prime_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -203,6 +203,8 @@ declare -A EXPECTED_RESULT=(
     [test_fenwick_tree]=0x0008090C
     [test_sliding_window_max]=0x00061D01
     [test_count_distinct_window]=0x00050F03
+    [test_gcd_array]=0x00040648
+    [test_primorial]=0x0005FECE
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -262,7 +264,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_articulation test_sqrt_decomp \
        test_dag_longest_path test_edit_distance \
        test_max_rect_sum test_fenwick_tree \
-       test_sliding_window_max test_count_distinct_window)
+       test_sliding_window_max test_count_distinct_window \
+       test_gcd_array test_primorial)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
