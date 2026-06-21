@@ -100,8 +100,9 @@ public class ExportDecompiledC extends GhidraScript {
     private static final int MAX_CALLERS_SHOWN       = 8;
 
     // ── Fix 1: GP register artifact ──────────────────────────────────────────
+    // Covers both "gp = 0x<hex>;" (hardcoded) and "gp = &__global_pointer_;" (symbol).
     private static final Pattern GP_ASSIGN =
-            Pattern.compile("^\\s*gp\\s*=\\s*0x[0-9A-Fa-f]+\\s*;\\s*$");
+            Pattern.compile("^\\s*gp\\s*=\\s*(?:0x[0-9A-Fa-f]+|&?__global_pointer_)\\s*;\\s*$");
 
     // ── Fix 2: void return-type promotion ────────────────────────────────────
     private static final Pattern VOID_SIG =
@@ -286,7 +287,7 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println("/* Program : " + currentProgram.getName()   + " */");
             pw.println("/* Language: " + currentProgram.getLanguageID() + " */");
             pw.println("/* Fixes applied:");
-            pw.println(" *   Fix 1 — gp = 0x<hex>; lines stripped");
+            pw.println(" *   Fix 1 — gp = 0x<hex>; / gp = &__global_pointer_; lines stripped");
             pw.println(" *   Fix 2 — void return promoted to undefined4 (caller-driven)");
             pw.println(" *   Fix 3 — bare return; -> return <last-local>; in promoted functions");
             pw.println(" *           (text scan + ClangAST fallback via P5)");
@@ -368,7 +369,7 @@ public class ExportDecompiledC extends GhidraScript {
                     pw.println(" * periph  : " + String.join(", ", periphs));
                 // Sprint 23: annotate ESP32-P4 hardware features visible in decompiled text.
                 if (raw != null && HWLP_REF.matcher(raw).find())
-                    pw.println(" * hw_feat  : xesploop — hardware loop; back-edge modeled via fall-through override");
+                    pw.println(" * hw_feat  : xesploop — hardware loop; CONDITIONAL_JUMP back-edge in listing (SLEIGH pcode injection pending)");
                 if (raw != null && PIE_QREF.matcher(raw).find())
                     pw.println(" * hw_feat  : xespv2p2-PIE — 128-bit Q-register SIMD");
                 pw.println(" */");
