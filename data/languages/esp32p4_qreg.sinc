@@ -43,17 +43,11 @@
 define register offset=0x6000 size=16 [ q0 q1 q2 q3 q4 q5 q6 q7 ];
 
 # ── Operand attach tables ─────────────────────────────────────────────────────
-# NOTE: qu1013 and clrs1517 are sub-fields of the standard RISC-V 'instr' token
-# declared in riscv.reg.sinc.  SLEIGH does not allow redeclaring 'instr', so
-# the qu1013 (bits[13:10]) and clrs1517 (bits[17:15]) fields are declared as
-# part of a compatibility attach section.  The esp32p4_pie.sinc constructors
-# that use these fields MUST come from the same token context as op2531/op1214.
-# This is resolved by having a pre-compiled .sla that was built with all of
-# these fields present in a single consolidated token declaration.
-# DO NOT add a 'define token instr_pie(32)' here — that causes "Mismatched
-# tokens" errors in SLEIGH because it creates a second 32-bit token while all
-# standard RISC-V fields are in 'instr'.  The fields qu1013 and clrs1517 must
-# reside in 'instr'.  The pre-compiled esp32p4.sla handles this correctly.
+# qu1013 and clrs1517 are declared as fields of the standard RISC-V 'instr'
+# token in riscv.reg.sinc (our local copy — not Ghidra's built-in).  Declaring
+# them there (in the same token as op2531, op1214, etc.) avoids the "Mismatched
+# tokens when combining patterns" SLEIGH error that occurs when a second 32-bit
+# token is defined and constructors mix fields from both.
 
 # Q register selection (bits[13:10], 4-bit field, values 0-7 → q0-q7)
 # Values 8-15 are reserved (encoded as "_" = invalid operand).

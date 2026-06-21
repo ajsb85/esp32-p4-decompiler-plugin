@@ -225,29 +225,9 @@
   </default_proto>
 
   <!-- ─── Hardware loop (xesploop) callotherfixups ────────────────────────────
-       Replace the opaque CALLOTHER pcodeop emitted by esp.lp.setup / esp.lp.count /
-       esp.lp.counti with visible HWLP virtual register writes.  The Sleigh
-       constructors already emit COPY ops to HWLP0_COUNT etc. BEFORE the CALLOTHER;
-       the fixup body causes the Ghidra decompiler to suppress the opaque
-       esp_lp_setup(...) call and emit the named register assignments in decompiled C.
-
-       Limitation: the back-edge (branch from lp_end to lp_start when
-       HWLP_COUNT > 0) is not modelled here — that still requires the
-       ESP32P4Analyzer post-analysis pass to inject a synthetic CONDITIONAL_JUMP
-       reference so the listing CFG shows the loop cycle.
+       Replace opaque CALLOTHER pcodeops with visible HWLP virtual register writes.
+       esp.lp.setup uses direct COPY pcode assignments — no callotherfixup needed.
   ──────────────────────────────────────────────────────────────────────────── -->
-
-  <!-- esp.lp.setup {0|1}, rs1, lp_end  →  HWLP0_COUNT = count; HWLP0_END = lp_end -->
-  <callotherfixup targetop="esp_lp_setup">
-    <pcode>
-      <input name="count" size="4"/>
-      <input name="lp_end_addr" size="4"/>
-      <body><![CDATA[
-        HWLP0_COUNT = count;
-        HWLP0_END = lp_end_addr;
-      ]]></body>
-    </pcode>
-  </callotherfixup>
 
   <!-- esp.lp.count {0|1}, rs1  →  HWLP0_COUNT = count -->
   <callotherfixup targetop="esp_lp_count">

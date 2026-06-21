@@ -148,7 +148,6 @@ define pcodeop custom3.rd.rs1.rs2;
     HWLP0_COUNT = rs1;
     HWLP0_START = inst_next;
     HWLP0_END   = lp_end;
-    esp_lp_setup(rs1, lp_end:4);
 }
 
 :esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & op0711=0x1 & rd & rs1 & op2031
@@ -157,7 +156,6 @@ define pcodeop custom3.rd.rs1.rs2;
     HWLP1_COUNT = rs1;
     HWLP1_START = inst_next;
     HWLP1_END   = lp_end;
-    esp_lp_setup(rs1, lp_end:4);
 }
 
 # esp.lp.setupi  loop_id, count_imm, loop_end_label
