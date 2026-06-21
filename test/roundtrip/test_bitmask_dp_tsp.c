@@ -13,12 +13,9 @@
  *           — min_cost_lo = 80 = 0x50, n_cities = 4, start_city = 1
  *             Use start_city=1 (non-zero): tour from city 1
  *             0→1→3→2→0 same cost 80 if we start accounting from 0.
- *             Keep start=0 forbidden (zero byte). Change to n_cities=4,
- *             cost_tens=8 (80/10), start=1: g_result=0x040801
- *             Or: n_cities<<16 | min_cost<<8 | n_cities: 0x045004
- *             But 4 repeated. Use n_cities=4, min_cost=80, n_edges=5:
- *             0x04500x — 0x045005 → bytes 4,80,5 all distinct, non-zero. OK.
- * g_result  = (4 << 16) | (80 << 8) | 5 = 0x045005
+ *             n_edges = C(4,2) = 6 upper-triangle nonzero entries
+ *             bytes: 4, 80, 6 — all distinct, all non-zero. OK.
+ * g_result  = (4 << 16) | (80 << 8) | 6 = 0x045006
  */
 /* xesploop-free: yes */
 
