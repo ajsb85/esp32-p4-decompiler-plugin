@@ -147,6 +147,9 @@ static int mr_pow2(int a,int e,int m){int r=1;a%=m;while(e>0){if(e&1)r=r*a%m;a=a
 static int miller_rabin2(int n){if(n<2)return 0;if(n==2)return 1;if(n%2==0)return 0;int d=n-1,s=0;while(d%2==0){d>>=1;s++;}int ws[]={2,3,5,7};for(int wi=0;wi<4;wi++){int a=ws[wi];if(a>=n)continue;int x=mr_pow2(a,d,n);if(x==1||x==n-1)continue;int r;for(r=1;r<s;r++){x=x*x%n;if(x==n-1)break;}if(r==s)return 0;}return 1;}
 static int cp2_adj[6][3],cp2_deg[6],cp2_memo[6];
 static int count_paths2(int u,int dst){if(u==dst)return 1;if(cp2_memo[u]>=0)return cp2_memo[u];int t=0;for(int i=0;i<cp2_deg[u];i++)t+=count_paths2(cp2_adj[u][i],dst);return cp2_memo[u]=t;}
+static int crt_inv2(int a,int m){int m0=m,x0=0,x1=1;if(m==1)return 0;while(a>1){int q=a/m,t=m;m=a%m;a=t;t=x0;x0=x1-q*x0;x1=t;}return x1<0?x1+m0:x1;}
+static void mp_mul2(long long A[2][2],long long B[2][2],long long C[2][2]){for(int i=0;i<2;i++)for(int j=0;j<2;j++){C[i][j]=0;for(int k=0;k<2;k++)C[i][j]+=A[i][k]*B[k][j];}}
+static long long mp_fib2(int n){long long R[2][2]={{1,0},{0,1}},MA[2][2]={{1,1},{1,0}},MT[2][2];while(n>0){if(n%2){mp_mul2(R,MA,MT);for(int i=0;i<2;i++)for(int j=0;j<2;j++)R[i][j]=MT[i][j];}mp_mul2(MA,MA,MT);for(int i=0;i<2;i++)for(int j=0;j<2;j++)MA[i][j]=MT[i][j];n/=2;}return R[0][1];}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -642,6 +645,59 @@ int main(void){
    for(int i=0;i<6;i++)cpa^=(uint32_t)count_paths2(i,5);
    uint32_t cpp=(uint32_t)cp2_memo[0]; /* paths(0,5)=4 */
    CHECK("test_count_paths_dag",(6u<<16)|(cpp<<8)|(cpa&0xFFu),0x00060406u);}
+  /* test_euler_totient: phi(12)=4,phi(13)=12,phi(36)=12,phi(100)=40; n=4 sum=68 xor=44 */
+  {int et_vals[]={12,13,36,100};uint32_t et_s=0,et_x=0;
+   for(int i=0;i<4;i++){int n=et_vals[i],r=n;
+     for(int p=2;p*p<=n;p++){if(n%p==0){r-=r/p;while(n%p==0)n/=p;}}
+     if(n>1)r-=r/n;et_s+=(uint32_t)r;et_x^=(uint32_t)r;}
+   CHECK("test_euler_totient",(4u<<16)|(et_s<<8)|(et_x&0xFFu),0x0004442Cu);}
+  /* test_difference_array: [0,2]+=3,[1,4]+=2,[3,5]+=1 → {3,5,5,3,3,1}; n=6 sum=20 xor=2 */
+  {int da_D[7]={0},da_A[6];
+   da_D[0]+=3;da_D[3]-=3;da_D[1]+=2;da_D[5]-=2;da_D[3]+=1;da_D[6]-=1;
+   {int acc=0;for(int i=0;i<6;i++){acc+=da_D[i];da_A[i]=acc;}}
+   uint32_t da_s=0,da_x=0;for(int i=0;i<6;i++){da_s+=(uint32_t)da_A[i];da_x^=(uint32_t)da_A[i];}
+   CHECK("test_difference_array",(6u<<16)|(da_s<<8)|(da_x&0xFFu),0x00061402u);}
+  /* test_crt: {x≡2(3),x≡3(5),x≡2(7)}=23; {x≡1(2),x≡2(3),x≡4(5)}=29; {x≡3(4),x≡5(7)}=19; sum=71 xor=25 */
+  {int c1=(2*35*crt_inv2(35%3,3)+3*21*crt_inv2(21%5,5)+2*15*crt_inv2(15%7,7))%105;
+   int c2=(1*15*crt_inv2(15%2,2)+2*10*crt_inv2(10%3,3)+4*6*crt_inv2(6%5,5))%30;
+   int c3=(3*7*crt_inv2(7%4,4)+5*4*crt_inv2(4%7,7))%28;
+   CHECK("test_crt",(3u<<16)|((uint32_t)(c1+c2+c3)<<8)|((uint32_t)(c1^c2^c3)&0xFFu),0x00034719u);}
+  /* test_longest_bitonic: arr={1,5,2,8,3} n=5; max_lbs=4 xor_lbs=7 */
+  {int lba[]={1,5,2,8,3},lbn=5,lbis[5],lbds[5];
+   for(int i=0;i<lbn;i++){lbis[i]=1;for(int j=0;j<i;j++)if(lba[j]<lba[i]&&lbis[j]+1>lbis[i])lbis[i]=lbis[j]+1;}
+   for(int i=lbn-1;i>=0;i--){lbds[i]=1;for(int j=i+1;j<lbn;j++)if(lba[j]<lba[i]&&lbds[j]+1>lbds[i])lbds[i]=lbds[j]+1;}
+   int lbmax=0;uint32_t lb_x=0;
+   for(int i=0;i<lbn;i++){int lbs=lbis[i]+lbds[i]-1;if(lbs>lbmax)lbmax=lbs;lb_x^=(uint32_t)lbs;}
+   CHECK("test_longest_bitonic",((uint32_t)lbn<<16)|((uint32_t)lbmax<<8)|(lb_x&0xFFu),0x00050407u);}
+  /* test_hamming: pair HDs {2,4,3} sum=9; total HD of {4,14,2}=6; n=3 */
+  {int hd_a[]={10,255,205},hd_b[]={9,15,75};uint32_t hd_s=0;
+   for(int i=0;i<3;i++){unsigned hx=(unsigned)(hd_a[i]^hd_b[i]);int pc=0;while(hx){pc+=hx&1;hx>>=1;}hd_s+=(uint32_t)pc;}
+   int hd_arr[]={4,14,2};uint32_t hd_t=0;
+   for(int b=0;b<32;b++){int cnt=0;for(int i=0;i<3;i++)if((hd_arr[i]>>b)&1)cnt++;hd_t+=(uint32_t)(cnt*(3-cnt));}
+   CHECK("test_hamming",(3u<<16)|(hd_s<<8)|(hd_t&0xFFu),0x00030906u);}
+  /* test_palindrome_partition: "aab"=1,"abcba"=0,"aabbc"=2; n=3 sum=3 xor=3 */
+  {const char *pp_ss[]={"aab","abcba","aabbc"};uint32_t pp_s=0,pp_x=0;
+   for(int t=0;t<3;t++){const char *s=pp_ss[t];int sn=(int)strlen(s);
+     int ppal[10][10],pdp[10];memset(ppal,0,sizeof(ppal));
+     for(int i=0;i<sn;i++)ppal[i][i]=1;
+     for(int i=0;i<sn-1;i++)if(s[i]==s[i+1])ppal[i][i+1]=1;
+     for(int l=3;l<=sn;l++)for(int i=0;i<=sn-l;i++){int j=i+l-1;if(s[i]==s[j]&&ppal[i+1][j-1])ppal[i][j]=1;}
+     for(int i=0;i<sn;i++)pdp[i]=i;
+     if(ppal[0][sn-1]){pdp[sn-1]=0;}
+     else{for(int i=1;i<sn;i++){if(ppal[0][i]){pdp[i]=0;continue;}for(int j=1;j<=i;j++)if(ppal[j][i]&&pdp[j-1]+1<pdp[i])pdp[i]=pdp[j-1]+1;}}
+     pp_s+=(uint32_t)pdp[sn-1];pp_x^=(uint32_t)pdp[sn-1];}
+   CHECK("test_palindrome_partition",(3u<<16)|(pp_s<<8)|(pp_x&0xFFu),0x00030303u);}
+  /* test_rotate_array: {1..7} right by 2 → {6,7,1,2,3,4,5}; n=7 k=2 last=5 */
+  {int ra[]={1,2,3,4,5,6,7},rn=7,rk=2;
+   for(int l=0,r=rn-rk-1;l<r;l++,r--){int t=ra[l];ra[l]=ra[r];ra[r]=t;}
+   for(int l=rn-rk,r=rn-1;l<r;l++,r--){int t=ra[l];ra[l]=ra[r];ra[r]=t;}
+   for(int l=0,r=rn-1;l<r;l++,r--){int t=ra[l];ra[l]=ra[r];ra[r]=t;}
+   CHECK("test_rotate_array",((uint32_t)rn<<16)|((uint32_t)rk<<8)|((uint32_t)ra[rn-1]&0xFFu),0x00070205u);}
+  /* test_matrix_power: F(10)=55 F(20)=6765; n=2 sum=164 xor=90 */
+  {long long f10=mp_fib2(10),f20=mp_fib2(20);
+   uint32_t mp_s=(uint32_t)((f10&0xFF)+(f20&0xFF));
+   uint32_t mp_x=(uint32_t)((f10&0xFF)^(f20&0xFF));
+   CHECK("test_matrix_power",(2u<<16)|(mp_s<<8)|(mp_x&0xFFu),0x0002A45Au);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

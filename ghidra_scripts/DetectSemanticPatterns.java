@@ -1115,6 +1115,82 @@ public class DetectSemanticPatterns extends GhidraScript {
             "for.*outdeg.*count_paths|cp_adj.*cp_outdeg",    // iterate adjacency
             "cp_adj|cp_outdeg|count_paths"                   // naming
         ),
+
+        // ── Sprint 58: Euler's Totient ───────────────────────────────────────
+        new PatternDef("euler_totient_strip", "euler_totient_prime_factor", "high",
+            "while.*%.*p.*==.*0|while.*n.*%.*p.*n.*=.*n",   // strip prime factor loop
+            "result.*-=.*result.*p|result.*result.*p.*1",   // phi multiply step
+            "euler.*totient|euler_phi|totient"              // naming
+        ),
+
+        // ── Sprint 58: Difference Array ─────────────────────────────────────
+        new PatternDef("difference_array_update", "difference_array_range", "high",
+            "\\[l\\].*\\+=|da_D.*l.*\\+=|diff.*l.*\\+=",    // range update lo bound
+            "\\[r.*\\+.*1\\].*-=|da_D.*r.*1.*-=|diff.*r.*1.*-=", // range update hi+1
+            "da_range|da_D|difference_array"                // naming
+        ),
+        new PatternDef("difference_array_reconstruct", "prefix_sum_reconstruct", "medium",
+            "acc.*\\+=.*D.*i|acc.*\\+=.*da_D|prefix.*sum.*D", // prefix sum accumulate
+            "A.*i.*=.*acc|da_A.*i.*=.*acc|arr.*i.*=.*acc",  // assign reconstructed
+            "da_reconstruct|reconstruct|da_A"               // naming
+        ),
+
+        // ── Sprint 59: Chinese Remainder Theorem ─────────────────────────────
+        new PatternDef("crt_partial_product", "chinese_remainder_theorem", "high",
+            "M.*=.*M.*m.*i|Mi.*=.*M.*m.*i|M_i.*=.*M.*m",   // compute partial product
+            "mod_inv.*Mi.*m|crt_inv.*M.*m|inv.*=.*mod_inv", // modular inverse call
+            "crt_solve|chinese_remainder|crt"               // naming
+        ),
+
+        // ── Sprint 59: Longest Bitonic Subsequence ───────────────────────────
+        new PatternDef("longest_bitonic_lis_lds", "bitonic_subsequence_dp", "high",
+            "lb_lis.*j.*\\+.*1.*>.*lb_lis.*i|lis.*j.*1.*lis.*i", // forward LIS update
+            "lb_lds.*j.*\\+.*1.*>.*lb_lds.*i|lds.*j.*1.*lds.*i", // backward LDS update
+            "longest_bitonic|lb_lis|lb_lds"                // naming
+        ),
+        new PatternDef("bitonic_combine", "bitonic_lbs_combine", "medium",
+            "lb_lis.*i.*\\+.*lb_lds.*i.*-.*1|lis.*i.*lds.*i.*1", // LIS+LDS-1 combine
+            "if.*lbs.*>.*max_lbs|max_lbs.*=.*lbs|max_lbs", // track global max
+            "lbs|max_lbs|bitonic_combine"                   // naming
+        ),
+
+        // ── Sprint 60: Hamming Distance ──────────────────────────────────────
+        new PatternDef("hamming_distance_xor", "hamming_distance_popcount", "high",
+            "hd_popcount.*a.*\\^.*b|popcount.*a.*\\^.*b|\\^.*b.*popcount", // popcount of XOR
+            "for.*bit.*<.*32|cnt1.*=.*0.*bit|count1.*n.*-.*count1", // bit-position loop
+            "hamming|hd_popcount|hamming_dist"              // naming
+        ),
+
+        // ── Sprint 60: Palindrome Partition ──────────────────────────────────
+        new PatternDef("palindrome_partition_dp", "min_palindrome_cuts", "high",
+            "pp_pal.*i.*\\+.*1.*j.*-.*1|is_pal.*i.*1.*j.*1",       // expand-from-ends
+            "pp_dp.*j.*-.*1.*\\+.*1.*<.*pp_dp.*i|dp.*j.*1.*dp.*i", // min-cut update
+            "min_pal_cuts|pp_dp|palindrome_partition"       // naming
+        ),
+        new PatternDef("palindrome_precompute", "palindrome_table", "medium",
+            "pp_pal.*i.*i.*=.*1|pal.*i.*i.*=.*1",           // single-char palindrome
+            "s.*i.*==.*s.*j.*&&.*pp_pal|s.*i.*==.*s.*j.*pp_pal", // expand condition
+            "pp_pal|pal_table|is_pal"                       // naming
+        ),
+
+        // ── Sprint 61: Array Rotation (3-reversal) ───────────────────────────
+        new PatternDef("rotate_reversal", "array_rotation_reversal", "high",
+            "ra_reverse.*0.*n.*-.*k.*-.*1|reverse.*0.*n.*k", // reverse left part
+            "while.*l.*<.*r.*t.*=.*arr|while.*l.*<.*r.*swap", // swap-while-l<r body
+            "ra_reverse|rotate_array|test_rotate"           // naming
+        ),
+
+        // ── Sprint 61: Matrix Fast Exponentiation ────────────────────────────
+        new PatternDef("matrix_power_square", "matrix_fast_exponentiation", "high",
+            "n.*%.*2.*==.*1.*result.*=.*mat_mul|n.*%.*2.*result.*=", // odd-exp branch
+            "base.*=.*mat_mul.*base.*base|mat_mul22.*base.*base",    // square base
+            "mat_pow22|matrix_power|mat_pow"                // naming
+        ),
+        new PatternDef("matrix_multiply_2x2", "matrix_multiply", "medium",
+            "C\\.v.*i.*j.*=.*0|v.*i.*j.*=.*0.*for.*k.*<.*2", // C[i][j] zero-init
+            "A\\.v.*i.*k.*\\*.*B\\.v.*k.*j|v.*i.*k.*v.*k.*j", // A[i][k]*B[k][j]
+            "mat_mul22|matmul_2x2|Mat22"                    // naming
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

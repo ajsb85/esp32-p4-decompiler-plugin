@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 86 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 94 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -98,6 +98,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_kahn_toposort.c` | Kahn toposort BFS in-degree; 6-node DAG; n_init_zero=2 last=1 | `0x00060201` | |
 | `test_word_break.c` | Word break DP; "leetcode"/"applepenapple"/"catsandog"; count_yes=2 xor=12 | `0x0003020C` | |
 | `test_count_paths_dag.c` | DAG path count memoized; 6-node DAG; paths(0,5)=4 xor_all=6 | `0x00060406` | |
+| `test_euler_totient.c` | Euler's totient φ(n) via prime factorisation; φ{12,13,36,100}={4,12,12,40}; sum=68 xor=44 | `0x0004442C` | |
+| `test_difference_array.c` | Difference array O(1) range-update + prefix-sum reconstruct; A={3,5,5,3,3,1}; sum=20 xor=2 | `0x00061402` | |
+| `test_crt.c` | Chinese Remainder Theorem (direct construction + mod_inv); 3 instances; sum=71 xor=25 | `0x00034719` | |
+| `test_longest_bitonic.c` | Longest Bitonic Subsequence O(n²) DP; {1,5,2,8,3}; max_lbs=4 xor_lbs=7 | `0x00050407` | |
+| `test_hamming.c` | Hamming distance pairwise + total array; pairs sum=9; total HD of {4,14,2}=6 | `0x00030906` | |
+| `test_palindrome_partition.c` | Min palindrome cuts interval DP; "aab"/"abcba"/"aabbc"; cuts sum=3 xor=3 | `0x00030303` | |
+| `test_rotate_array.c` | Array rotation 3-reversal method; {1..7} right by 2→{6,7,1,2,3,4,5}; last=5 | `0x00070205` | |
+| `test_matrix_power.c` | Matrix fast exponentiation for Fibonacci; F(10)=55 F(20)=6765; sum=164 xor=90 | `0x0002A45A` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -180,7 +188,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-170 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+188 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -192,7 +200,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (57 patterns):
+Pattern families currently covered (69 patterns):
 
 | Family | Patterns |
 |--------|---------|
@@ -274,6 +282,14 @@ Pattern families currently covered (57 patterns):
 | Word break DP | dp[0]=1 seed; dp[i-wlen]&&strncmp match; return dp[slen] |
 | Counting paths in DAG | if(u==dst) return 1; memo cache-hit check; accumulate over adj; memoize before return |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
+| Euler's totient | `while(n%p==0) n/=p` strip; `result-=result/p` phi-product step; `p*p<=n` trial-div bound |
+| Difference array | `D[l]+=delta; D[r+1]-=delta` range update; `acc+=D[i]; A[i]=acc` prefix-sum reconstruct |
+| Chinese Remainder Theorem | partial products M_i=M/m_i; iterative mod_inv; accumulate r_i*M_i*inv contribution |
+| Longest Bitonic Subsequence | forward LIS + backward LDS; `lbs[i]=lis[i]+lds[i]-1`; global max scan |
+| Hamming distance | `popcount(a^b)` pair distance; bit-position count1*(n-count1) total HD |
+| Palindrome partition | `is_pal[i][j]` expand-from-ends table; `dp[i]=min(dp[j-1]+1)` cuts DP |
+| Array rotation | 3-reversal: reverse(0,n-k-1), reverse(n-k,n-1), reverse(0,n-1) |
+| Matrix fast exponentiation | 2×2 multiply; `if n%2==1 result=result*base`; `base=base*base; n>>=1` square-and-halve |
 
 ---
 

@@ -165,6 +165,14 @@ declare -A EXPECTED_RESULT=(
     [test_kahn_toposort]=0x00060201
     [test_word_break]=0x0003020C
     [test_count_paths_dag]=0x00060406
+    [test_euler_totient]=0x0004442C
+    [test_difference_array]=0x00061402
+    [test_crt]=0x00034719
+    [test_longest_bitonic]=0x00050407
+    [test_hamming]=0x00030906
+    [test_palindrome_partition]=0x00030303
+    [test_rotate_array]=0x00070205
+    [test_matrix_power]=0x0002A45A
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -205,7 +213,11 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_max_rect_histogram test_trapping_rain \
        test_jump_game test_gas_station \
        test_bipartite_check test_kahn_toposort \
-       test_word_break test_count_paths_dag)
+       test_word_break test_count_paths_dag \
+       test_euler_totient test_difference_array \
+       test_crt test_longest_bitonic \
+       test_hamming test_palindrome_partition \
+       test_rotate_array test_matrix_power)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"
