@@ -4824,6 +4824,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_a.*=.*paths3x3|grid_path_metric_a",
             "metric_b.*=.*paths5x5.*%.*200u.*\\+.*5u|grid_path_metric_b_clamp"
         ),
+        new PatternDef("spq_block_assign", "sqrt_path_block_partition", "high",
+            "block_id.*=.*depth.*SPQ_BLOCK|i.*\\/.*SPQ_BLOCK|spq_blk.*\\^=.*spq_val",
+            "spq_build|sqrt_decomp_build|block_xor_init",
+            "spq_blk.*\\[.*i.*\\/.*SPQ_BLOCK.*\\]|sqrt_block_assign"
+        ),
+        new PatternDef("spq_range_query", "sqrt_path_range_xor_query", "high",
+            "lb.*=.*l.*\\/.*SPQ_BLOCK|rb.*=.*r.*\\/.*SPQ_BLOCK|l_block.*==.*r_block",
+            "for.*b.*=.*lb.*\\+.*1.*b.*<.*rb.*ans.*\\^=.*spq_blk|whole_block_xor",
+            "spq_query|sqrt_path_query|range_xor_sqrt"
+        ),
+        new PatternDef("spq_metric", "sqrt_path_result_encode", "medium",
+            "spq_query.*2.*6|sqrt_query_range_call",
+            "spq_query.*0.*8|sqrt_query_full_range",
+            "g_result.*2u.*16.*q1.*8.*q2|sqrt_path_metric_encode"
+        ),
+        new PatternDef("cf_convergent_recurrence", "continued_frac_convergent_step", "high",
+            "p.*=.*a.*\\*.*p1.*\\+.*p2|p.*=.*cf_a.*\\*.*p_prev.*\\+.*p_prev2",
+            "q.*=.*a.*\\*.*q1.*\\+.*q2|q.*=.*cf_a.*\\*.*q_prev.*\\+.*q_prev2",
+            "p2.*=.*p1.*p1.*=.*p|q2.*=.*q1.*q1.*=.*q"
+        ),
+        new PatternDef("cf_coeff_init", "continued_frac_coeff_init", "high",
+            "p2.*=.*1.*p1.*=.*cf_a.*\\[.*0.*\\]|cf_p_prev2_init",
+            "q2.*=.*0.*q1.*=.*1|cf_q_prev2_init",
+            "cf_a.*\\[.*CF_LEN.*\\]|continued_fraction_coeffs"
+        ),
+        new PatternDef("cf_metric", "continued_frac_result_encode", "medium",
+            "fp.*=.*p1.*&.*0xFFu|cf_p1_low_byte",
+            "fq.*=.*q1.*&.*0xFFu|cf_q1_low_byte",
+            "CF_LEN.*<<.*16.*fp.*<<.*8.*fq|continued_frac_encode"
+        ),
+        new PatternDef("pell_cf_step", "pell_equation_cf_iteration", "high",
+            "m.*=.*d.*\\*.*a.*-.*m|pell_m_update|pe_cf_m_step",
+            "d.*=.*D.*-.*m.*\\*.*m.*\\/.*d|pell_d_update|pe_cf_d_step",
+            "a.*=.*a0.*\\+.*m.*\\/.*d|pell_a_update|pe_cf_a_step"
+        ),
+        new PatternDef("pell_solution_check", "pell_equation_verify_solution", "high",
+            "p.*\\*.*p.*-.*D.*\\*.*q.*\\*.*q.*==.*1|pell_verify|pell_check_solution",
+            "pe_isqrt|isqrt.*pell|integer_sqrt_pell",
+            "a0.*=.*pe_isqrt.*D|pell_a0_init"
+        ),
+        new PatternDef("pell_metric", "pell_equation_result_encode", "medium",
+            "n_iters.*<<.*16.*xl.*<<.*8.*yl|pell_result_pack",
+            "xl.*=.*p.*&.*0xFFu|pell_x_low_byte",
+            "yl.*=.*q.*&.*0xFFu|pell_y_low_byte"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
