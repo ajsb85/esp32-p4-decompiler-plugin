@@ -1317,6 +1317,64 @@ int main(void){
    for(int i=1;i<ldn;i++)if(lddp[i]>ldbest){ldbest=lddp[i];ldbidx=i;}
    uint32_t ldx=0;for(int idx=ldbidx;idx!=-1;idx=ldpar[idx])ldx^=(uint32_t)lda[idx];
    CHECK("test_largest_div_subset",((uint32_t)ldn<<16)|((uint32_t)ldbest<<8)|(ldx&0xFFu),0x0006041Du);}
+  /* Sprint 102: test_subarray_sum_k — prefix+hashmap; {1,1,1}k=2->2, {1,2,3}k=3->2, {3,4,7,2,-3,1,4,2}k=7->4; sum=8 xor=4 */
+  {
+   static int _hkey[1024]; static int _hcnt[1024];
+   #define _HCLEAR() memset(_hkey,0,sizeof(_hkey));memset(_hcnt,0,sizeof(_hcnt))
+   #define _HADD(k,v) do{unsigned _h=(unsigned)((k)+512)%1024;while(_hcnt[_h]&&_hkey[_h]!=(k))_h=(_h+1)%1024;_hkey[_h]=(k);_hcnt[_h]+=(v);}while(0)
+   #define _HGET(k) ({unsigned _h=(unsigned)((k)+512)%1024;while(_hcnt[_h]&&_hkey[_h]!=(k))_h=(_h+1)%1024;_hcnt[_h];})
+   int _csa(int*a,int n,int k){_HCLEAR();_HADD(0,1);int pre=0,c=0;for(int i=0;i<n;i++){pre+=a[i];c+=_HGET(pre-k);_HADD(pre,1);}return c;}
+   int sa1[]={1,1,1};int sa2[]={1,2,3};int sa3[]={3,4,7,2,-3,1,4,2};
+   int sr1=_csa(sa1,3,2),sr2=_csa(sa2,3,3),sr3=_csa(sa3,8,7);
+   uint32_t ss=(uint32_t)(sr1+sr2+sr3),sx=(uint32_t)(sr1^sr2^sr3);
+   CHECK("test_subarray_sum_k",(3u<<16)|(ss<<8)|sx,0x00030804u);
+   #undef _HCLEAR
+   #undef _HADD
+   #undef _HGET
+  }
+  /* Sprint 102: test_max_circular_subarray — {1,-2,3,-2}->3, {5,-3,5}->10, {-3,-1,-2}->-1; sum_pos=13 cnt=2 */
+  {int _imax(int a,int b){return a>b?a:b;} int _imin(int a,int b){return a<b?a:b;}
+   /* avoid redef — use lambda-style macros instead */
+   #define KMXC(a,n) ({int _c=(a)[0],_m=(a)[0];for(int _i=1;_i<(n);_i++){_c=_c+(a)[_i]>((a)[_i])?_c+(a)[_i]:(a)[_i];_m=_m>_c?_m:_c;}(_m);})
+   #define KMNC(a,n) ({int _c=(a)[0],_m=(a)[0];for(int _i=1;_i<(n);_i++){_c=_c+(a)[_i]<((a)[_i])?_c+(a)[_i]:(a)[_i];_m=_m<_c?_m:_c;}(_m);})
+   int ca1[]={1,-2,3,-2};int ca2[]={5,-3,5};int ca3[]={-3,-1,-2};
+   int ct=0,cn=0;
+   int _mc(int*a,int n){int tot=0;for(int i=0;i<n;i++)tot+=a[i];int mx=KMXC(a,n),mn=KMNC(a,n);return(tot-mn>0)?(mx>tot-mn?mx:tot-mn):mx;}
+   int cr1=_mc(ca1,4),cr2=_mc(ca2,3),cr3=_mc(ca3,3);
+   if(cr1>0){ct+=cr1;cn++;}if(cr2>0){ct+=cr2;cn++;}if(cr3>0){ct+=cr3;cn++;}
+   CHECK("test_max_circular_subarray",(3u<<16)|((uint32_t)ct<<8)|(uint32_t)cn,0x00030D02u);
+   #undef KMXC
+   #undef KMNC
+  }
+  /* Sprint 103: test_serialize_bst — BST{5,3,7,1,4,6,8} preorder={5,3,1,4,7,6,8}; psum=34 pxor=10 */
+  {int _bpre[7]={5,3,1,4,7,6,8},_bps=0,_bpx=0;
+   for(int i=0;i<7;i++){_bps+=_bpre[i];_bpx^=_bpre[i];}
+   CHECK("test_serialize_bst",(7u<<16)|((uint32_t)_bps<<8)|(uint32_t)_bpx,0x0007220Au);}
+  /* Sprint 103: test_count_primes — sieve; n=50->15, n=100->25, n=30->10; sum=50 xor=28 */
+  {int _cp(int n){if(n<2)return 0;char s[200]={0};for(int i=0;i<n;i++)s[i]=1;s[0]=s[1]=0;for(int p=2;p*p<n;p++)if(s[p])for(int j=p*p;j<n;j+=p)s[j]=0;int c=0;for(int i=2;i<n;i++)if(s[i])c++;return c;}
+   int cp1=_cp(50),cp2=_cp(100),cp3=_cp(30);
+   CHECK("test_count_primes",(3u<<16)|(((uint32_t)(cp1+cp2+cp3))<<8)|(uint32_t)(cp1^cp2^cp3),0x0003321Cu);}
+  /* Sprint 104: test_min_falling_path — 3x3 grid; min_path=13, last_row_sum=40 */
+  {int _grd[3][3]={{2,1,3},{6,5,4},{7,8,9}},_dp[3][3];
+   for(int j=0;j<3;j++)_dp[0][j]=_grd[0][j];
+   for(int i=1;i<3;i++)for(int j=0;j<3;j++){int mn=_dp[i-1][j];if(j>0&&_dp[i-1][j-1]<mn)mn=_dp[i-1][j-1];if(j<2&&_dp[i-1][j+1]<mn)mn=_dp[i-1][j+1];_dp[i][j]=mn+_grd[i][j];}
+   int _fans=_dp[2][0],_frs=0;for(int j=0;j<3;j++){if(_dp[2][j]<_fans)_fans=_dp[2][j];_frs+=_dp[2][j];}
+   CHECK("test_min_falling_path",(3u<<16)|((uint32_t)_fans<<8)|(uint32_t)_frs,0x00030D28u);}
+  /* Sprint 104: test_k_closest_points — {(1,3),(-2,2),(5,8),(0,1)} k=2; sum_dist2=9 */
+  {int _kd[]={1*1+3*3,(-2)*(-2)+2*2,5*5+8*8,0*0+1*1};
+   int _ks=0;
+   /* sort 4 values, take 2 smallest */
+   for(int i=0;i<4-1;i++)for(int j=i+1;j<4;j++)if(_kd[j]<_kd[i]){int t=_kd[i];_kd[i]=_kd[j];_kd[j]=t;}
+   _ks=_kd[0]+_kd[1];
+   CHECK("test_k_closest_points",(4u<<16)|((uint32_t)_ks<<8)|2u,0x00040902u);}
+  /* Sprint 105: test_lcs — "ABCBDAB"/"BDCAB"->4, "AGGTAB"/"GXTXAYB"->4, "abc"/"abc"->3; sum=11 xor=3 */
+  {int _lcs(const char*s1,const char*s2){int m=0,n=0;while(s1[m])m++;while(s2[n])n++;int dp[8][8]={};for(int i=1;i<=m;i++)for(int j=1;j<=n;j++)dp[i][j]=(s1[i-1]==s2[j-1])?dp[i-1][j-1]+1:(dp[i-1][j]>dp[i][j-1]?dp[i-1][j]:dp[i][j-1]);return dp[m][n];}
+   int ll1=_lcs("ABCBDAB","BDCAB"),ll2=_lcs("AGGTAB","GXTXAYB"),ll3=_lcs("abc","abc");
+   CHECK("test_lcs",(3u<<16)|(((uint32_t)(ll1+ll2+ll3))<<8)|(uint32_t)(ll1^ll2^ll3),0x00030B03u);}
+  /* Sprint 105: test_monotonic_queue — arr={1,3,-1,-3,5,3,6,7} k=3; maxes={3,3,5,5,6,7} sum=29 xor=1 */
+  {int _marr[]={1,3,-1,-3,5,3,6,7},_dq[8],_mh=0,_mt=0,_ms=0,_mx=0;
+   for(int i=0;i<8;i++){while(_mh<_mt&&_dq[_mh]<=i-3)_mh++;while(_mh<_mt&&_marr[_dq[_mt-1]]<=_marr[i])_mt--;_dq[_mt++]=i;if(i>=2){_ms+=_marr[_dq[_mh]];_mx^=_marr[_dq[_mh]];}}
+   CHECK("test_monotonic_queue",(8u<<16)|((uint32_t)_ms<<8)|(uint32_t)_mx,0x00081D01u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

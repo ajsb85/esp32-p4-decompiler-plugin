@@ -1866,6 +1866,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "trace.*back.*subset.*via.*parent.*array|reconstruct.*divisible.*subset",
             "div_trace|subset_reconstruct|trace_div"
         ),
+        /* Sprint 102 — subarray_sum_k + max_circular_subarray */
+        new PatternDef("subarray_sum_k_prefix", "prefix_sum_hashmap_count", "high",
+            "prefix.*\\+=.*a.*i.*count.*\\+=.*hget.*prefix.*-.*k.*hadd.*prefix.*1",
+            "hclear.*hadd.*0.*1.*prefix.*=.*0.*count.*=.*0.*for.*prefix.*-.*k",
+            "subarray_sum_k|prefix_hashmap|count_subarray"
+        ),
+        new PatternDef("circular_subarray_max", "max_circular_total_minus_min", "high",
+            "total.*-.*mn.*>.*0.*imax.*mx.*total.*-.*mn.*:.*mx|circular.*total.*min",
+            "kadane_max.*kadane_min.*total_sum.*total.*-.*mn",
+            "circular_max|total_minus_min|circular_kadane"
+        ),
+        new PatternDef("kadane_min_variant", "min_subarray_kadane_variant", "medium",
+            "cur.*=.*imin.*a.*i.*cur.*\\+.*a.*i.*mn.*=.*imin.*mn.*cur",
+            "min_subarray.*kadane|running.*minimum.*subarray.*variant",
+            "kadane_min|min_kadane|min_subarray"
+        ),
+        /* Sprint 103 — serialize_bst + count_primes */
+        new PatternDef("serialize_bst_preorder", "bst_preorder_serialize", "high",
+            "preorder.*root.*arr.*idx|arr.*\\*idx.*\\+\\+.*=.*n.*val.*preorder.*n.*left.*preorder.*n.*right",
+            "deserialize.*arr.*idx.*sz.*lo.*hi|reconstruct.*bst.*bounds.*range",
+            "serialize_bst|preorder_serialize|bst_serialize"
+        ),
+        new PatternDef("sieve_eratosthenes", "prime_sieve_eratosthenes", "high",
+            "sieve.*0.*=.*sieve.*1.*=.*0|memset.*sieve.*1.*sieve.*0.*=.*sieve.*1.*=.*0",
+            "for.*p.*=.*2.*p.*\\*.*p.*<.*n.*if.*sieve.*p.*for.*j.*=.*p.*\\*.*p.*j.*<.*n.*j.*\\+=.*p.*sieve.*j.*=.*0",
+            "sieve|eratosthenes|prime_sieve"
+        ),
+        new PatternDef("bst_deserialize_bounds", "bst_range_deserialize", "medium",
+            "if.*\\*idx.*>=.*sz.*||.*arr.*\\*idx.*<.*lo.*||.*arr.*\\*idx.*>.*hi.*return.*NULL",
+            "n.*=.*alloc_node.*arr.*\\*idx.*\\(\\*idx\\)\\+\\+.*left.*=.*deserialize.*lo.*n.*val.*-.*1.*right.*=.*deserialize.*n.*val.*\\+.*1.*hi",
+            "bst_bounds|deserialize_range|bst_reconstruct"
+        ),
+        /* Sprint 104 — min_falling_path + k_closest_points */
+        new PatternDef("min_falling_path_dp", "falling_path_grid_dp", "high",
+            "mn.*=.*dp.*i.*-.*1.*j.*if.*j.*>.*0.*&&.*dp.*i.*-.*1.*j.*-.*1.*<.*mn.*mn.*=.*dp.*i.*-.*1.*j.*-.*1",
+            "dp.*i.*j.*=.*mn.*\\+.*grid.*i.*j.*for.*i.*=.*1.*n.*for.*j.*=.*0.*n",
+            "falling_path|falling_dp|grid_fall"
+        ),
+        new PatternDef("k_closest_sort", "k_closest_points_dist_sq", "high",
+            "dist_sq.*=.*p.*x.*p.*x.*\\+.*p.*y.*p.*y|dsq.*=.*x.*x.*\\+.*y.*y",
+            "qsort.*pts.*sizeof.*Point.*cmp_pts|sort.*by.*distance.*squared.*k.*closest",
+            "k_closest|closest_points|dist_sq_sort"
+        ),
+        new PatternDef("falling_path_boundary", "falling_path_edge_guard", "medium",
+            "if.*j.*>.*0.*&&.*dp.*i.*-.*1.*j.*-.*1.*<.*mn|if.*j.*<.*n.*-.*1.*&&.*dp.*i.*-.*1.*j.*\\+.*1.*<.*mn",
+            "boundary.*check.*j.*0.*j.*n.*-.*1.*falling.*path.*grid",
+            "falling_boundary|path_edge|grid_boundary"
+        ),
+        /* Sprint 105 — lcs + monotonic_queue */
+        new PatternDef("lcs_dp_2d", "longest_common_subseq_dp", "high",
+            "s1.*i.*-.*1.*==.*s2.*j.*-.*1.*dp.*i.*j.*=.*dp.*i.*-.*1.*j.*-.*1.*\\+.*1",
+            "dp.*i.*j.*=.*imax.*dp.*i.*-.*1.*j.*dp.*i.*j.*-.*1",
+            "lcs|common_subseq|longest_common"
+        ),
+        new PatternDef("monotonic_deque_max", "sliding_window_monotonic_deque", "high",
+            "while.*head.*<.*tail.*&&.*arr.*dq.*tail.*-.*1.*<=.*arr.*i.*tail--|dq.*tail\\+\\+.*=.*i",
+            "while.*head.*<.*tail.*&&.*dq.*head.*<=.*i.*-.*k.*head\\+\\+|window.*full.*maxes.*=.*arr.*dq.*head",
+            "monotonic_queue|deque_max|sliding_max_deque"
+        ),
+        new PatternDef("lcs_init_base", "lcs_dp_base_case_init", "medium",
+            "for.*i.*=.*0.*m.*dp.*i.*0.*=.*0|for.*j.*=.*0.*n.*dp.*0.*j.*=.*0",
+            "lcs.*base.*case.*empty.*string.*zero|dp.*0.*j.*=.*dp.*i.*0.*=.*0",
+            "lcs_base|lcs_init|dp_base_zero"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

@@ -261,6 +261,14 @@ declare -A EXPECTED_RESULT=(
     [test_count_digit_ones]=0x00032A1C
     [test_pascals_row]=0x00078023
     [test_largest_div_subset]=0x0006041D
+    [test_subarray_sum_k]=0x00030804
+    [test_max_circular_subarray]=0x00030D02
+    [test_serialize_bst]=0x0007220A
+    [test_count_primes]=0x0003321C
+    [test_min_falling_path]=0x00030D28
+    [test_k_closest_points]=0x00040902
+    [test_lcs]=0x00030B03
+    [test_monotonic_queue]=0x00081D01
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -349,7 +357,11 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_skip_list test_treap \
        test_turbulent test_min_cost_staircase \
        test_longest_valid_parens test_count_digit_ones \
-       test_pascals_row test_largest_div_subset)
+       test_pascals_row test_largest_div_subset \
+       test_subarray_sum_k test_max_circular_subarray \
+       test_serialize_bst test_count_primes \
+       test_min_falling_path test_k_closest_points \
+       test_lcs test_monotonic_queue)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

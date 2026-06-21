@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 173 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 201 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -188,6 +188,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_count_digit_ones.c` | Count digit-1s via position formula; n=13/50/100; sum=42 xor=28 | `0x00032A1C` | |
 | `test_pascals_row.c` | Pascal row7 in-place; sum=128, C(7,3)=35 | `0x00078023` | |
 | `test_largest_div_subset.c` | Largest divisible subset sort+DP; n=6 best={1,2,6,24} xor=29 | `0x0006041D` | |
+| `test_subarray_sum_k.c` | Count subarrays with sum=k via prefix+hashmap; 3 cases sum=8 xor=4 | `0x00030804` | |
+| `test_max_circular_subarray.c` | Max circular subarray: total−min_sub; 3 cases sum_pos=13 cnt=2 | `0x00030D02` | |
+| `test_serialize_bst.c` | Serialize BST as preorder, deserialize with bounds; psum=34 xor=10 | `0x0007220A` | |
+| `test_count_primes.c` | Sieve of Eratosthenes: n=50→15, n=100→25, n=30→10; sum=50 xor=28 | `0x0003321C` | |
+| `test_min_falling_path.c` | Min falling path in 3×3 grid; ans=13, last-row-sum=40 | `0x00030D28` | |
+| `test_k_closest_points.c` | K=2 closest points to origin by dist²; sum_dist2=9 | `0x00040902` | |
+| `test_lcs.c` | Longest common subsequence (2-D DP); 3 cases sum=11 xor=3 | `0x00030B03` | |
+| `test_monotonic_queue.c` | Sliding window max via monotonic deque; n=8 k=3 sum=29 xor=1 | `0x00081D01` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
