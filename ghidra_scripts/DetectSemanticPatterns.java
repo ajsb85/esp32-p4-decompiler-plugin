@@ -4004,6 +4004,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "x.*\\*.*0x01010101u.*>>.*24|popcount_multiply_shift_extract",
             "mis_popcount|bitmask_popcount|run_mis_tests"
         ),
+
+        // ── Articulation Points and Bridges ───────────────────────────────────
+        new PatternDef("apb_disc_low_update", "articulation_points_bridges_disc_low_tarjan", "high",
+            "disc.*low.*apb_disc.*apb_low.*apb_timer|tarjan_disc_low_init",
+            "apb_disc|apb_low|disc.*low.*timer|low.*disc.*back_edge",
+            "apb_find_all|run_apb_tests|articulation.*bridge.*dfs"
+        ),
+        new PatternDef("apb_ap_check", "articulation_points_bridges_cut_vertex_condition", "high",
+            "low.*v.*>=.*disc.*u.*apb_is_ap.*par|cut_vertex_ap_flag",
+            "apb_is_ap|is_ap.*low.*disc|apb_count_ap|low.*>=.*disc.*parent",
+            "apb_stk_child|root_children_ap_check|apb_dfs"
+        ),
+        new PatternDef("apb_bridge_check", "articulation_points_bridges_edge_bridge_condition", "high",
+            "low.*v.*>.*disc.*u.*apb_is_bridge|bridge.*edge.*low.*gt.*disc",
+            "apb_is_bridge|apb_eid|is_bridge.*low.*disc|apb_count_bridges",
+            "apb_add_edge|apb_head.*apb_to.*apb_nxt|apb_ecnt.*edge_id"
+        ),
+
+        // ── Treap with Order Statistics ───────────────────────────────────────
+        new PatternDef("tos_split_merge", "treap_order_stats_split_by_key_merge", "high",
+            "tos_split.*tos_pool.*key.*<=.*k|treap_split_key_left_right",
+            "tos_merge.*tos_pool.*pri.*>=|treap_merge_heap_priority",
+            "tos_split|tos_merge|run_tos_tests|treap.*order.*stat"
+        ),
+        new PatternDef("tos_size_update", "treap_order_stats_subtree_size_maintain", "high",
+            "tos_pool.*sz.*=.*1.*\\+.*tos_sz.*left.*tos_sz.*right|treap_size_upd",
+            "tos_upd|tos_sz|subtree.*size.*left.*right.*plus_one",
+            "tos_pool.*sz|tos_root|treap_order_stats_size"
+        ),
+        new PatternDef("tos_kth_rank", "treap_order_stats_kth_smallest_rank_query", "high",
+            "ls.*tos_sz.*left.*k.*<=.*ls.*k.*==.*ls.*\\+.*1.*k.*-=.*ls|kth_order_stat",
+            "tos_kth|tos_rank|kth_smallest.*left_size|order_of_rank",
+            "tos_insert|tos_erase|tos_split.*tos_merge.*tos_rand"
+        ),
+
+        // ── Maximum Weight Closure ────────────────────────────────────────────
+        new PatternDef("mc_closure_source_sink", "maximum_closure_source_sink_construction", "high",
+            "mc_add_edge.*s.*i.*weights.*i|mc_add_edge.*i.*t.*-weights|closure_pos_neg_edges",
+            "pos_sum.*weights.*>.*0|mc_solve.*pos_sum.*mc_maxflow|max_closure_reduction",
+            "mc_solve|run_mc_tests|maximum_closure.*min_cut"
+        ),
+        new PatternDef("mc_dinic_bfs_level", "maximum_closure_dinic_bfs_level_graph", "high",
+            "mc_level.*=.*-1.*mc_level.*s.*=.*0.*mc_bfs_queue|dinic_bfs_level_init",
+            "mc_bfs|mc_level.*mc_cap.*>.*0.*mc_level.*v.*==.*-1|bfs_level_graph",
+            "mc_head|mc_to|mc_cap|mc_nxt|mc_iter|dinic_flow_network"
+        ),
+        new PatternDef("mc_dinic_blocking_flow", "maximum_closure_dinic_blocking_flow_dfs", "high",
+            "mc_dfs.*mc_level.*v.*!=.*mc_level.*u.*\\+.*1.*mc_cap.*<=.*0|dinic_dfs_block",
+            "mc_cap.*e.*-=.*d.*mc_cap.*e.*\\^.*1.*\\+=.*d|residual_cap_update",
+            "mc_maxflow|mc_dfs|mc_iter|pos_sum.*-.*mc_maxflow.*s.*t"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
