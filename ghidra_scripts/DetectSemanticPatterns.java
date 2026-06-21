@@ -5829,6 +5829,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "0x32090E|AB_UPPER.*50.*count.*9.*sum.*14|abundant_result",
             "g_result.*0x32.*0x09.*0x0E|ab_g_result"
         ),
+        new PatternDef("mersenne_exponents_shift", "mersenne_exponents_shift", "high",
+            "1u\\s*<<\\s*p.*-\\s*1u|mersenne_construct_shift",
+            "me_is_prime.*1u\\s*<<.*-\\s*1|mersenne_primality_check",
+            "ME_UPPER.*20.*me_count.*exp_sum|mersenne_exponent_loop"
+        ),
+        new PatternDef("mersenne_exponents_count", "mersenne_exponents_count", "high",
+            "me_count.*exp_sum.*p.*ME_UPPER|mersenne_count_sum",
+            "me_is_prime.*d.*d.*<=.*n.*d\\s*\\+=\\s*2|mersenne_trial_div",
+            "7.*66.*0x140742|mersenne_result_pack"
+        ),
+        new PatternDef("mersenne_exponents_pack", "mersenne_exponents_pack", "medium",
+            "ME_UPPER\\s*<<\\s*16.*me_count.*<<.*8.*exp_sum|mersenne_pack",
+            "0x140742|ME_UPPER.*20.*count.*7.*sum.*66|mersenne_metrics",
+            "g_result.*0x14.*0x07.*0x42|me_g_result"
+        ),
+        new PatternDef("highly_composite_divisor", "highly_composite_divisor", "high",
+            "hc_divisor_count.*d.*<=.*n.*n\\s*%\\s*d.*cnt|highly_composite_div_loop",
+            "max_div.*cnt.*>.*max_div.*hc_count|highly_composite_max_track",
+            "HC_UPPER.*100.*hc_count.*hc_sum.*max_div|highly_composite_scan"
+        ),
+        new PatternDef("highly_composite_count", "highly_composite_count", "high",
+            "hc_count.*hc_sum.*max_div.*HC_UPPER|hc_accumulate",
+            "cnt.*>.*max_div.*max_div.*=.*cnt.*hc_sum|hc_update_max",
+            "9.*193.*0x6409C1|highly_composite_result"
+        ),
+        new PatternDef("highly_composite_pack", "highly_composite_pack", "medium",
+            "HC_UPPER\\s*<<\\s*16.*hc_count.*<<.*8.*hc_sum|hc_pack",
+            "0x6409C1|HC_UPPER.*100.*count.*9.*sum.*193|hc_metrics",
+            "g_result.*0x64.*0x09.*0xC1|hc_g_result"
+        ),
+        new PatternDef("aliquot_sequence_proper_sum", "aliquot_sequence_proper_sum", "high",
+            "aq_proper_sum.*d.*<.*n.*n\\s*%\\s*d.*s\\s*\\+=|aliquot_proper_div",
+            "aq_chain_length.*nxt.*aq_proper_sum.*cur|aliquot_chain_follow",
+            "AQ_UPPER.*40.*max_steps.*sum_steps|aliquot_outer_loop"
+        ),
+        new PatternDef("aliquot_sequence_chain", "aliquot_sequence_chain", "high",
+            "aq_chain_length.*AQ_STEP_LIMIT.*nxt.*==.*0|aliquot_termination",
+            "max_steps.*sum_steps.*len.*>.*max_steps|aliquot_max_track",
+            "15.*153.*0x280F99|aliquot_result_values"
+        ),
+        new PatternDef("aliquot_sequence_pack", "aliquot_sequence_pack", "medium",
+            "AQ_UPPER\\s*<<\\s*16.*max_steps.*<<.*8.*sum_steps|aliquot_pack",
+            "0x280F99|AQ_UPPER.*40.*max.*15.*sum.*153|aliquot_metrics",
+            "g_result.*0x28.*0x0F.*0x99|aq_g_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
