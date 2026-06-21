@@ -348,6 +348,20 @@ int main(void){
    for(int j=7;j>=0;j--)rto[--rct[rtp[j]>>4]]=rtp[j];
    uint32_t rrx=0;for(int j=0;j<8;j++)rrx^=rto[j];
    CHECK("test_radix_sort",(8u<<16)|((uint32_t)rto[7]<<8)|(rrx&0xFFu),0x00085978u);}
+  /* test_manacher: "#A#B#A#C#A#B#A#" (n_orig=7), P max=7, sum=17 */
+  {static const char mts[]="#A#B#A#C#A#B#A#";int mtp[15]={0};int mcc=0,mcr=0,mmmx=0;
+   for(int i=0;i<15;i++){int mir=2*mcc-i;
+     mtp[i]=(i<mcr)?(mcr-i<mtp[mir]?mcr-i:mtp[mir]):0;
+     while(i-mtp[i]-1>=0&&i+mtp[i]+1<15&&mts[i-mtp[i]-1]==mts[i+mtp[i]+1])mtp[i]++;
+     if(i+mtp[i]>mcr){mcc=i;mcr=i+mtp[i];}if(mtp[i]>mmmx)mmmx=mtp[i];}
+   uint32_t msp=0;for(int i=0;i<15;i++)msp+=mtp[i];
+   CHECK("test_manacher",(7u<<16)|((uint32_t)mmmx<<8)|(msp&0xFFu),0x00070711u);}
+  /* test_coin_change: coins={1,5,12,25}, dp[11]=3,dp[14]=3,dp[30]=2, sum=8, xor=2 */
+  {static const int ccoins[]={1,5,12,25};int cdp[31];
+   cdp[0]=0;for(int i=1;i<=30;i++){cdp[i]=999;for(int j=0;j<4;j++)if(i>=ccoins[j]&&cdp[i-ccoins[j]]+1<cdp[i])cdp[i]=cdp[i-ccoins[j]]+1;}
+   static const int ctgts[]={11,14,30};uint32_t cs2=0,cx2=0;
+   for(int k=0;k<3;k++){cs2+=(uint32_t)cdp[ctgts[k]];cx2^=(uint32_t)cdp[ctgts[k]];}
+   CHECK("test_coin_change",(4u<<16)|(cs2<<8)|(cx2&0xFFu),0x00040802u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

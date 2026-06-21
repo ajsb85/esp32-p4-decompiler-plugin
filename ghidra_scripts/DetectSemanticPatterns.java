@@ -686,6 +686,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "out\\[--cnt|tmp\\[--cnt|--cnt\\[",               // stable output: --cnt[key]
             "cnt\\[i\\].*\\+=.*cnt\\[i.*-.*1\\]|cnt.*\\+=.*cnt"  // prefix sum
         ),
+
+        // ── Manacher's palindrome (103, 104) ─────────────────────────────────
+        new PatternDef("manacher_window", "manacher_cr_window", "high",
+            "mirror.*=.*2.*\\*.*c.*-.*i|2\\*c.*-.*i",          // mirror index: 2*c-i
+            "if.*i.*<.*r.*p\\[i\\].*=|if.*i.*<.*r",           // [c,r) window init
+            "manacher|man_p|palindrome_radius"                // naming
+        ),
+        new PatternDef("manacher_expand", "manacher_centre_expand", "high",
+            "t\\[i.*-.*p\\[i\\].*-.*1\\].*==.*t\\[i.*\\+.*p\\[i\\].*\\+.*1\\]",  // expand compare
+            "p\\[i\\]\\+\\+|p\\[centre\\]\\+\\+",             // centre expansion
+            "if.*i.*\\+.*p.*>.*r.*c.*=.*i|c\\s*=\\s*i.*r\\s*="  // window advance
+        ),
+
+        // ── Coin change DP (105, 106) ─────────────────────────────────────────
+        new PatternDef("coin_change_dp", "coinchange_min", "high",
+            "dp\\[i\\].*=.*CC_LIMIT|dp\\[0\\].*=.*0.*dp.*=.*BIG|cc_dp.*=.*CC_LIMIT",  // init sentinel
+            "if.*i.*>=.*coins.*dp\\[i.*-.*coins|dp.*i.*-.*c.*\\+.*1.*<.*dp\\[i\\]",  // min(dp[i], dp[i-c]+1)
+            "coin_change|cc_dp|coin_change_dp"               // naming
+        ),
+        new PatternDef("coin_change_inner", "coinchange_loop", "high",
+            "for.*j.*=.*0.*j.*<.*nc|for.*j.*<.*CC_COINS",    // loop over denominations
+            "i.*>=.*coins\\[j\\]|i.*>=.*c",                  // feasibility check
+            "dp\\[i\\].*=.*dp\\[i.*-|min.*dp.*coins"        // recurrence body
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
