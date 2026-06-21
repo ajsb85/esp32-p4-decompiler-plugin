@@ -2307,6 +2307,57 @@ public class DetectSemanticPatterns extends GhidraScript {
             "ntt_X.*k.*=.*sum.*modular.*ntt_a.*j.*ntt_pow.*w.*k.*j",
             "ntt_loop|dft_loop|ntt_outer_k"
         ),
+
+        // ── van Emde Boas tree ──────────────────────────────────────────────
+        new PatternDef("veb_cluster_index", "veb_high_low_cluster_split", "high",
+            "hi.*=.*x.*>>.*4|lo.*=.*x.*&.*0xF|cluster.*=.*x.*>>.*sqrt|position.*=.*x.*&.*mask",
+            "x.*>>.*VEB_SQT|hi.*=.*x.*sqrt_u|veb.*cluster.*index",
+            "veb_hi|veb_lo|cluster_split|sqrt_decomp_index"
+        ),
+        new PatternDef("veb_summary_bit", "veb_summary_cluster_nonempty_bit", "high",
+            "summary.*\\|=.*1u.*<<.*hi|summary.*&=.*~.*1.*<<.*hi|summary.*bit.*cluster",
+            "v.*summary.*\\|=.*1u.*<<|v.*->summary.*&=.*~.*1u.*<<.*hi",
+            "veb_summary|cluster_nonempty_bit|veb_bit_set"
+        ),
+        new PatternDef("veb_succ_scan", "veb_successor_cluster_scan", "high",
+            "c.*=.*hi.*\\+.*1.*while.*c.*<.*VEB_SQT.*summary.*>>.*c.*&.*1|next.*cluster.*scan",
+            "while.*c.*<.*VEB_SQT.*if.*summary.*&.*1u.*<<.*c.*return.*c.*<<.*4|succ.*cluster",
+            "veb_succ|successor_cluster|next_nonempty_cluster"
+        ),
+
+        // ── Baby-step Giant-step (BSGS) ─────────────────────────────────────
+        new PatternDef("bsgs_baby_steps", "bsgs_precompute_baby_step_table", "high",
+            "for.*j.*=.*0.*j.*<.*m.*j\\+\\+.*ht_insert.*gj.*j|gj.*=.*mod_mul.*gj.*g.*p",
+            "baby.*step.*precompute|ht_insert.*g_to_j|bsgs_table.*fill",
+            "bsgs_baby|baby_step_table|gj_mod_p"
+        ),
+        new PatternDef("bsgs_giant_step", "bsgs_giant_step_inverse_scan", "high",
+            "gm_inv.*=.*mod_pow.*g.*p.*-.*1.*-.*m|val.*=.*mod_mul.*val.*gm_inv.*p",
+            "giant.*step.*g.*neg_m.*mod|bsgs.*g_inv_m.*scan|val.*\\*=.*gm_inv",
+            "bsgs_giant|giant_step_inv|gm_inv_scan"
+        ),
+        new PatternDef("bsgs_hash_probe", "bsgs_hash_table_linear_probe", "high",
+            "idx.*=.*key.*\\*.*2654435761u.*>>.*23|idx.*&=.*BSGS_HT_SIZE.*-.*1",
+            "while.*ht.*idx.*val.*!=.*-1.*&&.*ht.*idx.*key.*!=.*key.*idx.*=.*idx.*\\+.*1",
+            "bsgs_hash|knuth_multiplicative_hash|linear_probe_bsgs"
+        ),
+
+        // ── Wavelet tree ────────────────────────────────────────────────────
+        new PatternDef("wavelet_build_level", "wavelet_tree_level_stable_partition", "high",
+            "for.*lv.*=.*LEVELS.*-.*1.*lv.*>=.*0.*lv--|for.*i.*=.*0.*i.*<.*N.*bmap.*lv.*i",
+            "wt_bmap.*lv.*i.*=.*tmp.*i.*&.*bit.*?.*1.*:.*0|wavelet.*level.*partition",
+            "wt_build|wavelet_partition|wavelet_level_bmap"
+        ),
+        new PatternDef("wavelet_cnt0_prefix", "wavelet_tree_prefix_zero_count", "high",
+            "wt_cnt0.*lv.*i\\+1.*=.*wt_cnt0.*lv.*i.*\\+.*wt_bmap.*lv.*i.*==.*0",
+            "cnt0.*lv.*i.*\\+.*1.*=.*cnt0.*lv.*i.*\\+.*1.*-.*bit|prefix.*zero.*count.*wavelet",
+            "wt_cnt0|prefix_zero_count|wavelet_prefix_bits"
+        ),
+        new PatternDef("wavelet_freq_navigate", "wavelet_tree_freq_query_navigate", "high",
+            "if.*v.*&.*bit.*nlo.*=.*zeros_total.*\\+.*lo.*-.*cnt0.*lv.*lo|go.*right.*left.*wavelet",
+            "lo.*=.*wt_cnt0.*lv.*lo.*hi.*=.*wt_cnt0.*lv.*hi|wavelet.*freq.*go.*left",
+            "wt_freq|wavelet_navigate|wavelet_range_query"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
