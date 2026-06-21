@@ -1,0 +1,88 @@
+/* SPDX-License-Identifier: Apache-2.0
+ *
+ * ESP32-P4 Ghidra Plugin
+ * Copyright 2026 Alexander Salas Bastidas <ajsb85@firechip.dev>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// Ghidra Extension build for ESP32-P4 Decompiler Plugin
+// Build with: gradle -PGHIDRA_INSTALL_DIR=/opt/ghidra_12.1.2_PUBLIC
+
+def ghidraInstallDir
+
+if (System.env.GHIDRA_INSTALL_DIR) {
+    ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+}
+else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
+    ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
+}
+
+if (ghidraInstallDir == null) {
+    throw new GradleException("GHIDRA_INSTALL_DIR not set. Set the env var or pass -PGHIDRA_INSTALL_DIR=<path>")
+}
+
+apply from: "$ghidraInstallDir/support/buildExtension.gradle"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+// Compile Sleigh language files after Java compilation
+task compileSleigh(type: JavaExec, dependsOn: compileJava) {
+    description = "Compile ESP32-P4 Sleigh language files"
+    group = "Ghidra ESP32-P4"
+
+    def sleighCompiler = file("$ghidraInstallDir/support/sleigh")
+    def langDir = file("data/languages")
+
+    // Sleigh compiler searches multiple module dirs for @include resolution
+    def moduleDirs = [
+        langDir.absolutePath,
+        "$ghidraInstallDir/Ghidra/Processors/RISCV/data/languages"
+    ]
+
+    classpath = files("$ghidraInstallDir/support/LaunchSupport.jar")
+    mainClass = "LaunchSupport"
+
+    args = [ghidraInstallDir, "Headless", "-nosplash"] +
+           ["ghidra.pcodeCPort.slgh_compile.SlaFormat"] +
+           moduleDirs +
+           [file("data/languages/esp32p4.slaspec").absolutePath]
+
+    doFirst {
+        if (!sleighCompiler.exists()) {
+            throw new GradleException("Sleigh compiler not found at: $sleighCompiler")
+        }
+    }
+}
+
+// Run sleigh via the analyzeHeadless wrapper
+task compileSleighDirect(type: Exec) {
+    description = "Compile ESP32-P4 Sleigh via support/sleigh script"
+    group = "Ghidra ESP32-P4"
+
+    environment "GHIDRA_INSTALL_DIR", ghidraInstallDir
+
+    commandLine "$ghidraInstallDir/support/sleigh",
+        "-i", "$ghidraInstallDir/Ghidra/Processors/RISCV/data/languages",
+        "data/languages/esp32p4.slaspec"
+
+    workingDir projectDir
+
+    standardOutput = System.out
+    errorOutput = System.err
+    ignoreExitValue = true
+}
