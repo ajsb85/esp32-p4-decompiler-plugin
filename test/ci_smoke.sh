@@ -277,6 +277,19 @@ int main(void){
      if(ed1[i-1]==ed2[j-1])dp3[i][j]=dp3[i-1][j-1];
      else{int a=dp3[i-1][j]+1,b=dp3[i][j-1]+1,c=dp3[i-1][j-1]+1;dp3[i][j]=a<b?(a<c?a:c):(b<c?b:c);}}
    CHECK("test_edit_dist",(6u<<16)|(7u<<8)|(uint32_t)dp3[la][lb],0x00060703u);}
+  /* test_bellman_ford: 5 nodes, edges with neg weights, dist={0,6,7,2,4}, sum=19, xor=7 */
+  {struct{int u,v,w;}bfe[8]={{0,1,6},{0,2,7},{1,2,8},{1,3,-4},{1,4,5},{2,4,-3},{3,0,2},{4,3,7}};
+   int bfd[5]={0,9999,9999,9999,9999};
+   for(int p=0;p<4;p++)for(int e=0;e<8;e++){int u=bfe[e].u,v=bfe[e].v,w=bfe[e].w;if(bfd[u]+w<bfd[v])bfd[v]=bfd[u]+w;}
+   uint32_t bfs=0,bfx=0;for(int i=0;i<5;i++){bfs+=(uint32_t)bfd[i];bfx^=(uint32_t)bfd[i];}
+   CHECK("test_bellman_ford",(5u<<16)|(bfs<<8)|(bfx&0xFFu),0x00051307u);}
+  /* test_counting_sort: {4,2,2,8,3,3,1,4,1,8}, sorted {1,1,2,2,3,3,4,4,8,8}, sum=36, xor=0 */
+  {static const int csa2[10]={4,2,2,8,3,3,1,4,1,8};int cnt2[10]={0},cso2[10];
+   for(int i=0;i<10;i++)cnt2[csa2[i]]++;
+   for(int i=1;i<10;i++)cnt2[i]+=cnt2[i-1];
+   for(int i=9;i>=0;i--)cso2[--cnt2[csa2[i]]]=csa2[i];
+   uint32_t css2=0,csx2=0;for(int i=0;i<10;i++){css2+=(uint32_t)cso2[i];csx2^=(uint32_t)cso2[i];}
+   CHECK("test_counting_sort",(10u<<16)|(css2<<8)|(csx2&0xFFu),0x000A2400u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }

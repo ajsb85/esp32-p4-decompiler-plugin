@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 34 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 36 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -46,6 +46,8 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_fib_memo.c` | Top-down memoized Fibonacci fib(0..9); fib(9)=34, xor_all=54 | `0x000A2236` | |
 | `test_sieve.c` | Sieve of Eratosthenes ≤50; 15 primes, last=47, xor=26 | `0x000F2F1A` | |
 | `test_edit_dist.c` | Levenshtein edit distance "KITTEN"→"SITTING" via 2D DP; dist=3 | `0x00060703` | |
+| `test_bellman_ford.c` | Bellman-Ford SSSP on 5-node graph with neg weights; dist={0,6,7,2,4}, sum=19, xor=7 | `0x00051307` | |
+| `test_counting_sort.c` | Stable counting sort {4,2,2,8,3,3,1,4,1,8}→{1…8,8}; sum=36, xor=0 | `0x000A2400` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -128,7 +130,7 @@ diff /tmp/orig.dis /tmp/rebuilt.dis | head -40
 ## Semantic pattern detection
 
 `DetectSemanticPatterns.java` classifies decompiled function bodies against
-81 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
+85 algorithm patterns using multi-regex heuristics. Run it as a Ghidra post-script
 and it emits `semantic_hints.json` alongside the decompiled `.c`:
 
 ```bash
@@ -169,6 +171,8 @@ Pattern families currently covered (51 patterns):
 | Memoization DP | Fibonacci cache-check hit, recursive memoize-before-return |
 | Number theory | Sieve outer i*i bound + composite marking, prime scan |
 | Edit distance DP | Levenshtein 2D fill with 3-way min, character equality check |
+| Bellman-Ford | n-1 relaxation passes + INF guard, negative-cycle final pass |
+| Counting sort | Frequency count by value, prefix-sum, stable right-to-left output |
 | Dynamic programming (extra) | 0/1 knapsack 1D reverse iteration, capacity-subproblem table access |
 
 ---

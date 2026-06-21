@@ -113,6 +113,8 @@ declare -A EXPECTED_RESULT=(
     [test_fib_memo]=0x000A2236
     [test_sieve]=0x000F2F1A
     [test_edit_dist]=0x00060703
+    [test_bellman_ford]=0x00051307
+    [test_counting_sort]=0x000A2400
 )
 
 # Tests that require real ESP32-P4 ECO2 hardware to execute.
@@ -127,7 +129,8 @@ TESTS=(hello test_sorting test_math test_state_machine test_crypto \
        test_bfs test_knapsack test_dfs test_kmp \
        test_dijkstra test_binary_search \
        test_toposort test_fib_memo \
-       test_sieve test_edit_dist)
+       test_sieve test_edit_dist \
+       test_bellman_ford test_counting_sort)
 
 # ── Phase 1: compile originals ────────────────────────────────────────────────
 echo "══ Phase 1: Compile originals ══════════════════════════════"

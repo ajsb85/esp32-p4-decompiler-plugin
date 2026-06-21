@@ -566,6 +566,30 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dp.*i-1.*j.*dp.*i.*j-1.*dp.*i-1.*j-1",           // three dp cells in min
             "edit_dist|levenshtein|lev_dp"                     // function/var name
         ),
+
+        // ── Bellman-Ford SSSP (83, 84) ────────────────────────────────────────
+        new PatternDef("bellman_ford_relax", "bf_edge_relax", "high",
+            "for.*pass.*<.*BF_N|for.*p.*<.*n.*-.*1",           // n-1 pass outer loop
+            "bf_dist.*\\+.*w.*<.*bf_dist|d\\[u\\].*\\+.*w.*<.*d\\[v\\]", // relaxation cond
+            "if.*bf_dist.*!.*INF|if.*dist.*!=.*INF"           // INF guard
+        ),
+        new PatternDef("bellman_ford_neg", "bf_negcycle", "medium",
+            "for.*e.*<.*BF_E|for.*e.*<.*n_edges",              // final pass edge scan
+            "return.*1.*negative|neg.*cycle|neg_cycle",        // cycle return flag
+            "bellman_ford|bf_edges|BF_INF"                    // naming
+        ),
+
+        // ── Counting sort (85, 86) ────────────────────────────────────────────
+        new PatternDef("counting_sort_count", "csort_freq", "high",
+            "cs_count|count\\[arr\\[i\\]\\]|freq\\[arr\\[",    // freq array indexed by value
+            "count.*\\+\\+|cs_count.*arr.*\\+\\+",             // increment by value
+            "counting_sort|count_sort|csort"                   // function name
+        ),
+        new PatternDef("counting_sort_stable", "csort_output", "high",
+            "for.*i.*=.*n.*-.*1.*i.*>=.*0",                    // right-to-left loop
+            "--cs_count.*arr|--count\\[arr\\[i\\]\\]",         // pre-decrement index
+            "cs_out.*--.*count|out.*--.*count.*arr"            // stable output write
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
