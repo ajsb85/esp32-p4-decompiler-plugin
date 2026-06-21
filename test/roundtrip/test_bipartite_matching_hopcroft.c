@@ -116,9 +116,10 @@ void _start(void) {
         if (hk_match_l[u] != -1) sum_r += hk_match_l[u];
     }
 
-    /* g_result = (n_left<<16) | (matching<<8) | sum_r
-     *          = (4<<16) | (4<<8) | 6 = 0x040406 */
-    g_result = ((uint32_t)HK_L    << 16)
+    /* n_edges = 8 unique edges in the graph */
+    int n_edges = 8;
+    /* g_result = (n_edges<<16) | (matching<<8) | sum_r = 0x080406 */
+    g_result = ((uint32_t)n_edges  << 16)
              | ((uint32_t)matching << 8)
              |  (uint32_t)sum_r;
     while (1) {}
