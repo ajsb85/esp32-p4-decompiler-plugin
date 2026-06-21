@@ -3004,6 +3004,52 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*s.*j.*<.*s.*k.*j.*=.*i|lyndon.*reset.*j.*on.*less|duval.*strict.*less.*reset",
             "lyndon.*string.*suffix.*rotation|lyn_s.*compare.*duval.*progress"
         ),
+
+        // ── DSU with rollback (no path compression) ──────────────────────────
+        new PatternDef("dsu_find_no_compress", "dsu_rollback_find_without_path_compression", "high",
+            "while.*dr_p.*x.*!=.*x.*x.*=.*dr_p.*x|while.*p.*x.*!=.*x.*x.*=.*p.*x",
+            "find.*no.*compress|dsu_rollback_find",
+            "dsu_no_compress|rollback_find|dsu_path_free"
+        ),
+        new PatternDef("dsu_rollback_push", "dsu_rollback_push_undo_record_before_union", "high",
+            "dr_snode.*dr_top.*=.*b.*dr_soldp.*dr_top.*=.*dr_p.*b|snode.*top.*=.*b.*soldp.*top",
+            "push.*undo.*stack.*before.*union|dsu_undo_push.*union_by_rank",
+            "dsu_undo_push|rollback_stack|dsu_pre_save"
+        ),
+        new PatternDef("dsu_rollback_restore", "dsu_rollback_pop_undo_records_to_checkpoint", "high",
+            "while.*dr_top.*>.*cp.*dr_top--|while.*top.*>.*checkpoint.*top--",
+            "dr_p.*b.*=.*dr_soldp.*dr_top.*dr_r.*a.*=.*dr_soldr|undo.*restore.*pop",
+            "dsu_rollback|dsu_undo_pop|checkpoint_restore"
+        ),
+
+        // ── Sweep-line interval depth ─────────────────────────────────────────
+        new PatternDef("sweep_open_close_ev", "sweep_line_open_close_event_creation", "high",
+            "sw_ev.*sw_ne.*=.*SwEv.*ls.*i.*\\+.*1.*sw_ev.*sw_ne.*=.*SwEv.*rs.*i.*\\+.*1.*-.*1",
+            "create.*open.*close.*events.*interval|ev.*open.*delta.*\\+1.*close.*-1",
+            "sweep_events|open_close|interval_events"
+        ),
+        new PatternDef("sweep_depth_max", "sweep_line_running_depth_maximum", "high",
+            "cur.*\\+=.*sw_ev.*i.*d.*if.*cur.*>.*mx.*mx.*=.*cur|running_sum.*update.*max",
+            "current.*\\+=.*event.*delta.*max.*sweep|depth.*sweep.*increment.*max",
+            "sweep_depth|interval_depth|sweep_max"
+        ),
+
+        // ── Parallel binary search ────────────────────────────────────────────
+        new PatternDef("pbs_outer_log_loop", "parallel_bsearch_log_n_outer_iterations", "high",
+            "for.*iter.*=.*0.*iter.*<.*PBS_LOG.*iter\\+\\+.*psum.*=.*0|log_n_passes_parallel_bsearch",
+            "outer_log_loop.*parallel.*binary.*search|pbs_iter_count",
+            "pbs_outer|parallel_bsearch|pbs_log_iter"
+        ),
+        new PatternDef("pbs_mid_per_query", "parallel_bsearch_per_query_midpoint_check", "high",
+            "if.*pbs_lo.*q.*>.*pbs_hi.*q.*continue.*mid.*=.*pbs_lo.*\\+.*pbs_hi.*\\/.*2.*if.*mid.*==.*i",
+            "mid.*lo.*q.*hi.*q.*2.*if.*mid.*==.*i.*check|per_query_mid_check_parallel",
+            "pbs_mid|parallel_mid_check|pbs_query_mid"
+        ),
+        new PatternDef("pbs_narrow_lo_hi", "parallel_bsearch_narrow_lo_hi_per_query", "high",
+            "if.*psum.*>=.*pbs_thr.*q.*pbs_hi.*q.*=.*mid.*-.*1.*else.*pbs_lo.*q.*=.*mid.*\\+.*1",
+            "check.*pass.*hi.*q.*=.*mid.*-.*1.*else.*lo.*q.*=.*mid.*\\+.*1|narrow_parallel_range",
+            "pbs_narrow|pbs_lo_hi|parallel_binary_narrow"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
