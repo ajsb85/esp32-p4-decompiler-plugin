@@ -276,13 +276,25 @@ public class ESP32P4Analyzer extends AbstractAnalyzer {
             program.getReferenceManager().addMemoryReference(
                 loopEnd, loopStart, RefType.CONDITIONAL_JUMP, SourceType.ANALYSIS, 0);
 
-            // Annotate the loop-end instruction
+            // Annotate the loop-end instruction and inject back-edge fall-through.
             Instruction lpEndInstr = program.getListing().getInstructionAt(loopEnd);
             if (lpEndInstr != null) {
                 String backEdge = String.format(
                     "[xesploop%d] Hardware loop back-edge → %s (decrement count; jump if count≠0)",
                     loopId, loopStart);
                 lpEndInstr.setComment(CommentType.POST, backEdge);
+
+                // Override the fall-through of the loop-end instruction to create a
+                // back-edge in the decompiler's CFG.  The hardware decrements COUNT
+                // and jumps to loopStart if COUNT != 0; the fall-through override
+                // makes Ghidra's decompiler see the back-edge and reconstruct a loop
+                // structure (for/while) instead of a goto-tangle.
+                try {
+                    program.getListing().setFallThrough(loopEnd, loopStart);
+                } catch (Exception ex) {
+                    log.appendMsg("Could not set fall-through at " + loopEnd
+                            + " → " + loopStart + ": " + ex.getMessage());
+                }
             }
         } catch (Exception e) {
             log.appendMsg("Could not annotate loop at " + instr.getAddress() + ": " + e.getMessage());

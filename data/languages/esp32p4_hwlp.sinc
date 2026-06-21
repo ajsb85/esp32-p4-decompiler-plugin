@@ -79,16 +79,31 @@ define pcodeop custom3.rd.rs1.rs2;
 
 # esp.lp.starti  loop_id, start_offset
 # funct3=0 [14:12]=000; [31:20]=signed 12-bit offset (halfwords from PC to loop start)
-# Constraining op0711 to 0 or 1 makes this more specific than generic custom1
-:esp.lp.starti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0 & (op0711=0x0 | op0711=0x1) & rd & immI
+# Split by loop ID so the decompiler can trace HWLP0_START / HWLP1_START dataflow.
+:esp.lp.starti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0 & op0711=0x0 & rd & immI
 {
+    HWLP0_START = inst_start + immI * 2;
+    esp_lp_starti(rd:1, immI);
+}
+
+:esp.lp.starti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0 & op0711=0x1 & rd & immI
+{
+    HWLP1_START = inst_start + immI * 2;
     esp_lp_starti(rd:1, immI);
 }
 
 # esp.lp.endi  loop_id, end_offset
 # funct3=1 [14:12]=001; [31:20]=signed 12-bit offset (halfwords from PC to loop end)
-:esp.lp.endi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x1 & (op0711=0x0 | op0711=0x1) & rd & immI
+# Split by loop ID so the decompiler can trace HWLP0_END / HWLP1_END dataflow.
+:esp.lp.endi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x1 & op0711=0x0 & rd & immI
 {
+    HWLP0_END = inst_start + immI * 2;
+    esp_lp_endi(rd:1, immI);
+}
+
+:esp.lp.endi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x1 & op0711=0x1 & rd & immI
+{
+    HWLP1_END = inst_start + immI * 2;
     esp_lp_endi(rd:1, immI);
 }
 
@@ -147,9 +162,18 @@ define pcodeop custom3.rd.rs1.rs2;
 
 # esp.lp.setupi  loop_id, count_imm, loop_end_label
 # funct3=5 [14:12]=101; [31:20]=encoded as count in upper bits, body in lower
-# Constraining op0711 to 0 or 1 to avoid conflict with generic custom1 funct3=5
-:esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & (op0711=0x0 | op0711=0x1) & rd & immI
+# Count and end-offset are packed in immI (exact split unconfirmed from hardware).
+# Conservative: write HWLP_START = inst_next (loop body always starts at next instr).
+# Split by loop ID to avoid conflict with generic custom1 funct3=5.
+:esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & op0711=0x0 & rd & immI
 {
+    HWLP0_START = inst_next;
+    esp_lp_setupi(rd:1, immI);
+}
+
+:esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & op0711=0x1 & rd & immI
+{
+    HWLP1_START = inst_next;
     esp_lp_setupi(rd:1, immI);
 }
 

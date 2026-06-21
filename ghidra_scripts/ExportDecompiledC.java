@@ -329,7 +329,7 @@ public class ExportDecompiledC extends GhidraScript {
                     pw.println(" * periph  : " + String.join(", ", periphs));
                 // Sprint 23: annotate ESP32-P4 hardware features visible in decompiled text.
                 if (raw != null && HWLP_REF.matcher(raw).find())
-                    pw.println(" * hw_feat  : xesploop — hardware loop; back-edge NOT in decompiler CFG");
+                    pw.println(" * hw_feat  : xesploop — hardware loop; back-edge modeled via fall-through override");
                 if (raw != null && PIE_QREF.matcher(raw).find())
                     pw.println(" * hw_feat  : xespv2p2-PIE — 128-bit Q-register SIMD");
                 pw.println(" */");
