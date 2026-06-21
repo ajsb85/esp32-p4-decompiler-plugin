@@ -1,0 +1,178 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# ESP32-P4 Ghidra Plugin
+# Copyright 2026 Alexander Salas Bastidas <ajsb85@firechip.dev>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# esp32p4_hwlp.sinc
+# Espressif xesploop Hardware Loop Extension for ESP32-P4
+# Opcode space: custom-1 (0x2B) -- fully replaces riscv.custom.sinc custom-1 entries
+# Also covers generic custom-0/2/3 to avoid needing riscv.custom.sinc.
+
+# ---- pcodeop declarations ----
+
+# Hardware loop control
+define pcodeop esp_lp_starti;
+define pcodeop esp_lp_endi;
+define pcodeop esp_lp_count;
+define pcodeop esp_lp_counti;
+define pcodeop esp_lp_setup;
+define pcodeop esp_lp_setupi;
+
+# Generic custom opcode fallbacks (custom-0/2/3 -- no semantic meaning on ESP32-P4)
+define pcodeop custom0;
+define pcodeop custom0.rs1;
+define pcodeop custom0.rs1.rs2;
+define pcodeop custom0.rd;
+define pcodeop custom0.rd.rs1;
+define pcodeop custom0.rd.rs1.rs2;
+
+define pcodeop custom2;
+define pcodeop custom2.rs1;
+define pcodeop custom2.rs1.rs2;
+define pcodeop custom2.rd;
+define pcodeop custom2.rd.rs1;
+define pcodeop custom2.rd.rs1.rs2;
+
+define pcodeop custom3;
+define pcodeop custom3.rs1;
+define pcodeop custom3.rs1.rs2;
+define pcodeop custom3.rd;
+define pcodeop custom3.rd.rs1;
+define pcodeop custom3.rd.rs1.rs2;
+
+
+# ============================================================
+# xesploop: Hardware Loop Instructions
+# All use opcode 0x2B (custom-1): op0001=0x3 & op0204=0x2 & op0506=0x1
+# Loop ID (0 or 1) is encoded in rd field [11:7]: 0 = loop0, 1 = loop1
+# ============================================================
+
+# esp.lp.starti  loop_id, start_offset
+# funct3=0 [14:12]=000; [31:20]=signed 12-bit offset (halfwords from PC to loop start)
+# Constraining op0711 to 0 or 1 makes this more specific than generic custom1
+:esp.lp.starti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0 & (op0711=0x0 | op0711=0x1) & rd & immI
+{
+    esp_lp_starti(rd:1, immI);
+}
+
+# esp.lp.endi  loop_id, end_offset
+# funct3=1 [14:12]=001; [31:20]=signed 12-bit offset (halfwords from PC to loop end)
+:esp.lp.endi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x1 & (op0711=0x0 | op0711=0x1) & rd & immI
+{
+    esp_lp_endi(rd:1, immI);
+}
+
+# esp.lp.count  loop_id, rs1
+# funct3=2 [14:12]=010; [19:15]=count register
+:esp.lp.count rd, rs1  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x2 & (op0711=0x0 | op0711=0x1) & rd & rs1
+{
+    esp_lp_count(rd:1, rs1);
+}
+
+# esp.lp.counti  loop_id, count_imm
+# funct3=3 [14:12]=011; [31:20]=signed immediate loop count
+:esp.lp.counti rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x3 & (op0711=0x0 | op0711=0x1) & rd & immI
+{
+    esp_lp_counti(rd:1, immI);
+}
+
+# esp.lp.setup  loop_id, rs1, loop_end_label
+# funct3=4 [14:12]=100; [19:15]=count register; [31:20]=body length in halfwords
+# loop_end = inst_next + (imm * 2) - 2  (imm halfwords after next instruction, minus 2 for last instr itself)
+# Encoded as: for "esp.lp.setup 0, t0, end_lbl" where body is N halfwords, [31:20] = N
+:esp.lp.setup rd, rs1, lp_end  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & (op0711=0x0 | op0711=0x1) & rd & rs1 & op2031
+    [ lp_end = inst_next + (op2031 * 2) - 2; ]
+{
+    esp_lp_setup(rd:1, rs1, lp_end:4);
+}
+
+# esp.lp.setupi  loop_id, count_imm, loop_end_label
+# funct3=5 [14:12]=101; [31:20]=encoded as count in upper bits, body in lower
+# Constraining op0711 to 0 or 1 to avoid conflict with generic custom1 funct3=5
+:esp.lp.setupi rd, immI  is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x5 & (op0711=0x0 | op0711=0x1) & rd & immI
+{
+    esp_lp_setupi(rd:1, immI);
+}
+
+
+# ============================================================
+# Generic custom-0 fallback (op0001=0x3 & op0204=0x2 & op0506=0x0)
+# ============================================================
+
+:custom0 is op0001=0x3 & op0204=0x2 & op0506=0x0 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
+{ custom0(); }
+
+:custom0.rs1 rs1 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x2 & rs1
+{ custom0.rs1(rs1); }
+
+:custom0.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x3 & rs1 & rs2
+{ custom0.rs1.rs2(rs1, rs2); }
+
+:custom0.rd rd is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x4 & rd
+{ rd = custom0.rd(); }
+
+:custom0.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x6 & rd & rs1
+{ rd = custom0.rd.rs1(rs1); }
+
+:custom0.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x7 & rd & rs1 & rs2
+{ rd = custom0.rd.rs1.rs2(rs1, rs2); }
+
+
+# ============================================================
+# Generic custom-2 fallback (op0001=0x3 & op0204=0x6 & op0506=0x2 = 0x5B)
+# Note: PIE instructions using 0x5B (esp32p4_pie.sinc) take priority via
+# more-specific funct3/funct7 constraints.
+# ============================================================
+
+:custom2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
+{ custom2(); }
+
+:custom2.rs1 rs1 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x2 & rs1
+{ custom2.rs1(rs1); }
+
+:custom2.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x3 & rs1 & rs2
+{ custom2.rs1.rs2(rs1, rs2); }
+
+:custom2.rd rd is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x4 & rd
+{ rd = custom2.rd(); }
+
+:custom2.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x6 & rd & rs1
+{ rd = custom2.rd.rs1(rs1); }
+
+:custom2.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x7 & rd & rs1 & rs2
+{ rd = custom2.rd.rs1.rs2(rs1, rs2); }
+
+
+# ============================================================
+# Generic custom-3 fallback (op0001=0x3 & op0204=0x6 & op0506=0x3 = 0x7B)
+# ============================================================
+
+:custom3 is op0001=0x3 & op0204=0x6 & op0506=0x3 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
+{ custom3(); }
+
+:custom3.rs1 rs1 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x2 & rs1
+{ custom3.rs1(rs1); }
+
+:custom3.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x3 & rs1 & rs2
+{ custom3.rs1.rs2(rs1, rs2); }
+
+:custom3.rd rd is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x4 & rd
+{ rd = custom3.rd(); }
+
+:custom3.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x6 & rd & rs1
+{ rd = custom3.rd.rs1(rs1); }
+
+:custom3.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x7 & rd & rs1 & rs2
+{ rd = custom3.rd.rs1.rs2(rs1, rs2); }
