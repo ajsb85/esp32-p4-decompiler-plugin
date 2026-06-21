@@ -1443,6 +1443,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "if.*n.*<.*2.*return.*0.*trial.*division|pr_is_prime.*trial",
             "is_prime|trial_division|prime_check"
         ),
+        /* Sprint 78: Gray Code + Fisher-Yates */
+        new PatternDef("gray_code_xor_shift", "gray_code_generate", "high",
+            "G.*i.*=.*i.*\\^.*i.*>>.*1|gc_code.*i.*=.*i.*\\^.*i.*>>.*1",
+            "popcount.*G.*i.*\\^.*G.*i.*1.*==.*1|single.*bit.*transition.*gray",
+            "gray_code|gc_code|G.*i.*xor.*shift"
+        ),
+        new PatternDef("gray_code_property", "gray_code_single_bit_differ", "medium",
+            "diff.*=.*gc_code.*i.*\\^.*gc_code.*i.*1|xor.*consecutive.*gray.*code",
+            "diff.*&.*diff.*-.*1.*!=.*0.*invalid|single_bit.*differ.*check",
+            "gray_valid|gray_diff|single_bit_differ"
+        ),
+        new PatternDef("fisher_yates_shuffle", "knuth_shuffle_deterministic", "high",
+            "for.*i.*=.*0.*n.*-.*2.*j.*=.*i.*\\+.*.*%.*n.*-.*i.*swap.*arr.*i.*arr.*j",
+            "int.*t.*=.*arr.*i.*arr.*i.*=.*arr.*j.*arr.*j.*=.*t|swap.*permute.*inplace",
+            "fisher_yates|knuth_shuffle|fy_arr"
+        ),
+        /* Sprint 79: Partition Equal Sum + Jump Game II */
+        new PatternDef("partition_equal_sum_dp", "subset_sum_boolean_dp", "high",
+            "dp.*0.*=.*1.*for.*num.*for.*j.*=.*target.*down.*num.*dp.*j.*|=.*dp.*j.*-.*num",
+            "total.*%.*2.*!=.*0.*impossible|odd_total.*not_partition",
+            "partition_equal|subset_sum_dp|pe_dp"
+        ),
+        new PatternDef("jump_game_greedy", "min_jumps_greedy", "high",
+            "far.*=.*max.*far.*i.*\\+.*arr.*i|if.*i.*\\+.*arr.*i.*>.*far.*far.*=.*i.*arr.*i",
+            "if.*i.*==.*cur_end.*jumps.*\\+\\+.*cur_end.*=.*far",
+            "jump_game2|min_jumps|jg2_min"
+        ),
+        new PatternDef("jump_game_bound", "greedy_current_range", "medium",
+            "cur_end.*=.*0.*far.*=.*0.*jumps.*=.*0|init.*greedy.*jump.*range",
+            "for.*i.*=.*0.*n.*-.*1.*if.*far.*>=.*n.*-.*1.*break",
+            "cur_end.*far|greedy_range|jump_bound"
+        ),
+        /* Sprint 80: Perfect Squares + Interleaving Strings */
+        new PatternDef("perfect_squares_dp", "min_perfect_squares", "high",
+            "for.*j.*=.*1.*j.*\\*.*j.*<=.*i.*j\\+\\+.*dp.*i.*=.*min.*dp.*i.*dp.*i.*-.*j.*j.*1",
+            "dp.*0.*=.*0.*for.*i.*=.*1.*dp.*i.*=.*INF|PS_INF.*init.*dp",
+            "perfect_squares|ps_dp|min_sq"
+        ),
+        new PatternDef("interleave_dp", "interleaving_string_dp", "high",
+            "dp.*i.*j.*=.*dp.*i-1.*j.*&&.*s1.*i-1.*==.*s3.*i\\+j-1.*||.*dp.*i.*j-1.*&&.*s2.*j-1.*==.*s3.*i\\+j-1",
+            "dp.*0.*0.*=.*1.*dp.*i.*0.*=.*dp.*i-1.*0.*&&.*s1.*i-1.*==.*s3.*i-1",
+            "interleave_dp|is_interleave|il_dp"
+        ),
+        new PatternDef("interleave_base_case", "interleaving_init", "medium",
+            "for.*j.*=.*1.*n2.*dp.*0.*j.*=.*dp.*0.*j-1.*&&.*s2.*j-1.*==.*s3.*j-1",
+            "dp.*0.*0.*=.*1.*base.*case.*interleave|empty.*prefix.*init",
+            "il_base|interleave_init|dp_0_0"
+        ),
+        /* Sprint 81: Activity Selection + Bipartite Matching */
+        new PatternDef("activity_selection_greedy", "interval_scheduling_greedy", "high",
+            "if.*start.*i.*>=.*last_end.*count.*\\+\\+.*last_end.*=.*end.*i|as_start.*>=.*ale",
+            "sort.*by.*end.*time.*last_end.*-INF.*count.*=.*0|greedy.*earliest.*end",
+            "activity_select|interval_sched|as_start"
+        ),
+        new PatternDef("bipartite_matching_augment", "hungarian_augmenting_path", "high",
+            "bpm_try.*u.*for.*i.*<.*BPM_R.*v.*=.*bpm_adj.*u.*i.*if.*!bpm_vis.*v",
+            "if.*bpm_match_r.*v.*==.*-1.*||.*bpm_try.*bpm_match_r.*v.*bpm_match_r.*v.*=.*u",
+            "bipartite_match|augmenting_path|bpm_try"
+        ),
+        new PatternDef("max_matching_driver", "maximum_matching_count", "medium",
+            "for.*u.*=.*0.*BPM_L.*for.*i.*<.*BPM_R.*bpm_vis.*i.*=.*0.*if.*bpm_try.*u.*match.*\\+\\+",
+            "max_match.*=.*0.*for.*u.*left.*vis.*zero.*try.*augment",
+            "max_match|matching_count|bpm_driver"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────

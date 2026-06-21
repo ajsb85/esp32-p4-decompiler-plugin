@@ -2,7 +2,7 @@
 
 Validates the full decompiler pipeline: **compile → decompile → recompile → verify**.
 
-The suite ships 125 bare-metal RISC-V fixtures covering a broad range of algorithm
+The suite ships 133 bare-metal RISC-V fixtures covering a broad range of algorithm
 families. Each fixture stores its result in `volatile uint32_t g_result` so the
 hardware flash-and-verify path can read it from a known address via serial output.
 
@@ -138,6 +138,14 @@ hardware flash-and-verify path can read it from a known address via serial outpu
 | `test_count_distinct_window.c` | Freq-array distinct count; k=4; all windows=3 | `0x00050F03` | |
 | `test_gcd_array.c` | Euclidean GCD+LCM over {12,18,24,36}; gcd=6 lcm=72 | `0x00040648` | |
 | `test_primorial.c` | Primorial P(1..5); sum%256=254 xor%256=206 | `0x0005FECE` | |
+| `test_gray_code.c` | Gray code G(i)=i^(i>>1); n_codes=8 last=4 | `0x00080304` | |
+| `test_fisher_yates.c` | Det. Fisher-Yates shuffle {1..8}; sum=36 xor=8 | `0x00082408` | |
+| `test_partition_equal_sum.c` | 0/1 knapsack equal-subset DP; 3 cases | `0x00031C01` | |
+| `test_jump_game2.c` | Min-jumps greedy; 3 arrays, sum=7 xor=3 | `0x00030703` | |
+| `test_perfect_squares.c` | Min perfect squares DP; 4 cases sum=10 xor=4 | `0x00040A04` | |
+| `test_interleave.c` | Interleaving strings DP; 3 cases n_true=2 | `0x00030203` | |
+| `test_activity_selection.c` | Greedy interval scheduling; 11 acts, 4 selected | `0x000B0418` | |
+| `test_bipartite_matching.c` | Augmenting-path bipartite match K_{3,3}; max=3 | `0x00090303` | |
 
 `test_pie_simd` compiles for any RV32 target but requires real **ESP32-P4 ECO2**
 hardware to execute the PIE SIMD instructions. Use `--flash <port>` to validate it.
@@ -232,7 +240,7 @@ analyzeHeadless /tmp/proj RT_hash \
   -deleteProject
 ```
 
-Pattern families currently covered (102 patterns):
+Pattern families currently covered (248 patterns):
 
 | Family | Patterns |
 |--------|---------|

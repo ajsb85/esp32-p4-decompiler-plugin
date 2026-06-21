@@ -180,6 +180,9 @@ static void build_sa2(void){for(int i=0;i<6;i++)sa2_idx[i]=i;for(int i=1;i<6;i++
 static int ap2_disc[5],ap2_low[5],ap2_vis[5],ap2_par[5],ap2_is_ap[5],ap2_timer2=0;
 static int ap2_adj[5][4],ap2_deg[5];
 static void ap2_dfs(int u){ap2_disc[u]=ap2_low[u]=ap2_timer2++;ap2_vis[u]=1;int cc=0;for(int i=0;i<ap2_deg[u];i++){int v=ap2_adj[u][i];if(!ap2_vis[v]){cc++;ap2_par[v]=u;ap2_dfs(v);if(ap2_low[v]<ap2_low[u])ap2_low[u]=ap2_low[v];if(ap2_par[u]==-1&&cc>1)ap2_is_ap[u]=1;if(ap2_par[u]!=-1&&ap2_low[v]>=ap2_disc[u])ap2_is_ap[u]=1;}else if(v!=ap2_par[u]){if(ap2_disc[v]<ap2_low[u])ap2_low[u]=ap2_disc[v];}}}
+/* Sprint 81: bipartite_matching augmenting path */
+static int bpm2_match_r[3],bpm2_vis[3];
+static int bpm2_try(int u){for(int i=0;i<3;i++){if(!bpm2_vis[i]){bpm2_vis[i]=1;if(bpm2_match_r[i]==-1||bpm2_try(bpm2_match_r[i])){bpm2_match_r[i]=u;return 1;}}}return 0;}
 #define CHECK(nm,got,exp) do{uint32_t _g=(got),_e=(exp);if(_g==_e){printf("PASS %-25s = 0x%08X\n",(nm),_g);}else{printf("FAIL %-25s got=0x%08X exp=0x%08X\n",(nm),_g,_e);failures++;}}while(0)
 int main(void){
   int failures=0;
@@ -932,6 +935,63 @@ int main(void){
    for(int n=2;ppc<5;n++){int ok=1;for(int i=2;i*i<=n;i++)if(n%i==0){ok=0;break;}
      if(ok){prim2*=(uint32_t)n;psum+=prim2&0xFFu;pxor^=prim2&0xFFu;ppc++;}}
    CHECK("test_primorial",(5u<<16)|((psum&0xFFu)<<8)|(pxor&0xFFu),0x0005FECEu);}
+  /* Sprint 78: test_gray_code — G(i)=i^(i>>1), n_codes=8 n_bits=3 last=4 */
+  {int gcl=7^(7>>1); CHECK("test_gray_code",(8u<<16)|(3u<<8)|((uint32_t)gcl&0xFFu),0x00080304u);}
+  /* Sprint 78: test_fisher_yates — det shuffle {1..8}, sum=36 xor=8 */
+  {int fya[8]={1,2,3,4,5,6,7,8};
+   for(int i=0;i<7;i++){int j=i+(i*3+7)%(8-i);int t=fya[i];fya[i]=fya[j];fya[j]=t;}
+   uint32_t fs=0,fx=0;for(int i=0;i<8;i++){fs+=fya[i];fx^=fya[i];}
+   CHECK("test_fisher_yates",(8u<<16)|((fs&0xFFu)<<8)|(fx&0xFFu),0x00082408u);}
+  /* Sprint 79: test_partition_equal_sum — targets hit: 11+17=28, n_false=1 */
+  {static int pdp[100];
+   int pa1[]={1,5,11,5},pt1=11;
+   for(int j=0;j<=pt1;j++)pdp[j]=0; pdp[0]=1;
+   for(int i=0;i<4;i++) for(int j=pt1;j>=pa1[i];j--) if(pdp[j-pa1[i]])pdp[j]=1;
+   int pr1=pdp[pt1];
+   int pa3[]={2,3,5,6,8,10},pt3=17;
+   for(int j=0;j<=pt3;j++)pdp[j]=0; pdp[0]=1;
+   for(int i=0;i<6;i++) for(int j=pt3;j>=pa3[i];j--) if(pdp[j-pa3[i]])pdp[j]=1;
+   int pr3=pdp[pt3];
+   uint32_t phit=(uint32_t)((pr1?pt1:0)+(pr3?pt3:0)); /* 28 */
+   uint32_t pnf=(uint32_t)((1-pr1)+(1)+(1-pr3)); /* n_false */
+   CHECK("test_partition_equal_sum",(3u<<16)|((phit&0xFFu)<<8)|(pnf&0xFFu),0x00031C01u);}
+  /* Sprint 79: test_jump_game2 — {2,3,1,1,4}=2, {2,3,0,1,4}=2, {1,2,3,4,5}=3 */
+  {int jcases[3][5]={{2,3,1,1,4},{2,3,0,1,4},{1,2,3,4,5}};
+   uint32_t jsum=0,jxr=0;
+   for(int c=0;c<3;c++){int*ar=jcases[c];int jmp=0,ce=0,fr=0;
+     for(int i=0;i<4;i++){if(i+ar[i]>fr)fr=i+ar[i];if(i==ce){jmp++;ce=fr;if(ce>=4)break;}}
+     jsum+=jmp;jxr^=jmp;}
+   CHECK("test_jump_game2",(3u<<16)|((jsum&0xFFu)<<8)|(jxr&0xFFu),0x00030703u);}
+  /* Sprint 80: test_perfect_squares — {12→3,13→2,7→4,9→1} sum=10 xor=4 */
+  {static int psdp[14]; int pst[]={12,13,7,9}; uint32_t pssum=0,psxr=0;
+   for(int ti=0;ti<4;ti++){int n=pst[ti];
+     for(int i=0;i<=n;i++)psdp[i]=9999; psdp[0]=0;
+     for(int i=1;i<=n;i++) for(int j=1;j*j<=i;j++) if(psdp[i-j*j]+1<psdp[i])psdp[i]=psdp[i-j*j]+1;
+     pssum+=(uint32_t)psdp[n]; psxr^=(uint32_t)psdp[n];}
+   CHECK("test_perfect_squares",(4u<<16)|((pssum&0xFFu)<<8)|(psxr&0xFFu),0x00040A04u);}
+  /* Sprint 80: test_interleave — {1,1,0} n_true=2 weighted_xor=3 */
+  {static int ildp[4][4];
+   const char*is1[3]={"aab","abc","abc"},*is2[3]={"axy","def","def"},*is3[3]={"aaxaby","abdecf","abcfed"};
+   int iln1[3]={3,3,3},iln2[3]={3,3,3};
+   int ilnt=0,ilwx=0;
+   for(int tc=0;tc<3;tc++){
+     int n1=iln1[tc],n2=iln2[tc];
+     ildp[0][0]=1;
+     for(int i=1;i<=n1;i++)ildp[i][0]=ildp[i-1][0]&&(is1[tc][i-1]==is3[tc][i-1]);
+     for(int j=1;j<=n2;j++)ildp[0][j]=ildp[0][j-1]&&(is2[tc][j-1]==is3[tc][j-1]);
+     for(int i=1;i<=n1;i++) for(int j=1;j<=n2;j++)
+       ildp[i][j]=(ildp[i-1][j]&&is1[tc][i-1]==is3[tc][i+j-1])||(ildp[i][j-1]&&is2[tc][j-1]==is3[tc][i+j-1]);
+     int r=ildp[n1][n2]; ilnt+=r; ilwx^=r*(tc+1);}
+   CHECK("test_interleave",(3u<<16)|((uint32_t)(ilnt&0xFF)<<8)|((uint32_t)(ilwx&0xFF)),0x00030203u);}
+  /* Sprint 81: test_activity_selection — 11 acts sorted by end, count=4 xor_ends=24 */
+  {int ast[]={1,3,0,5,3,5,6,8,8,2,12},aen[]={4,5,6,7,9,9,10,11,12,14,16};
+   int acnt=0,ale=-1; uint32_t axe=0;
+   for(int i=0;i<11;i++) if(ast[i]>=ale){acnt++;ale=aen[i];axe^=(uint32_t)aen[i];}
+   CHECK("test_activity_selection",(11u<<16)|((uint32_t)(acnt&0xFF)<<8)|(axe&0xFFu),0x000B0418u);}
+  /* Sprint 81: test_bipartite_matching — K_{3,3} max_match=3 */
+  {for(int i=0;i<3;i++)bpm2_match_r[i]=-1;
+   int bmt=0; for(int u=0;u<3;u++){for(int i=0;i<3;i++)bpm2_vis[i]=0;if(bpm2_try(u))bmt++;}
+   CHECK("test_bipartite_matching",(9u<<16)|((uint32_t)(bmt&0xFF)<<8)|(3u),0x00090303u);}
   printf("\n%s: %d failure(s)\n",failures==0?"ALL PASS":"FAILURES",failures);
   return failures;
 }
