@@ -49,3 +49,5 @@ Desktop.ini
 
 # Logs
 *.log
+__pycache__/
+*.pyc
