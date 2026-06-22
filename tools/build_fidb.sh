@@ -170,25 +170,22 @@ while IFS= read -r arc; do
     dest="$OBJ_DIR/$comp"
     mkdir -p "$dest"
     (cd "$dest" && ar x "$arc" 2>/dev/null) || true
-    n=$(ls "$dest"/*.obj "$dest"/*.o 2>/dev/null | wc -l)
+    n=$(find "$dest" -maxdepth 1 \( -name "*.obj" -o -name "*.o" \) | wc -l)
     OBJ_COUNT=$((OBJ_COUNT + n))
 done <<< "$ARCHIVE_LIST"
 echo "  Extracted $OBJ_COUNT object files from $ARCHIVE_COUNT archives"
 
-# Build import-args list
-IMPORT_ARGS=()
-while IFS= read -r obj; do
-    [[ -n "$obj" ]] && IMPORT_ARGS+=(-import "$obj")
-done < <(find "$OBJ_DIR" -name "*.obj" -o -name "*.o" | sort)
-
 rm -rf "$GHIDRA_PROJ_DIR"
 mkdir -p "$GHIDRA_PROJ_DIR"
 
-echo "  Running analyzeHeadless -import ($OBJ_COUNT files)…"
+# Use -recursive import on the whole OBJ_DIR — avoids ARG_MAX limits from
+# passing thousands of individual -import flags on the command line.
+echo "  Running analyzeHeadless -import $OBJ_DIR -recursive ($OBJ_COUNT files)…"
 "$ANALYZE_HEADLESS" \
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
-    "${IMPORT_ARGS[@]}" \
-    -processor "RISCV:LE:32:ESP32-P4" \
+    -import "$OBJ_DIR" \
+    -recursive \
+    -processor "RISCV:LE:32:default" \
     -analysisTimeoutPerFile 60 \
     2>&1 | grep -E '(ERROR|WARN|Import succeeded|functions identified)' | tail -20
 
@@ -205,10 +202,10 @@ mkdir -p "$(dirname "$FIDB_OUT")"
 
 "$ANALYZE_HEADLESS" \
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
-    -process '*.obj' \
+    -process \
     -noanalysis \
     -scriptPath "$SCRIPTS_DIR" \
-    -postScript GenerateESP32P4FIDB.java "$FIDB_OUT" \
+    -postScript GenerateESP32P4FIDB.java "$FIDB_OUT" "$OBJ_DIR" "-Os" \
     2>&1 | grep -E '(INFO|WARN|ERROR|FIDB|Populate|fingerprint|saved|pattern|result)' | tail -60
 
 # ── Verify ────────────────────────────────────────────────────────────────────
