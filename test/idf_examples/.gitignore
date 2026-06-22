@@ -1,0 +1,6 @@
+# IDF build artifacts
+**/build/
+**/.cache/
+**/sdkconfig.old
+**/__pycache__/
+**/*.pyc
