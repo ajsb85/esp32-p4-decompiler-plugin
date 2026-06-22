@@ -6376,6 +6376,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "15u.*<<.*16.*total_sum.*251u.*cnt_le50|strong_primes_g_result",
             "cnt_le50.*p_mid.*50u.*count.*15u|strong_primes_count_pack"
         ),
+        new PatternDef("prime_triplets_sieve", "prime_triplets_sieve", "high",
+            "sieve.*p.*2u.*==.*0u.*sieve.*p.*6u.*==.*0u|triplet_type1_test",
+            "p.*\\+.*2u.*\\+.*6u.*SIEVE_LIMIT|triplet_bound_check",
+            "build_sieve.*SIEVE_LIMIT.*408u|prime_triplets_sieve_init"
+        ),
+        new PatternDef("prime_triplets_count", "prime_triplets_count", "high",
+            "sum_p.*\\+.*p.*cnt_lt200.*\\+\\+|triplet_accumulate",
+            "p.*<.*200u.*cnt_lt200|triplet_lt200_gate",
+            "10u.*<<.*16.*sum_p.*251u.*cnt_lt200|prime_triplets_g_result"
+        ),
+        new PatternDef("prime_triplets_pattern", "prime_triplets_pattern", "medium",
+            "sieve.*p.*0u.*&&.*sieve.*p.*2.*0u.*&&.*sieve.*p.*6.*0u|three_sieve_tests",
+            "sum_p.*%.*251u|prime_triplets_sum_mod",
+            "count_prime_triplets.*type1.*p.*p.*2.*p.*6|triplet_type1_collect"
+        ),
+        new PatternDef("balanced_primes_sieve", "balanced_primes_sieve", "high",
+            "build_sieve.*SIEVE_LIMIT.*600u|balanced_primes_sieve_600",
+            "primes.*np.*<.*120u.*np.*\\+\\+|balanced_prime_array_fill",
+            "sieve.*0u.*primes.*np|balanced_collect_prime_array"
+        ),
+        new PatternDef("balanced_primes_test", "balanced_primes_test", "high",
+            "2u.*\\*.*p_mid.*==.*p_prev.*\\+.*p_next|balanced_prime_equality",
+            "p_prev.*primes.*i.*p_mid.*primes.*i.*p_next.*primes.*i|balanced_triple_walk",
+            "bal_sum.*\\+.*p_mid.*cnt_le200.*\\+\\+|balanced_sum_accumulate"
+        ),
+        new PatternDef("balanced_primes_collect", "balanced_primes_collect", "medium",
+            "bal_sum.*%.*251u|balanced_sum_mod251",
+            "10u.*<<.*16.*bal_sum.*251u.*cnt_le200|balanced_primes_g_result",
+            "cnt_le200.*p_mid.*200u.*count.*10u|balanced_primes_count_pack"
+        ),
+        new PatternDef("good_primes_sieve", "good_primes_sieve", "high",
+            "p_mid.*\\*.*p_mid.*>.*p_prev.*\\*.*p_next|good_prime_geometric_test",
+            "p_prev.*primes.*i.*p_mid.*primes.*i.*p_next.*primes.*i|good_triple_walk",
+            "build_sieve.*good_primes|good_primes_sieve_init"
+        ),
+        new PatternDef("good_primes_test", "good_primes_test", "high",
+            "p_mid.*p_mid.*p_prev.*p_next.*geometric_mean|good_prime_sq_product",
+            "good_sum.*\\+.*p_mid.*cnt_le50.*\\+\\+|good_prime_accumulate",
+            "count.*<.*15u.*good_prime|good_prime_limit15"
+        ),
+        new PatternDef("good_primes_collect", "good_primes_collect", "medium",
+            "good_sum.*%.*251u|good_primes_sum_mod251",
+            "15u.*<<.*16.*good_sum.*251u.*cnt_le50|good_primes_g_result",
+            "cnt_le50.*p_mid.*50u.*count.*15u.*good_sum.*901|good_primes_count_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
