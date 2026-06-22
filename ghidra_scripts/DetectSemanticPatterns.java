@@ -6872,6 +6872,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "g_result.*0x0063011E|giuga_result_constant",
             "metric_b.*30u.*metric_a.*1u|giuga_known_counts"
         ),
+        new PatternDef("odious_numbers_popcount", "odious_numbers_popcount", "high",
+            "0x55555555u.*0x33333333u.*0x0F0F0F0Fu|odious_parallel_popcount",
+            "0x01010101u.*>>.*24u|odious_popcount_multiply",
+            "popcount32.*&.*1u.*is_odious|odious_parity_check"
+        ),
+        new PatternDef("odious_numbers_count", "odious_numbers_count", "medium",
+            "count\\+\\+.*osum.*\\+=.*n.*is_odious|odious_accumulate_sum",
+            "n_tests.*99u.*osum.*%.*251u|odious_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*osum.*%.*251u|odious_metric_pack"
+        ),
+        new PatternDef("odious_numbers_pack", "odious_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|odious_result_combine",
+            "g_result.*0x006332D8|odious_result_constant",
+            "metric_b.*216u.*metric_a.*50u|odious_known_counts"
+        ),
+        new PatternDef("evil_numbers_popcount", "evil_numbers_popcount", "high",
+            "0x55555555u.*0x33333333u.*0x0F0F0F0Fu|evil_parallel_popcount",
+            "popcount32.*&.*1u.*==.*0u.*is_evil|evil_even_parity_check",
+            "n.*n.*>>.*1u.*0x55555555u|evil_popcount_halving"
+        ),
+        new PatternDef("evil_numbers_count", "evil_numbers_count", "medium",
+            "count\\+\\+.*esum.*\\+=.*n.*is_evil|evil_accumulate_sum",
+            "n_tests.*99u.*esum.*%.*251u|evil_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*esum.*%.*251u|evil_metric_pack"
+        ),
+        new PatternDef("evil_numbers_pack", "evil_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|evil_result_combine",
+            "g_result.*0x006331D8|evil_result_constant",
+            "metric_b.*216u.*metric_a.*49u|evil_known_counts"
+        ),
+        new PatternDef("fibbinary_numbers_check", "fibbinary_numbers_check", "high",
+            "n.*&.*n.*>>.*1u.*==.*0u|fibbinary_consecutive_bits_test",
+            "is_fibbinary.*fsum.*\\+=.*n|fibbinary_zeckendorf_filter",
+            "n.*>>.*1u.*&.*n.*==.*0u|fibbinary_no_adjacent_ones"
+        ),
+        new PatternDef("fibbinary_numbers_count", "fibbinary_numbers_count", "medium",
+            "count\\+\\+.*fsum.*\\+=.*n.*is_fibbinary|fibbinary_accumulate_sum",
+            "n_tests.*99u.*fsum.*%.*251u|fibbinary_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*fsum.*%.*251u|fibbinary_metric_pack"
+        ),
+        new PatternDef("fibbinary_numbers_pack", "fibbinary_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|fibbinary_result_combine",
+            "g_result.*0x00632186|fibbinary_result_constant",
+            "metric_b.*134u.*metric_a.*33u|fibbinary_known_counts"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
