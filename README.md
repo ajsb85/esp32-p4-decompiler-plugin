@@ -4,17 +4,17 @@
 [![Ghidra](https://img.shields.io/badge/Ghidra-12.x-orange.svg)](https://ghidra-sre.org)
 [![RISC-V](https://img.shields.io/badge/arch-RISC--V%2032-green.svg)](https://riscv.org)
 [![Java](https://img.shields.io/badge/Java-21%2B-red.svg)](https://adoptium.net)
-[![Round-trip](https://img.shields.io/badge/round--trip-201%20fixtures%20passing-brightgreen.svg)](#round-trip-validation)
-[![Patterns](https://img.shields.io/badge/semantic%20patterns-321-blue.svg)](#detectsemanticpatternsjava)
-[![FIDB](https://img.shields.io/badge/FIDB-1%2C224%20IDF%20functions-purple.svg)](#fidb-function-id-database)
+[![Round-trip](https://img.shields.io/badge/round--trip-525%20fixtures%20passing-brightgreen.svg)](#round-trip-validation)
+[![Patterns](https://img.shields.io/badge/semantic%20patterns-1287-blue.svg)](#detectsemanticpatternsjava)
+[![FIDB](https://img.shields.io/badge/FIDB-ESP--IDF%20v6.0.1-purple.svg)](#fidb-function-id-database)
 
 Ghidra extension that adds first-class support for the **ESP32-P4** RISC-V
 microcontroller. Provides a custom Sleigh processor definition covering the
 full ISA (RV32IMAFC + Zicsr + Zifencei + Zmmul + Zaamo + Zalrsc + Zca + Zcf
 + xesploop + xespv2p2), peripheral memory-map labeling from the official SVD,
-ROM symbol loading, a **pre-built ESP-IDF v6.0.1 FIDB** with 1,224 fingerprinted
-functions, and an automated decompiled-C export pipeline validated on real
-hardware with **201 round-trip fixtures** and **321 semantic detection patterns**.
+ROM symbol loading, a **pre-built ESP-IDF v6.0.1 FIDB**, and an automated
+decompiled-C export pipeline validated end-to-end (IDF v6.0.1 + FreeRTOS)
+with **525 round-trip fixtures** and **1287 semantic detection patterns**.
 
 ---
 
@@ -89,7 +89,7 @@ hardware with **201 round-trip fixtures** and **321 semantic detection patterns*
          │  riscv32-esp-elf-gcc → ELF → Ghidra headless →              │
          │  decompiled.c → recompile → objdump diff → g_result check    │
          │                                                               │
-         │  201 fixtures  ·  321 semantic patterns  ·  ✓ real hardware  │
+         │  525 fixtures  ·  1287 semantic patterns  ·  ✓ IDF v6.0.1 + FreeRTOS  │
          └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -282,12 +282,21 @@ bash tools/build_fidb.sh \
 - **Call graph export** — `ExportCallGraph.java` emits a Graphviz `.dot` call
   graph and `MODULES.md` table organized by IDF/app/unknown layer
 - **Semantic pattern detection** — `DetectSemanticPatterns.java` classifies
-  functions by algorithm using **321 patterns** across **60+ algorithm families**
+  functions by algorithm using **1287 patterns** across **170+ algorithm families**
   and emits `semantic_hints.json` with rename suggestions
-- **Headless analysis** — `AnalyzeESP32P4Headless.py` pre-script for
-  CI/batch workflows
-- **Round-trip validation** — **201 bare-metal test fixtures** validated
-  end-to-end with deterministic `g_result` values
+- **FreeRTOS type recovery** — `LoadFreeRTOSTypes.java` registers 14 ESP-IDF SMP
+  FreeRTOS types (`TCB_t`, `Queue`, `List`, etc.) with correct field offsets
+- **FreeRTOS task extraction** — `ExtractFreeRTOSTasks.java` resolves `xTaskCreate`
+  call sites via backward Varnode slicing to recover task names, stack depth, priority, core ID
+- **Identify return variable** — `IdentifyReturnVariable.java` walks ClangAST to
+  resolve `a0`/`fa0` return variables and adds EOL comments
+- **HWLP context analyzer** — `ESP32P4HWLPContextAnalyzer.java` injects
+  `CONDITIONAL_JUMP` back-edges at hardware-loop tail addresses
+- **IDF example projects** — `test/idf_examples/` contains two verified IDF v6.0.1
+  projects (algorithms + number theory) as FreeRTOS tasks with Unity assertions
+- **HIL CI scaffold** — `test/hil/` provides a pytest-embedded HIL test harness
+- **Round-trip validation** — **525 bare-metal test fixtures** validated
+  end-to-end with deterministic `g_result` values, plus IDF v6.0.1 FreeRTOS round-trip
 
 ---
 

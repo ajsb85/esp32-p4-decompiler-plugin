@@ -213,9 +213,11 @@ public class LoadESP32P4SVD extends GhidraScript {
     /** Resolves data/esp32p4.svd relative to the script's source directory. */
     private File resolveBundledSvd() {
         try {
-            File scriptDir = getSourceFile().getParentFile();       // ghidra_scripts/
-            File dataDir   = new File(scriptDir.getParent(), "data");
-            File bundled   = new File(dataDir, "esp32p4.svd");
+            // getSourceFile() returns generic.jar.ResourceFile, not java.io.File
+            generic.jar.ResourceFile rf = getSourceFile();
+            java.io.File scriptDir = rf.getFile(false).getParentFile();  // ghidra_scripts/
+            java.io.File dataDir   = new java.io.File(scriptDir.getParent(), "data");
+            java.io.File bundled   = new java.io.File(dataDir, "esp32p4.svd");
             if (bundled.exists()) return bundled;
         } catch (Exception ignore) {}
         return null;
@@ -232,10 +234,9 @@ public class LoadESP32P4SVD extends GhidraScript {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     private void applyPlateComment(Address addr, String comment) {
         try {
-            currentProgram.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
+            currentProgram.getListing().setComment(addr, ghidra.program.model.listing.CommentType.PLATE, comment);
         } catch (Exception ignore) {}
     }
 }

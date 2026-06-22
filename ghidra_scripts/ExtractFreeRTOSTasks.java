@@ -95,7 +95,7 @@ public class ExtractFreeRTOSTasks extends GhidraScript {
                         taskName, stackDepth < 0 ? "?" : String.valueOf(stackDepth),
                         priority < 0 ? "?" : String.valueOf(priority), coreStr);
                     currentProgram.getListing().setComment(callSite,
-                        CodeUnit.PLATE_COMMENT, comment);
+                        ghidra.program.model.listing.CommentType.PLATE, comment);
                 }
             }
         }
