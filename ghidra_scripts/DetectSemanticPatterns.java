@@ -6511,6 +6511,52 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*lucky_sz.*251u.*metric_a.*==.*0u|lucky_prime_metric_guard",
             "run_lucky_primes.*g_result|lucky_primes_entry"
         ),
+        // ── Sprint 193 ────────────────────────────────────────────────────────
+        new PatternDef("happy_primes_happy_check", "happy_primes_happy", "high",
+            "digit_sq_sum.*n.*%.*10u.*d.*\\*.*d.*s.*\\+=|happy_digit_sq_loop",
+            "n.*==.*1u.*return.*1u.*n.*==.*4u.*return.*0u|happy_cycle_detect",
+            "is_happy.*MAX_ITER.*digit_sq_sum|happy_iteration_bound"
+        ),
+        new PatternDef("happy_primes_search", "happy_primes_search", "high",
+            "is_prime.*n.*is_happy.*n.*count.*\\+\\+.*hp_sum|happy_prime_find",
+            "hp_sum.*\\+=.*n.*count.*MAX_N|happy_prime_accumulate",
+            "run_happy_primes.*g_result|happy_primes_entry"
+        ),
+        new PatternDef("happy_primes_pack", "happy_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*hp_sum.*251u|happy_prime_pack",
+            "metric_b.*hp_sum.*251u.*1u.*251u|happy_prime_metric_b",
+            "hp_sum.*MAX_N.*g_result|happy_primes_result"
+        ),
+        new PatternDef("catalan_primes_check", "catalan_primes_check", "high",
+            "catalan_vals.*1u.*1u.*2u.*5u.*14u.*42u|catalan_table_init",
+            "is_prime.*catalan_vals.*i.*prime_count.*\\+\\+|catalan_prime_test",
+            "cat_sum.*\\+=.*catalan_vals.*idx_sum.*\\+=.*i|catalan_prime_accum"
+        ),
+        new PatternDef("catalan_primes_search", "catalan_primes_search", "high",
+            "prime_count.*cat_sum.*idx_sum.*MAX_CAT.*catalan_vals|catalan_prime_find",
+            "catalan_vals.*i.*is_prime.*prime_count.*cat_sum|catalan_prime_loop",
+            "run_catalan_primes.*g_result|catalan_primes_entry"
+        ),
+        new PatternDef("catalan_primes_pack", "catalan_primes_pack", "medium",
+            "n_tests.*prime_count.*0xFFu.*metric_a.*cat_sum.*251u|catalan_prime_pack",
+            "metric_b.*idx_sum.*MAX_CAT.*251u|catalan_prime_metric_b",
+            "catalan_primes.*g_result|catalan_primes_result"
+        ),
+        new PatternDef("strobogrammatic_primes_rot", "strobogrammatic_digit_rot", "high",
+            "rot_digit.*d.*==.*6u.*return.*9u.*d.*==.*9u.*return.*6u|strob_6_9_swap",
+            "get_digits.*len.*n.*%.*10u.*buf.*len|strob_digit_extract",
+            "is_strobogrammatic.*rot_digit.*digits.*lo.*hi|strob_palindrome_check"
+        ),
+        new PatternDef("strobogrammatic_primes_search", "strobogrammatic_primes_search", "high",
+            "is_prime.*n.*is_strobogrammatic.*n.*count.*\\+\\+.*sp_sum|strob_prime_find",
+            "sp_sum.*\\+=.*n.*count.*MAX_N|strob_prime_accumulate",
+            "run_strobogrammatic_primes.*g_result|strobogrammatic_primes_entry"
+        ),
+        new PatternDef("strobogrammatic_primes_pack", "strobogrammatic_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*sp_sum.*251u|strob_prime_pack",
+            "metric_b.*sp_sum.*251u.*3u.*251u|strob_prime_metric_b",
+            "sp_sum.*MAX_N.*g_result|strob_primes_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
