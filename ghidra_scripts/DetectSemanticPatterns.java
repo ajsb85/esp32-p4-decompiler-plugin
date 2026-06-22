@@ -6466,6 +6466,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count.*<.*15u.*weak.*prime|weak_prime_limit15",
             "cnt_mod6.*9u.*weak_sum.*817u.*count.*15u|weak_primes_count_pack"
         ),
+        new PatternDef("circular_primes_rotate", "circular_primes_rotate", "high",
+            "rot.*pow10.*lead.*rest.*rotate_left|circular_prime_digit_rotate",
+            "is_prime.*rot.*rotate_left.*digits|circular_prime_rotation_check",
+            "circ_sum.*\\+=.*n.*is_circular_prime|circular_prime_accumulate"
+        ),
+        new PatternDef("circular_primes_count", "circular_primes_count", "high",
+            "count.*\\+\\+.*circ_sum.*n.*200u|circular_prime_count200",
+            "n_tests.*count.*0xFFu.*metric_a.*circ_sum.*251u|circular_prime_pack",
+            "circ_sum.*>>.*3u.*251u.*metric_b|circular_prime_shift_mod"
+        ),
+        new PatternDef("circular_primes_detect", "circular_primes_detect", "medium",
+            "digits.*num_digits.*rot.*n.*i.*digits.*1u|circular_prime_digit_loop",
+            "rotate_left.*rot.*digits|circular_prime_rotate_call",
+            "run_circular_primes.*g_result|circular_primes_entry"
+        ),
+        new PatternDef("truncatable_right", "truncatable_right", "high",
+            "t.*n.*t.*10u.*is_prime.*t|right_truncatable_loop",
+            "right_count.*\\+\\+.*right_sum.*\\+=.*n.*is_right_truncatable|right_trunc_accumulate",
+            "is_right_truncatable.*is_left_truncatable|trunc_prime_both_check"
+        ),
+        new PatternDef("truncatable_left", "truncatable_left", "high",
+            "pow10_table.*num_digits.*truncated.*n.*%.*pow10_table|left_truncatable_mod",
+            "tmp.*10u.*==.*0u.*return.*0u|left_trunc_no_zero_digit",
+            "left_count.*\\+\\+.*is_left_truncatable|left_trunc_count"
+        ),
+        new PatternDef("truncatable_pack", "truncatable_pack", "medium",
+            "n_tests.*right_count.*0xFFu.*metric_a.*right_sum.*251u|trunc_prime_pack",
+            "metric_b.*left_count.*251u.*metric_b.*==.*0u|trunc_prime_metric_b",
+            "run_truncatable_primes.*g_result|truncatable_primes_entry"
+        ),
+        new PatternDef("lucky_primes_sieve", "lucky_primes_sieve", "high",
+            "lucky.*lucky_sz.*i.*2u.*MAX_N|lucky_sieve_odd_init",
+            "sieve_val.*lucky.*step.*i.*1u.*%.*sieve_val|lucky_sieve_remove_step",
+            "build_lucky.*lucky_sz.*step|lucky_sieve_build"
+        ),
+        new PatternDef("lucky_primes_search", "lucky_primes_search", "high",
+            "is_prime.*n.*is_lucky.*n.*count.*\\+\\+.*lp_sum|lucky_prime_find",
+            "lo.*hi.*lucky_sz.*mid.*lo.*hi.*1u|lucky_binary_search",
+            "lp_sum.*\\+=.*n.*count.*250u|lucky_prime_accumulate250"
+        ),
+        new PatternDef("lucky_primes_pack", "lucky_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*lp_sum.*251u|lucky_prime_pack",
+            "metric_b.*lucky_sz.*251u.*metric_a.*==.*0u|lucky_prime_metric_guard",
+            "run_lucky_primes.*g_result|lucky_primes_entry"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
