@@ -6917,6 +6917,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "g_result.*0x00632186|fibbinary_result_constant",
             "metric_b.*134u.*metric_a.*33u|fibbinary_known_counts"
         ),
+        new PatternDef("carmichael_numbers_fermat", "carmichael_numbers_fermat", "high",
+            "powmod32.*nm1.*n.*!=.*1u|carmichael_fermat_witness",
+            "is_prime.*return.*0u.*is_carmichael|carmichael_composite_guard",
+            "b.*<=.*50u.*gcd32.*b.*n.*!=.*1u|carmichael_coprime_loop"
+        ),
+        new PatternDef("carmichael_numbers_count", "carmichael_numbers_count", "medium",
+            "count\\+\\+.*csum.*\\+=.*n.*>>.*5u|carmichael_accumulate_csum",
+            "n.*561u.*n.*<=.*10000u.*n.*\\+=.*2u|carmichael_scan_range",
+            "metric_a.*count.*0xFFu.*metric_b.*csum.*0xFFu|carmichael_metric_pack"
+        ),
+        new PatternDef("carmichael_numbers_pack", "carmichael_numbers_pack", "medium",
+            "n_tests.*100u.*<<.*16u.*metric_a.*<<.*8u.*metric_b|carmichael_result_combine",
+            "g_result.*0x00640700|carmichael_result_template",
+            "count.*7u.*csum.*carmichael_known_count"
+        ),
+        new PatternDef("blum_integers_check", "blum_integers_check", "high",
+            "p.*%.*4u.*!=.*3u.*return.*0u.*q.*%.*4u.*!=.*3u|blum_mod4_check",
+            "is_prime.*p.*is_prime.*q.*p.*!=.*q|blum_semiprime_guard",
+            "n.*%.*i.*==.*0u.*p.*=.*i.*break|blum_smallest_factor"
+        ),
+        new PatternDef("blum_integers_count", "blum_integers_count", "medium",
+            "count\\+\\+.*bsum.*\\+=.*n.*&.*0xFFu|blum_accumulate_bsum",
+            "n.*21u.*n.*<=.*500u|blum_scan_range",
+            "metric_a.*count.*0xFFu.*metric_b.*bsum.*0xFFu|blum_metric_pack"
+        ),
+        new PatternDef("blum_integers_pack", "blum_integers_pack", "medium",
+            "n_tests.*99u.*<<.*16u.*metric_a.*<<.*8u.*metric_b|blum_result_combine",
+            "g_result.*0x00630000|blum_result_template",
+            "p.*3u.*mod4.*q.*3u.*mod4.*blum_condition"
+        ),
+        new PatternDef("primary_pseudoperfect_check", "primary_pseudoperfect_check", "high",
+            "s.*\\+=.*n.*\\/.*p.*s.*>.*n.*return.*0u|pseudoperfect_fraction_sum",
+            "s.*1u.*tmp.*n.*p.*\\*.*p.*<=.*tmp|pseudoperfect_init_scan",
+            "s.*==.*n.*1u.*0u|pseudoperfect_equality_test"
+        ),
+        new PatternDef("primary_pseudoperfect_count", "primary_pseudoperfect_count", "medium",
+            "count\\+\\+.*psum.*\\+=.*n.*%.*251u|pseudoperfect_accumulate_psum",
+            "n.*2u.*n.*<=.*2000u|pseudoperfect_scan_range",
+            "metric_a.*count.*0xFFu.*metric_b.*psum.*0xFFu|pseudoperfect_metric_pack"
+        ),
+        new PatternDef("primary_pseudoperfect_pack", "primary_pseudoperfect_pack", "medium",
+            "n_tests.*99u.*<<.*16u.*metric_a.*<<.*8u.*metric_b|pseudoperfect_result_combine",
+            "g_result.*0x00630332|pseudoperfect_result_constant",
+            "count.*3u.*psum.*50u.*pseudoperfect_known_values"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
