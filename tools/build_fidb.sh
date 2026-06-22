@@ -185,7 +185,7 @@ echo "  Running analyzeHeadless -import $OBJ_DIR -recursive ($OBJ_COUNT files)â€
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
     -import "$OBJ_DIR" \
     -recursive \
-    -processor "RISCV:LE:32:default" \
+    -processor "RISCV:LE:32:ESP32-P4" \
     -analysisTimeoutPerFile 60 \
     2>&1 | grep -E '(ERROR|WARN|Import succeeded|functions identified)' | tail -20
 

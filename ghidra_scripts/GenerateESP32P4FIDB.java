@@ -68,7 +68,7 @@ import java.util.function.Predicate;
 
 public class GenerateESP32P4FIDB extends GhidraScript {
 
-    private static final String TARGET_LANG  = "RISCV:LE:32:default";
+    private static final String TARGET_LANG  = "RISCV:LE:32:ESP32-P4";
     private static final String LIB_FAMILY   = "ESP-IDF-v6";
     private static final String LIB_VERSION  = "6.0";
 
