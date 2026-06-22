@@ -6692,6 +6692,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_tests.*count.*0xFFu.*metric_a.*ach_sum.*251u|achilles_pack_n_tests",
             "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|achilles_result_combine"
         ),
+        new PatternDef("zeisel_numbers_factorize", "zeisel_numbers_factorize", "high",
+            "spf.*n.*n.*%.*2u.*==.*0u.*return.*2u|zeisel_smallest_prime",
+            "distinct_primes.*n.*pf.*maxpf.*cnt.*last.*spf|zeisel_extract_primes",
+            "d1.*d0.*pf.*1.*pf.*0.*d1.*%.*d0.*!=.*0u|zeisel_recurrence_check"
+        ),
+        new PatternDef("zeisel_numbers_linear_rec", "zeisel_numbers_linear_rec", "high",
+            "a.*d1.*\\/.*d0.*pf.*1.*a.*pf.*0.*b.*pf.*1.*apf0|zeisel_ab_compute",
+            "pf.*i.*!=.*a.*pf.*i.*1u.*\\+.*b.*return.*0u|zeisel_verify_factors",
+            "is_zeisel.*n.*count\\+\\+.*zsum.*\\+=.*n|zeisel_accumulate"
+        ),
+        new PatternDef("zeisel_numbers_pack", "zeisel_numbers_pack", "medium",
+            "count.*0xFFu.*zsum.*%.*251u|zeisel_metric_pack",
+            "n_tests.*499u.*count.*8u.*zsum.*2135u|zeisel_expected_values",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|zeisel_result_combine"
+        ),
+        new PatternDef("hyperperfect_numbers_sigma", "hyperperfect_numbers_sigma", "high",
+            "sigma_s.*n.*s.*0u.*d.*2u.*d.*<.*n.*n.*%.*d.*==.*0u|hyperperfect_div_sum",
+            "is_hyperperfect.*n.*s.*sigma_s.*n.*s.*==.*0u|hyperperfect_zero_guard",
+            "n.*1u.*%.*s.*!=.*0u.*k.*n.*1u.*\\/.*s.*k.*>=.*1u|hyperperfect_k_check"
+        ),
+        new PatternDef("hyperperfect_numbers_classify", "hyperperfect_numbers_classify", "high",
+            "is_hyperperfect.*n.*count\\+\\+.*hsum.*\\+=.*n|hyperperfect_accumulate",
+            "n_tests.*299u.*count.*3u.*hsum.*55u|hyperperfect_expected_values",
+            "k.*1.*perfect.*k.*2.*2_hyperperfect|hyperperfect_k_family"
+        ),
+        new PatternDef("hyperperfect_numbers_pack", "hyperperfect_numbers_pack", "medium",
+            "count.*0xFFu.*hsum.*%.*251u|hyperperfect_metric_pack",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|hyperperfect_result_combine",
+            "hsum.*%.*251u.*55u.*metric_b|hyperperfect_metric_b"
+        ),
+        new PatternDef("vampire_numbers_digits", "vampire_numbers_digits", "high",
+            "sort4.*dn.*dn.*0.*n.*1000u.*dn.*1.*n.*100u.*%.*10u|vampire_digit_extract",
+            "a.*10u.*a.*<=.*99u.*n.*%.*a.*!=.*0u.*b.*n.*\\/.*a|vampire_fang_loop",
+            "a.*%.*10u.*==.*0u.*b.*%.*10u.*==.*0u.*continue|vampire_double_zero_reject"
+        ),
+        new PatternDef("vampire_numbers_multiset", "vampire_numbers_multiset", "high",
+            "df.*0.*a.*10u.*df.*1.*a.*%.*10u.*df.*2.*b.*10u|vampire_fang_digits",
+            "sort4.*df.*df.*k.*!=.*dn.*k.*match.*0u|vampire_digit_multiset_cmp",
+            "is_vampire4.*n.*count\\+\\+.*vsum.*\\+=.*n|vampire_accumulate"
+        ),
+        new PatternDef("vampire_numbers_pack", "vampire_numbers_pack", "medium",
+            "count_lo.*n.*<.*5000u.*vsum.*%.*251u|vampire_metric_pack",
+            "n_tests.*7u.*count_lo.*6u.*vsum.*16514u|vampire_expected_values",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|vampire_result_combine"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
