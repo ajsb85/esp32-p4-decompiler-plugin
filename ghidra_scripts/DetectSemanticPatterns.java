@@ -6602,6 +6602,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*ap_sum.*251u.*4u.*251u|additive_prime_metric_b",
             "ap_sum.*MAX_N.*g_result|additive_primes_result"
         ),
+        new PatternDef("sphenic_numbers_squarefree", "sphenic_squarefree_check", "high",
+            "n.*%.*4u.*==.*0u.*return.*0u|sphenic_squarefree_even",
+            "d.*\\*.*d.*<=.*n.*n.*%.*d.*\\*.*d.*==.*0u.*return.*0u|sphenic_squarefree_odd",
+            "is_squarefree.*n.*count_distinct_prime_factors.*n.*==.*3u|sphenic_three_factor_check"
+        ),
+        new PatternDef("sphenic_numbers_factor_count", "sphenic_factor_count", "high",
+            "count_distinct_prime_factors.*n.*while.*n.*%.*2u.*==.*0u.*n.*\\/=.*2u|sphenic_factor_2",
+            "count.*n.*%.*d.*==.*0u.*count\\+\\+.*while.*n.*%.*d.*==.*0u.*n.*\\/=.*d|sphenic_factor_odd",
+            "n.*>.*1u.*count\\+\\+.*return.*count|sphenic_factor_residual"
+        ),
+        new PatternDef("sphenic_numbers_pack", "sphenic_numbers_pack", "medium",
+            "sp_sum.*%.*251u.*sp_sum.*\\/.*251u.*5u.*%.*251u|sphenic_metric_pack",
+            "run_sphenic_numbers.*g_result|sphenic_result_store",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|sphenic_result_combine"
+        ),
+        new PatternDef("ore_numbers_divisor_stats", "ore_divisor_stats", "high",
+            "divisor_stats.*n.*d_count.*d_sum.*i.*\\*.*i.*<=.*n|ore_divisor_loop",
+            "n.*%.*i.*==.*0u.*cnt\\+\\+.*sum.*\\+=.*i.*i.*!=.*n.*\\/.*i|ore_divisor_pair",
+            "cnt\\+\\+.*sum.*\\+=.*n.*\\/.*i.*d_count.*d_sum|ore_divisor_output"
+        ),
+        new PatternDef("ore_numbers_harmonic_check", "ore_harmonic_check", "high",
+            "ds.*>.*0u.*n.*\\*.*dc.*%.*ds.*==.*0u|ore_harmonic_divisible",
+            "divisor_stats.*n.*dc.*ds.*n.*\\*.*dc.*%.*ds|ore_harmonic_test",
+            "count\\+\\+.*ore_sum.*\\+=.*n|ore_harmonic_accumulate"
+        ),
+        new PatternDef("ore_numbers_pack", "ore_numbers_pack", "medium",
+            "ore_sum.*%.*251u.*ore_sum.*\\/.*251u.*3u.*%.*251u|ore_metric_pack",
+            "run_ore_numbers.*g_result|ore_result_store",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|ore_result_combine"
+        ),
+        new PatternDef("hoax_numbers_digit_sum", "hoax_digit_sum", "high",
+            "digit_sum.*n.*s.*\\+=.*n.*%.*10u.*n.*\\/=.*10u|hoax_digit_accumulate",
+            "prime_factor_digit_sum.*n.*digit_sum.*2u.*while.*n.*%.*2u.*==.*0u|hoax_pf_digit_2",
+            "digit_sum.*d.*while.*n.*%.*d.*==.*0u.*n.*\\/=.*d|hoax_pf_digit_odd"
+        ),
+        new PatternDef("hoax_numbers_composite_check", "hoax_composite_check", "high",
+            "is_prime.*n.*continue.*digit_sum.*n.*==.*prime_factor_digit_sum.*n|hoax_composite_filter",
+            "count\\+\\+.*hoax_sum.*\\+=.*n|hoax_accumulate",
+            "run_hoax_numbers.*g_result|hoax_result_store"
+        ),
+        new PatternDef("hoax_numbers_pack", "hoax_numbers_pack", "medium",
+            "hoax_sum.*%.*251u.*hoax_sum.*\\/.*251u.*6u.*%.*251u|hoax_metric_pack",
+            "n_tests.*count.*0xFFu.*metric_a.*hoax_sum.*251u|hoax_pack_n_tests",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|hoax_result_combine"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
