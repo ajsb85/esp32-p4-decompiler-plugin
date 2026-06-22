@@ -30,14 +30,19 @@
 //    If the caller assigns the result, the C is invalid.  A two-pass scan
 //    detects this and promotes the return type to undefined4.
 //
-//  Fix 3 (Sprint 7 + P5a SSA + P5 ClangAST): Bare return in promoted functions
+//  Fix 3 — bare return; -> return <last-local>; in promoted functions
+//          (ClangAST RETURN Varnode slice, text-scan fallback)
+// Fix 4 — return variable resolved via backward PcodeOp.RETURN Varnode slice
+//          (tracks a0 through COPY/CAST/INT_ZEXT chains, depth ≤ 6)
 //    Bare "return;" in a promoted function is rewritten to "return <var>;"
 //    where <var> is (in priority order):
-//    1. The last Ghidra-local variable (uVar*, iVar*, param_*) assigned before
+//    1. Fix 4: Backward Varnode slice from PcodeOp.RETURN getInput(1) through
+//       COPY/CAST/INT_ZEXT/INT_SEXT chains (depth ≤ 6) — most accurate.
+//    2. The last Ghidra-local variable (uVar*, iVar*, param_*) assigned before
 //       the return (backwards text scan, Sprint 7).
-//    2. The HighVariable feeding the RETURN pcode op in the SSA graph (P5a).
+//    3. The HighVariable feeding the RETURN pcode op in the SSA graph (P5a).
 //       More accurate than text scan for complex control flow.
-//    3. The last variable token in the ClangAST body (P5, last resort).
+//    4. The last variable token in the ClangAST body (P5, last resort).
 //
 // ── Semantic enrichments ─────────────────────────────────────────────────────
 //
@@ -306,6 +311,7 @@ public class ExportDecompiledC extends GhidraScript {
         int gpStripped      = 0;
         int promoted        = 0;
         int bareReturnFixed = 0;
+        int vnSliceFixes    = 0;
         int ssaFallbacks    = 0;
         int astFallbacks    = 0;
         int romSkipped      = 0;
@@ -320,7 +326,9 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" *   Fix 1 — gp = 0x<hex>; / gp = &__global_pointer_; lines stripped");
             pw.println(" *   Fix 2 — void return promoted to undefined4 (caller-driven)");
             pw.println(" *   Fix 3 — bare return; -> return <last-local>; in promoted functions");
-            pw.println(" *           (text scan + ClangAST fallback via P5)");
+            pw.println(" *           (ClangAST RETURN Varnode slice, text-scan fallback)");
+            pw.println(" * Fix 4 — return variable resolved via backward PcodeOp.RETURN Varnode slice");
+            pw.println(" *           (tracks a0 through COPY/CAST/INT_ZEXT chains, depth <= 6)");
             pw.println(" * Semantic enrichments:");
             pw.println(" *   Sprint 1  — sorted output, typed sig, callers, ROM extern");
             pw.println(" *   Sprint 7  — smart bare-return (backwards local-var scan)");
@@ -465,14 +473,29 @@ public class ExportDecompiledC extends GhidraScript {
                     Matcher lam = LOCAL_ASSIGN.matcher(line);
                     if (lam.find()) lastLocalVar = lam.group(1);
 
-                    // Fix 3: bare return → return <lastLocalVar or SSA or AST fallback or param_1>.
+                    // Fix 3 / Fix 4: bare return → return <var> in promoted functions.
+                    // Priority: Fix 4 (Varnode slice) > text scan > SSA > AST > param_1.
                     if (isPromoted) {
                         Matcher brm = BARE_RETURN.matcher(line);
                         if (brm.matches()) {
-                            String retVar = lastLocalVar;
+                            String retVar = null;
+
+                            // Fix 4: backward Varnode slice from PcodeOp.RETURN getInput(1)
+                            // through COPY/CAST/INT_ZEXT/INT_SEXT chains, depth ≤ 6.
+                            DecompileResults dr = resultsByAddr.get(addr);
+                            String vnVar = resolveReturnVarName(dr);
+                            if (vnVar != null) {
+                                retVar = vnVar;
+                                vnSliceFixes++;
+                            }
+
+                            // Fallback 1: backwards text scan (last local assignment seen).
                             if (retVar == null) {
-                                // P5a: SSA walk via HighFunction/PcodeOpAST — most accurate
-                                DecompileResults dr = resultsByAddr.get(addr);
+                                retVar = lastLocalVar;
+                            }
+
+                            if (retVar == null) {
+                                // Fallback 2: SSA walk via HighFunction/PcodeOpAST
                                 String ssaVar = extractReturnVarFromSSA(dr);
                                 if (ssaVar != null) {
                                     retVar = ssaVar;
@@ -480,8 +503,7 @@ public class ExportDecompiledC extends GhidraScript {
                                 }
                             }
                             if (retVar == null) {
-                                // P5: ClangAST walk — tertiary fallback
-                                DecompileResults dr = resultsByAddr.get(addr);
+                                // Fallback 3: ClangAST walk — last resort
                                 String astVar = extractReturnVarFromAST(dr);
                                 if (astVar != null) {
                                     retVar = astVar;
@@ -513,10 +535,10 @@ public class ExportDecompiledC extends GhidraScript {
 
         println(String.format(
             "Export: %d written, %d ROM externs, %d failed | "
-            + "gp_stripped=%d promoted=%d bare_fixed=%d (ssa=%d ast=%d) strings=%d → %s",
+            + "gp_stripped=%d promoted=%d bare_fixed=%d (vn=%d ssa=%d ast=%d) strings=%d -> %s",
             exported, romSkipped, failed,
             gpStripped, promoted, bareReturnFixed,
-            ssaFallbacks, astFallbacks,
+            vnSliceFixes, ssaFallbacks, astFallbacks,
             stringDecls.size(),
             outFile.getAbsolutePath()));
 
@@ -533,6 +555,73 @@ public class ExportDecompiledC extends GhidraScript {
                 printerr("DOT generation failed: " + ex.getMessage());
             }
         }
+    }
+
+    // ── Fix 4: backward Varnode slice from PcodeOp.RETURN ────────────────────
+
+    /**
+     * Resolve the name of the variable that holds the return value by walking
+     * backward from the RETURN pcode op's input(1) Varnode.
+     *
+     * Algorithm:
+     *  1. Scan all PcodeOps in the HighFunction for any RETURN op with > 1 input.
+     *  2. Take getInput(1) — for RISC-V (ABI a0) this is the return-value Varnode.
+     *  3. Walk backward through COPY / CAST / INT_ZEXT / INT_SEXT chains (depth ≤ 6).
+     *     At each node, if the Varnode is a VarnodeAST, check getHigh().getName().
+     *     Return the first name that matches the Ghidra local-variable pattern and
+     *     is not "UNNAMED" / null.
+     *  4. Return null if no resolvable name is found (text-scan fallback applies).
+     */
+    private String resolveReturnVarName(DecompileResults res) {
+        if (res == null || !res.decompileCompleted()) return null;
+        try {
+            HighFunction hf = res.getHighFunction();
+            if (hf == null) return null;
+            Iterator<PcodeOpAST> opIter = hf.getPcodeOps();
+            while (opIter.hasNext()) {
+                PcodeOpAST op = opIter.next();
+                if (op.getOpcode() != PcodeOp.RETURN) continue;
+                if (op.getNumInputs() <= 1) continue;  // no return value operand
+                Varnode retVn = op.getInput(1);
+                if (retVn == null) continue;
+                String name = walkVarnodeChain(retVn, 6);
+                if (name != null) return name;
+            }
+        } catch (Exception ex) {
+            // silently fall through to text-scan fallback
+        }
+        return null;
+    }
+
+    /**
+     * Walk backward through COPY/CAST/INT_ZEXT/INT_SEXT pcode chains up to
+     * {@code maxDepth} hops, returning the first HighVariable name that matches
+     * the Ghidra local-variable pattern, or null if nothing is found.
+     */
+    private String walkVarnodeChain(Varnode vn, int maxDepth) {
+        if (vn == null || maxDepth <= 0) return null;
+        // Check whether this Varnode already carries a named HighVariable.
+        if (vn instanceof VarnodeAST) {
+            HighVariable hv = ((VarnodeAST) vn).getHigh();
+            if (hv != null) {
+                String name = hv.getName();
+                if (name != null && !name.equals("UNNAMED")
+                        && AST_VAR_NAME.matcher(name).matches()) {
+                    return name;
+                }
+            }
+        }
+        // Try to continue backward through the defining PcodeOp.
+        PcodeOp def = vn.getDef();
+        if (def == null) return null;
+        int opc = def.getOpcode();
+        if (opc == PcodeOp.COPY
+                || opc == PcodeOp.CAST
+                || opc == PcodeOp.INT_ZEXT
+                || opc == PcodeOp.INT_SEXT) {
+            return walkVarnodeChain(def.getInput(0), maxDepth - 1);
+        }
+        return null;
     }
 
     // ── P5a: SSA-based bare-return variable extractor ────────────────────────
