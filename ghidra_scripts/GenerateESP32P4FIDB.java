@@ -105,29 +105,18 @@ public class GenerateESP32P4FIDB extends GhidraScript {
             }
         }
 
-        // ── 2. Ask for ESP-IDF build directory (informational / for logging) ──
-        //    When running headless with -postScript, askDirectory() throws
-        //    CancelledException if no GUI is present; catch it gracefully.
-        File idfBuildDir = null;
-        try {
-            idfBuildDir = askDirectory(
-                    "Select ESP-IDF build directory (contains .elf/.a files)", "Select");
-        } catch (ghidra.util.exception.CancelledException ce) {
-            // Headless mode or user cancelled — skip the directory prompt.
-            println("No ESP-IDF build directory provided — using project programs only.");
-        }
-        if (idfBuildDir != null) {
-            println("ESP-IDF build directory : " + idfBuildDir.getAbsolutePath());
+        // ── 2. ESP-IDF build directory — informational only, not required ────────
+        //    Headless mode: use args[1] if provided; GUI mode: ask via dialog.
+        //    This argument is only for logging context; the actual programs come
+        //    from the Ghidra project folder walk below.
+        String idfBuildDirStr = (args != null && args.length > 1) ? args[1] : null;
+        if (idfBuildDirStr != null && !idfBuildDirStr.isEmpty()) {
+            println("ESP-IDF build directory : " + idfBuildDirStr);
         }
 
         // ── 3. Optimization variant ───────────────────────────────────────────
-        String variant = "-Os";
-        try {
-            variant = askString("Library variant",
-                    "Enter optimization variant (-Os, -O0, -O2):", "-Os");
-        } catch (ghidra.util.exception.CancelledException ce) {
-            println("No variant provided — defaulting to " + variant);
-        }
+        //    args[2] if provided, else "-Os".
+        String variant = (args != null && args.length > 2) ? args[2] : "-Os";
         println("Library variant : " + variant);
 
         // ── 4. Scan current project for RISC-V / ESP32-P4 programs ───────────
