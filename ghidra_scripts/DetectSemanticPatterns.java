@@ -6331,6 +6331,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "prime_cnt.*0xFF.*total_sum|leyland_numbers_mask",
             "leyland_numbers_prime.*leyland_numbers_sum|leyland_numbers_metrics"
         ),
+        new PatternDef("emirp_primes_reverse", "emirp_primes_reverse", "high",
+            "reverse_digits.*n.*10u.*rev.*10u|emirp_digit_reversal",
+            "rev.*rev.*10u.*n.*10u.*n|emirp_reversal_loop",
+            "while.*n.*0u.*rev.*10u.*n.*10u|emirp_reverse_digits"
+        ),
+        new PatternDef("emirp_primes_test", "emirp_primes_test", "high",
+            "is_emirp.*is_prime.*rev.*==.*n|emirp_palindrome_check",
+            "is_prime.*n.*reverse_digits.*n.*rev.*!=.*n|emirp_nonpalindrome",
+            "is_prime.*rev.*return.*0u.*is_prime|emirp_double_prime_check"
+        ),
+        new PatternDef("emirp_primes_collect", "emirp_primes_collect", "medium",
+            "total_sum.*251u.*cnt_le100|emirp_metrics_pack",
+            "count.*15u.*is_emirp|emirp_count_loop",
+            "15u.*<<.*16.*total_sum.*251u.*cnt_le100|emirp_g_result"
+        ),
+        new PatternDef("mills_primes_array", "mills_primes_array", "high",
+            "mills.*2u.*11u.*1361u|mills_known_primes",
+            "static.*const.*uint32_t.*mills.*3.*2u.*11u|mills_prime_array",
+            "mills\\[2\\].*251u|mills_largest_mod"
+        ),
+        new PatternDef("mills_primes_verify", "mills_primes_verify", "high",
+            "total_sum.*mills.*i.*is_prime.*mills|mills_sum_primality",
+            "cnt_prime.*is_prime.*mills.*i|mills_count_primes",
+            "total_sum.*1374u|mills_known_sum"
+        ),
+        new PatternDef("mills_primes_pack", "mills_primes_pack", "medium",
+            "3u.*<<.*16.*total_sum.*251u.*mills.*2.*251u|mills_g_result",
+            "total_sum.*251u.*<<.*8.*mills.*251u|mills_pack_metrics",
+            "mills_primes_sum.*mills_primes_largest|mills_primes_metrics"
+        ),
+        new PatternDef("strong_primes_sieve", "strong_primes_sieve", "high",
+            "build_sieve.*sieve.*0u.*sieve.*1u|strong_sieve_init",
+            "sieve.*i.*==.*0u.*j.*=.*i.*\\*.*i.*j.*<.*SIEVE_LIMIT|strong_sieve_inner",
+            "sieve.*0.*1.*SIEVE_LIMIT.*primes.*np|strong_sieve_collect"
+        ),
+        new PatternDef("strong_primes_test", "strong_primes_test", "high",
+            "2u.*\\*.*p_mid.*>.*p_prev.*\\+.*p_next|strong_prime_condition",
+            "p_prev.*primes.*i.*p_mid.*primes.*i.*p_next.*primes.*i|strong_triple_walk",
+            "strong_prime.*2.*p.*>.*prev.*next|strong_arithmetic_mean"
+        ),
+        new PatternDef("strong_primes_collect", "strong_primes_collect", "medium",
+            "total_sum.*1129u|strong_primes_known_sum",
+            "15u.*<<.*16.*total_sum.*251u.*cnt_le50|strong_primes_g_result",
+            "cnt_le50.*p_mid.*50u.*count.*15u|strong_primes_count_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
