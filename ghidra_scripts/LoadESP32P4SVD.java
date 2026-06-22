@@ -210,16 +210,32 @@ public class LoadESP32P4SVD extends GhidraScript {
         println("Decompiled code will show PERIPHERAL->REGISTER instead of raw pointer arithmetic.");
     }
 
-    /** Resolves data/esp32p4.svd relative to the script's source directory. */
+    /** Resolves data/esp32p4.svd — checks script dir, extension dir, and home. */
     private File resolveBundledSvd() {
+        // 1. Via ResourceFile (works when script is on filesystem, not in JAR)
         try {
-            // getSourceFile() returns generic.jar.ResourceFile, not java.io.File
             generic.jar.ResourceFile rf = getSourceFile();
-            java.io.File scriptDir = rf.getFile(false).getParentFile();  // ghidra_scripts/
-            java.io.File dataDir   = new java.io.File(scriptDir.getParent(), "data");
-            java.io.File bundled   = new java.io.File(dataDir, "esp32p4.svd");
-            if (bundled.exists()) return bundled;
+            java.io.File f = rf.getFile(false);
+            if (f != null) {
+                java.io.File bundled = new java.io.File(f.getParentFile().getParent(), "data/esp32p4.svd");
+                if (bundled.exists()) return bundled;
+            }
         } catch (Exception ignore) {}
+
+        // 2. Relative to Ghidra user extension dir
+        String[] extCandidates = {
+            System.getProperty("user.home") + "/.config/ghidra/ghidra_12.1.2_PUBLIC/Extensions/esp32p4-ghidra-plugin/data/esp32p4.svd",
+            System.getProperty("user.home") + "/.ghidra/.ghidra_12.1.2_PUBLIC/Extensions/esp32p4-ghidra-plugin/data/esp32p4.svd",
+        };
+        for (String path : extCandidates) {
+            java.io.File f = new java.io.File(path);
+            if (f.exists()) return f;
+        }
+
+        // 3. Working directory (useful for headless runs from repo root)
+        java.io.File cwd = new java.io.File("data/esp32p4.svd");
+        if (cwd.exists()) return cwd;
+
         return null;
     }
 
