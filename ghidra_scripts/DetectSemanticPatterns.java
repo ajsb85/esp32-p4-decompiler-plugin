@@ -6557,6 +6557,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_b.*sp_sum.*251u.*3u.*251u|strob_prime_metric_b",
             "sp_sum.*MAX_N.*g_result|strob_primes_result"
         ),
+        new PatternDef("undulating_primes_digit", "undulating_digit_extract", "high",
+            "get_digits_msf.*tmp.*len.*n.*%.*10u.*buf.*i.*tmp.*len.*1u.*i|undulating_msf_extract",
+            "digits_msf.*msf.*len.*3u|undulating_min_len",
+            "is_undulating.*get_digits_msf.*len.*3u|undulating_check_entry"
+        ),
+        new PatternDef("undulating_primes_alternation", "undulating_alternation_check", "high",
+            "prev_up.*digits.*i.*>.*digits.*i.*1u.*next_up.*digits.*i.*1u.*>.*digits.*i|undulating_direction",
+            "prev_up.*==.*next_up.*return.*0u|undulating_flip_fail",
+            "is_undulating.*is_prime.*count.*up_sum|undulating_prime_scan"
+        ),
+        new PatternDef("undulating_primes_pack", "undulating_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*up_sum.*251u|undulating_prime_pack",
+            "metric_b.*up_sum.*251u.*3u.*251u|undulating_prime_metric_b",
+            "up_sum.*MAX_N.*g_result|undulating_primes_result"
+        ),
+        new PatternDef("repunit_primes_build", "repunit_build", "high",
+            "build_repunit.*r.*0u.*i.*0u.*i.*<.*len.*r.*r.*10u.*1u|repunit_construct",
+            "build_repunit.*len.*<.*=.*9u.*32.*bit|repunit_bound",
+            "is_prime.*build_repunit.*len.*rp_sum|repunit_prime_test"
+        ),
+        new PatternDef("repunit_primes_scan", "repunit_scan", "high",
+            "for.*len.*2u.*len.*<.*=.*MAX_REPUNIT_LEN.*build_repunit.*len|repunit_loop",
+            "is_prime.*r.*count.*rp_sum.*\\+=.*r|repunit_prime_collect",
+            "run_repunit_primes.*rp_sum.*count|repunit_run_entry"
+        ),
+        new PatternDef("repunit_primes_pack", "repunit_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*rp_sum.*251u|repunit_prime_pack",
+            "metric_b.*rp_sum.*251u.*5u.*251u|repunit_prime_metric_b",
+            "rp_sum.*MAX_REPUNIT_LEN.*g_result|repunit_primes_result"
+        ),
+        new PatternDef("additive_primes_digit_sum", "additive_digit_sum", "high",
+            "digit_sum.*s.*0u.*n.*>.*0u.*s.*\\+=.*n.*%.*10u.*n.*\\/=.*10u|additive_digit_sum_loop",
+            "digit_sum.*return.*s|additive_digit_sum_return",
+            "is_prime.*digit_sum.*n.*additive|additive_digitsum_prime_check"
+        ),
+        new PatternDef("additive_primes_scan", "additive_scan", "high",
+            "is_prime.*n.*&&.*is_prime.*digit_sum.*n.*count.*ap_sum|additive_prime_scan",
+            "ap_sum.*\\+=.*n.*count.*MAX_N|additive_prime_accumulate",
+            "run_additive_primes.*g_result|additive_primes_entry"
+        ),
+        new PatternDef("additive_primes_pack", "additive_primes_pack", "medium",
+            "n_tests.*count.*0xFFu.*metric_a.*ap_sum.*251u|additive_prime_pack",
+            "metric_b.*ap_sum.*251u.*4u.*251u|additive_prime_metric_b",
+            "ap_sum.*MAX_N.*g_result|additive_primes_result"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
