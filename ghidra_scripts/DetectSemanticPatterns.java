@@ -6782,6 +6782,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|multiply_perfect_result_combine",
             "n_tests.*199u.*msum.*%.*251u|multiply_perfect_expected_values"
         ),
+        new PatternDef("permutable_primes_check", "permutable_primes_check", "high",
+            "all_perms_prime.*digits.*len.*is_prime.*num|permutable_prime_all_perms",
+            "next_permutation.*pivot.*swap_idx.*digits.*reverse_suffix|permutable_next_perm",
+            "is_permutable_prime.*is_prime.*num_digits.*all_perms_prime|permutable_top_level"
+        ),
+        new PatternDef("permutable_primes_count", "permutable_primes_count", "medium",
+            "count\\+\\+.*psum.*\\+=.*n.*is_permutable_prime|permutable_accumulate",
+            "n_tests.*199u.*psum.*%.*251u|permutable_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*psum.*%.*251u|permutable_metric_pack"
+        ),
+        new PatternDef("permutable_primes_pack", "permutable_primes_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|permutable_result_combine",
+            "g_result.*0x00C71088|permutable_result_constant",
+            "metric_b.*136u.*metric_a.*16u|permutable_known_counts"
+        ),
+        new PatternDef("untouchable_numbers_sieve", "untouchable_numbers_sieve", "high",
+            "proper_div_sum.*m.*sv.*reachable.*sv|untouchable_sieve_mark",
+            "m.*<=.*50000u.*reachable.*sv.*1u|untouchable_sieve_bound",
+            "for.*m.*2u.*m.*50000u.*sv.*proper_div_sum|untouchable_outer_sieve"
+        ),
+        new PatternDef("untouchable_numbers_count", "untouchable_numbers_count", "medium",
+            "reachable.*n.*count\\+\\+.*usum.*\\+=.*n|untouchable_accumulate",
+            "n_tests.*199u.*usum.*%.*251u|untouchable_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*usum.*%.*251u|untouchable_metric_pack"
+        ),
+        new PatternDef("untouchable_numbers_pack", "untouchable_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|untouchable_result_combine",
+            "g_result.*0x00C70AE6|untouchable_result_constant",
+            "metric_b.*230u.*metric_a.*10u|untouchable_known_counts"
+        ),
+        new PatternDef("colossally_abundant_check", "colossally_abundant_check", "high",
+            "sigma.*n.*sn.*is_superabundant.*sn.*m.*sm.*n|colossally_abundant_super_check",
+            "sig_cache.*sn.*is_colossally_abundant|colossally_abundant_cache",
+            "for.*m.*1u.*m.*n.*sm.*sig_cache.*sigma.*m|colossally_abundant_dominance"
+        ),
+        new PatternDef("colossally_abundant_count", "colossally_abundant_count", "medium",
+            "count\\+\\+.*casum.*\\+=.*n.*is_colossally_abundant|colossally_abundant_accumulate",
+            "n_tests.*199u.*casum.*%.*251u|colossally_abundant_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*casum.*%.*251u|colossally_abundant_metric_pack"
+        ),
+        new PatternDef("colossally_abundant_pack", "colossally_abundant_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|colossally_abundant_result_combine",
+            "g_result.*0x00C706C9|colossally_abundant_result_constant",
+            "metric_b.*201u.*metric_a.*6u|colossally_abundant_known_counts"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
