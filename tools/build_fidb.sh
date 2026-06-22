@@ -200,13 +200,16 @@ echo "(Fingerprinting all functions in all imported programs)"
 
 mkdir -p "$(dirname "$FIDB_OUT")"
 
+# Use -preScript (not -postScript + -process) because imported programs live in
+# subfolders; -process without a path only searches the root folder and finds
+# nothing.  GenerateESP32P4FIDB.java walks all subfolders internally via
+# collectPrograms(getRootFolder(), ...) so -preScript with no -process works.
 "$ANALYZE_HEADLESS" \
     "$GHIDRA_PROJ_DIR" "$GHIDRA_PROJ_NAME" \
-    -process \
     -noanalysis \
     -scriptPath "$SCRIPTS_DIR" \
-    -postScript GenerateESP32P4FIDB.java "$FIDB_OUT" "$OBJ_DIR" "-Os" \
-    2>&1 | grep -E '(INFO|WARN|ERROR|FIDB|Populate|fingerprint|saved|pattern|result)' | tail -60
+    -preScript GenerateESP32P4FIDB.java "$FIDB_OUT" "" "-Os" \
+    2>&1 | grep -E '(INFO|WARN|ERROR|FIDB|Populate|fingerprint|saved|pattern|result|Found [0-9])' | tail -60
 
 # ── Verify ────────────────────────────────────────────────────────────────────
 if [[ -f "$FIDB_OUT" ]]; then
