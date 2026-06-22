@@ -6827,6 +6827,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "g_result.*0x00C706C9|colossally_abundant_result_constant",
             "metric_b.*201u.*metric_a.*6u|colossally_abundant_known_counts"
         ),
+        new PatternDef("pronic_numbers_isqrt", "pronic_numbers_isqrt", "high",
+            "k.*\\*.*k.*\\+.*1u.*==.*n|pronic_consecutive_product_check",
+            "isqrt32.*newton.*x.*n.*x.*>>.*1u|pronic_integer_sqrt_newton",
+            "k.*-.*1u.*\\*.*k.*==.*n|pronic_lower_bracket_check"
+        ),
+        new PatternDef("pronic_numbers_count", "pronic_numbers_count", "medium",
+            "count\\+\\+.*psum.*\\+=.*n.*is_pronic|pronic_accumulate_sum",
+            "n_tests.*199u.*psum.*%.*251u|pronic_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*psum.*%.*251u|pronic_metric_pack"
+        ),
+        new PatternDef("pronic_numbers_pack", "pronic_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|pronic_result_combine",
+            "g_result.*0x00C70D9D|pronic_result_constant",
+            "metric_b.*157u.*metric_a.*13u|pronic_known_counts"
+        ),
+        new PatternDef("polite_numbers_power2", "polite_numbers_power2", "high",
+            "n.*&.*n.*-.*1u.*==.*0u|polite_power_of_two_bitmask",
+            "is_power_of_two.*is_polite.*count\\+\\+|polite_impolite_filter",
+            "psum.*\\+=.*n.*!is_power_of_two|polite_accumulate_non_power2"
+        ),
+        new PatternDef("polite_numbers_count", "polite_numbers_count", "medium",
+            "count\\+\\+.*psum.*\\+=.*n.*is_polite|polite_accumulate_sum",
+            "n_tests.*199u.*psum.*%.*251u|polite_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*psum.*%.*251u|polite_metric_pack"
+        ),
+        new PatternDef("polite_numbers_pack", "polite_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|polite_result_combine",
+            "g_result.*0x00C7BF43|polite_result_constant",
+            "metric_b.*67u.*metric_a.*191u|polite_known_counts"
+        ),
+        new PatternDef("giuga_numbers_check", "giuga_numbers_check", "high",
+            "n.*d.*-.*1u.*%.*d.*!=.*0u|giuga_divisibility_condition",
+            "nprimes.*<.*2u.*return.*0u|giuga_composite_distinct_primes",
+            "temp.*%.*d.*==.*0u.*nprimes\\+\\+|giuga_prime_factor_scan"
+        ),
+        new PatternDef("giuga_numbers_count", "giuga_numbers_count", "medium",
+            "count\\+\\+.*gsum.*\\+=.*n.*is_giuga|giuga_accumulate_sum",
+            "n_tests.*99u.*gsum.*%.*251u|giuga_expected_values",
+            "metric_a.*count.*0xFFu.*metric_b.*gsum.*%.*251u|giuga_metric_pack"
+        ),
+        new PatternDef("giuga_numbers_pack", "giuga_numbers_pack", "medium",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|giuga_result_combine",
+            "g_result.*0x0063011E|giuga_result_constant",
+            "metric_b.*30u.*metric_a.*1u|giuga_known_counts"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
