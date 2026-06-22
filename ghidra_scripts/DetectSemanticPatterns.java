@@ -6286,6 +6286,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "count_s.*0xFF.*cand_sum.*0xFF|sierpinski_numbers_mask",
             "g_result.*n_tests.*metric_a.*metric_b|sierpinski_numbers_g_result"
         ),
+        new PatternDef("riesel_numbers_table", "riesel_numbers_table", "high",
+            "riesel_k\\s*\\[|riesel_numbers_table",
+            "2293.*9221.*23669|riesel_numbers_constants",
+            "dig_sum.*riesel_digit_sum|riesel_numbers_digit_sum"
+        ),
+        new PatternDef("riesel_numbers_threshold", "riesel_numbers_threshold", "high",
+            "riesel_k.*>>.*8.*>.*100|riesel_numbers_threshold",
+            "cnt_large\\+\\+|riesel_numbers_count_large",
+            "dig_sum.*%.*251|riesel_numbers_mod251"
+        ),
+        new PatternDef("riesel_numbers_pack", "riesel_numbers_pack", "medium",
+            "RIESEL_N\\s*<<\\s*16.*cnt_large.*<<.*8|riesel_numbers_pack",
+            "cnt_large.*0xFF.*dig_sum|riesel_numbers_mask",
+            "g_result.*RIESEL_N.*cnt_large.*dig_sum|riesel_numbers_g_result"
+        ),
+        new PatternDef("kynea_numbers_formula", "kynea_numbers_formula", "high",
+            "pow2\\s*\\+\\s*1.*\\*.*pow2\\s*\\+\\s*1.*-\\s*2|kynea_numbers_formula",
+            "pow2\\s*<<=\\s*1|kynea_numbers_doubling",
+            "kynea_is_prime.*kval|kynea_numbers_primality"
+        ),
+        new PatternDef("kynea_numbers_count", "kynea_numbers_count", "high",
+            "prime_cnt\\+\\+.*composite_cnt\\+\\+|kynea_numbers_count",
+            "KYNEA_N.*<<.*16.*prime_cnt.*<<.*8|kynea_numbers_result_pack",
+            "composite_cnt.*0xFF.*prime_cnt.*0xFF|kynea_numbers_mask"
+        ),
+        new PatternDef("kynea_numbers_pack", "kynea_numbers_pack", "medium",
+            "g_result.*KYNEA_N.*prime_cnt.*composite_cnt|kynea_numbers_g_result",
+            "kynea_numbers_composite|composite_cnt",
+            "kynea_numbers_prime|prime_cnt.*KYNEA_N"
+        ),
+        new PatternDef("leyland_numbers_nested", "leyland_numbers_nested", "high",
+            "pow_u32.*x.*y.*pow_u32.*y.*x|leyland_numbers_formula",
+            "for.*x.*<=.*5.*for.*y.*<=.*x|leyland_numbers_nested_loop",
+            "leyland_is_prime.*ley|leyland_numbers_primality"
+        ),
+        new PatternDef("leyland_numbers_count", "leyland_numbers_count", "high",
+            "prime_cnt.*total_sum.*count|leyland_numbers_accum",
+            "total_sum.*%.*251|leyland_numbers_mod251",
+            "10u\\s*<<\\s*16.*prime_cnt.*total_sum|leyland_numbers_pack"
+        ),
+        new PatternDef("leyland_numbers_pack", "leyland_numbers_pack", "medium",
+            "g_result.*10u.*prime_cnt.*total_sum|leyland_numbers_g_result",
+            "prime_cnt.*0xFF.*total_sum|leyland_numbers_mask",
+            "leyland_numbers_prime.*leyland_numbers_sum|leyland_numbers_metrics"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
