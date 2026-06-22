@@ -6737,6 +6737,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_tests.*7u.*count_lo.*6u.*vsum.*16514u|vampire_expected_values",
             "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|vampire_result_combine"
         ),
+        new PatternDef("frugal_numbers_digit_count", "frugal_numbers_digit_count", "high",
+            "digit_count.*n.*0u.*return.*1u.*d.*0u.*n.*0u.*n.*\\/.*10u.*d\\+\\+|frugal_digit_count",
+            "factorization_digits.*fd.*0u.*d.*2u.*d.*d.*<=.*n.*n.*%.*d.*==.*0u|frugal_factor_loop",
+            "exp.*1u.*fd.*digit_count.*exp|frugal_exp_digits"
+        ),
+        new PatternDef("frugal_numbers_classify", "frugal_numbers_classify", "high",
+            "is_frugal.*factorization_digits.*n.*<.*digit_count.*n|frugal_strict_less",
+            "is_frugal.*n.*<.*2u.*return.*0u|frugal_trivial_reject",
+            "count\\+\\+.*fsum.*\\+=.*n.*is_frugal|frugal_accumulate"
+        ),
+        new PatternDef("frugal_numbers_pack", "frugal_numbers_pack", "medium",
+            "metric_a.*count.*0xFFu.*metric_b.*fsum.*%.*251u|frugal_metric_pack",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|frugal_result_combine",
+            "n_tests.*499u.*fsum.*%.*251u|frugal_expected_values"
+        ),
+        new PatternDef("equidigital_numbers_digit_count", "equidigital_numbers_digit_count", "high",
+            "factorization_digits.*n.*==.*digit_count.*n|equidigital_equal_test",
+            "is_equidigital.*n.*<.*2u.*return.*0u|equidigital_trivial_reject",
+            "exp.*1u.*fd.*digit_count.*exp|equidigital_exp_digits"
+        ),
+        new PatternDef("equidigital_numbers_classify", "equidigital_numbers_classify", "high",
+            "is_equidigital.*factorization_digits.*==.*digit_count|equidigital_equal_classify",
+            "count\\+\\+.*esum.*\\+=.*n.*is_equidigital|equidigital_accumulate",
+            "d.*2u.*d.*d.*<=.*n.*n.*%.*d.*0u.*exp.*0u|equidigital_factor_trial"
+        ),
+        new PatternDef("equidigital_numbers_pack", "equidigital_numbers_pack", "medium",
+            "metric_a.*count.*0xFFu.*metric_b.*esum.*%.*251u|equidigital_metric_pack",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|equidigital_result_combine",
+            "n_tests.*499u.*esum.*%.*251u|equidigital_expected_values"
+        ),
+        new PatternDef("multiply_perfect_sigma", "multiply_perfect_sigma", "high",
+            "sigma.*n.*s.*0u.*d.*1u.*d.*d.*<=.*n.*n.*%.*d.*==.*0u.*s.*\\+=.*d|multiply_perfect_sigma_loop",
+            "d.*!=.*n.*\\/.*d.*s.*\\+=.*n.*\\/.*d|multiply_perfect_sigma_pair",
+            "is_multiply_perfect.*sigma.*n.*%.*n.*==.*0u.*s.*\\/.*n.*>=.*2u|multiply_perfect_ktest"
+        ),
+        new PatternDef("multiply_perfect_classify", "multiply_perfect_classify", "high",
+            "is_multiply_perfect.*n.*<.*2u.*return.*0u|multiply_perfect_trivial_reject",
+            "count\\+\\+.*msum.*\\+=.*n.*is_multiply_perfect|multiply_perfect_accumulate",
+            "s.*\\/.*n.*>=.*2u.*sigma.*k.*perfect|multiply_perfect_k_ge2"
+        ),
+        new PatternDef("multiply_perfect_pack", "multiply_perfect_pack", "medium",
+            "metric_a.*count.*0xFFu.*metric_b.*msum.*%.*251u|multiply_perfect_metric_pack",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|multiply_perfect_result_combine",
+            "n_tests.*199u.*msum.*%.*251u|multiply_perfect_expected_values"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
