@@ -7052,6 +7052,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_a.*sum10.*0xFFu.*metric_b.*p50.*0xFFu|sundaram_metric_encode",
             "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|sundaram_distinct_guard"
         ),
+        new PatternDef("smith_numbers_digit_sum", "smith_numbers_digit_sum", "medium",
+            "s.*\\+=.*n.*%.*10u.*n.*\\/=.*10u.*n.*>.*0u|smith_digit_sum_loop",
+            "digit_sum.*n.*==.*prime_factor_digit_sum.*n|smith_equality_check",
+            "while.*n.*>.*0u.*s.*\\+=.*n.*%.*10u|smith_modulo_digit_extract"
+        ),
+        new PatternDef("smith_numbers_pfds", "smith_numbers_pfds", "medium",
+            "d.*\\*.*d.*<=.*n.*n.*%.*d.*==.*0u.*s.*\\+=.*digit_sum.*d|smith_factor_loop",
+            "n.*\\/=.*d.*s.*\\+=.*digit_sum.*n.*n.*>.*1u|smith_residual_prime",
+            "n_smith.*first.*tenth.*is_prime.*n|smith_collect_candidates"
+        ),
+        new PatternDef("smith_numbers_pack", "smith_numbers_pack", "medium",
+            "nt_byte.*n_smith.*0xFFu.*metric_a.*first.*0xFFu.*metric_b.*tenth.*0xFFu|smith_metric_encode",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|smith_result_combine",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|smith_distinct_guard"
+        ),
+        new PatternDef("taxi_numbers_cube", "taxi_numbers_cube", "medium",
+            "x.*\\*.*x.*\\*.*x|taxi_cube_compute",
+            "cube.*a.*\\*.*2u.*<=.*n.*cube.*b.*==.*rem|taxi_pair_search",
+            "ways.*>=.*2u.*n_taxi.*smallest.*reps_of_smallest|taxi_taxicab_classify"
+        ),
+        new PatternDef("taxi_numbers_search", "taxi_numbers_search", "medium",
+            "ca.*=.*cube.*a.*rem.*=.*n.*-.*ca.*b.*=.*a|taxi_inner_search_init",
+            "while.*cube.*b.*<.*rem.*b\\+\\+.*cube.*b.*==.*rem.*ways\\+\\+|taxi_cube_root_check",
+            "n_taxi.*smallest.*reps_of_smallest.*limit.*20000u|taxi_collect_loop"
+        ),
+        new PatternDef("taxi_numbers_pack", "taxi_numbers_pack", "medium",
+            "nt_byte.*n_taxi.*0xFFu.*metric_a.*smallest.*0xFFu.*metric_b.*reps_of_smallest.*0xFFu|taxi_metric_encode",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|taxi_result_combine",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|taxi_distinct_guard"
+        ),
+        new PatternDef("keith_numbers_digits", "keith_numbers_digits", "medium",
+            "seq.*i.*-.*1u.*=.*tmp.*%.*10u.*tmp.*\\/=.*10u|keith_digit_extract",
+            "nd.*=.*count_digits.*n.*win.*i.*=.*seq.*i|keith_window_init",
+            "count_digits.*d\\+\\+.*n.*\\/=.*10u.*n.*>.*0u|keith_digit_count_loop"
+        ),
+        new PatternDef("keith_numbers_sequence", "keith_numbers_sequence", "medium",
+            "next.*\\+=.*win.*i.*i.*<.*nd.*next.*==.*n|keith_sequence_match",
+            "win.*i.*=.*win.*i.*\\+.*1u.*win.*nd.*-.*1u.*=.*next|keith_window_shift",
+            "next.*>.*n.*return.*0u.*next.*==.*n.*return.*1u|keith_early_exit"
+        ),
+        new PatternDef("keith_numbers_pack", "keith_numbers_pack", "medium",
+            "nt_byte.*n_keith.*0xFFu.*metric_a.*first.*0xFFu.*metric_b.*fifth.*0xFFu|keith_metric_encode",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|keith_result_combine",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|keith_distinct_guard"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
