@@ -294,27 +294,48 @@ with : op0001=0x3 & op0204=0x6 & op0506=0x0 {
     # --- ECO2-confirmed: complex s16 multiply (encoding estimated from cmul group) ---
     :esp.cmul.s16   qu1013  is op2531=0x28 & op1214=0x0 & qu1013  { esp_cmul_s16(); }
 
-    # --- Vector add/sub (all share op2531=0x03 in xespv2p2) ---
-    # Specific op0711 sub-type discriminator estimated from pattern analysis.
-    # Confirmed: vadd.u32 q2,q0,q1 = 0x06a2a31b -> op0711=0x06 (q2 dest, non-standard enc).
-    :esp.vadd.u32  is op2531=0x03 & op0711=0x06 & op3131=0x0  { esp_vadd_u32(); }
-    :esp.vadd.s32  is op2531=0x03 & op0711=0x07 & op3131=0x0  { esp_vadd_s32(); }
-    # vsub.u32/s32: estimated op0711 values removed to avoid pattern conflict with vsmulas.
-    # They fall through to :esp.pie.arith (generic catch-all) below.
+    # --- Vector add/sub (all share op2531=0x03, op1214=0x2, op0711=0x06 in xespv2p2) ---
+    #
+    # Confirmed xespv2p2 encodings (riscv32-esp-elf-gcc esp-15.2.0_20251204):
+    #   esp.vadd.s8  q2,q0,q1 = 0x06a3231b: op2531=3, op1214=2, op0711=6, op1519=6,  op2024=10
+    #   esp.vadd.u8  q2,q0,q1 = 0x06a1231b: op2531=3, op1214=2, op0711=6, op1519=2,  op2024=10
+    #   esp.vadd.s16 q2,q0,q1 = 0x06a7231b: op2531=3, op1214=2, op0711=6, op1519=14, op2024=10
+    #   esp.vadd.u16 q2,q0,q1 = 0x06a5231b: op2531=3, op1214=2, op0711=6, op1519=10, op2024=10
+    #   esp.vadd.s32 q2,q0,q1 = 0x06a6a31b: op2531=3, op1214=2, op0711=6, op1519=13, op2024=10
+    #   esp.vadd.u32 q2,q0,q1 = 0x06a2a31b: op2531=3, op1214=2, op0711=6, op1519=5,  op2024=10
+    #
+    # NOTE: op0711 (bits[11:7]) = 6 for ALL vadd types when dest=q2, src2=q1.
+    # The previous op0711=0x07 for vadd.s32 was INCORRECT (estimated value).
+    # op1519 (bits[19:15]) encodes BOTH the element type AND the source Q1 register;
+    # the values below are confirmed only for q_src1=q0 (op1519[1:0]=0b10 pattern).
+    # Instructions with different source registers will fall to :esp.pie.arith catch-all.
+    # NOTE: op2024=10 encodes q1 as the second source in some non-standard mapping;
+    # the exact Q register encoding table for 0x1B arithmetic ops is not yet confirmed.
+    #
+    # No real SUBPIECE/PIECE pcode is added here because the source Q register bit
+    # fields in the 0x1B arithmetic encoding are not yet hardware-confirmed for all
+    # Q register combinations. Source bits overlap the type discriminator in op1519.
+    # Once the full Q register encoding table is confirmed from hardware, these can be
+    # upgraded to lane-level pcode using the vld/vst.128.ip real-pcode approach.
+    :esp.vadd.s8  is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x06 & op2024=0x0a  { esp_vadd_s8(); }
+    :esp.vadd.u8  is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x02 & op2024=0x0a  { esp_vadd_u8(); }
+    :esp.vadd.s16 is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x0e & op2024=0x0a  { esp_vadd_s16(); }
+    :esp.vadd.u16 is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x0a & op2024=0x0a  { esp_vadd_u16(); }
+    :esp.vadd.s32 is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x0d & op2024=0x0a  { esp_vadd_s32(); }
+    :esp.vadd.u32 is op2531=0x03 & op1214=0x2 & op0711=0x06 & op1519=0x05 & op2024=0x0a  { esp_vadd_u32(); }
+    # vsub: same op2531/op1214/op0711 structure as vadd; type encodings estimated from
+    # the signed/unsigned bit pattern in op1519 (hardware-confirmed vsub encodings pending).
+    # These fall to the catch-all until confirmed encodings are measured on hardware.
 
-    # --- Multiply-accumulate (vmulas) (op2531=0x03, op0711 distinguishes variant) ---
-    :esp.vmulas.u8.xacc  is op2531=0x03 & op0711=0x18  { esp_vmulas_u8_xacc(); }
-    :esp.vmulas.s8.xacc  is op2531=0x03 & op0711=0x19  { esp_vmulas_s8_xacc(); }
-    :esp.vmulas.u16.xacc is op2531=0x03 & op0711=0x1a  { esp_vmulas_u16_xacc(); }
-    :esp.vmulas.s16.xacc is op2531=0x03 & op0711=0x1b  { esp_vmulas_s16_xacc(); }
-    :esp.vmulas.u8.qacc  is op2531=0x03 & op0711=0x1c  { esp_vmulas_u8_qacc(); }
-    :esp.vmulas.s8.qacc  is op2531=0x03 & op0711=0x1d  { esp_vmulas_s8_qacc(); }
-    :esp.vmulas.u16.qacc is op2531=0x03 & op0711=0x1e  { esp_vmulas_u16_qacc(); }
-    :esp.vmulas.s16.qacc is op2531=0x03 & op0711=0x1f  { esp_vmulas_s16_qacc(); }
-    :esp.vsmulas.u8.qacc  is op2531=0x03 & op0711=0x0c  { esp_vsmulas_u8_qacc(); }
-    :esp.vsmulas.s8.qacc  is op2531=0x03 & op0711=0x0d  { esp_vsmulas_s8_qacc(); }
-    :esp.vsmulas.u16.qacc is op2531=0x03 & op0711=0x0e  { esp_vsmulas_u16_qacc(); }
-    :esp.vsmulas.s16.qacc is op2531=0x03 & op0711=0x0f  { esp_vsmulas_s16_qacc(); }
+    # --- Confirmed vmulas.s8.xacc q0,q1 = 0x06a5a01b ---
+    # op2531=3, op1214=2, op0711=0, op1519=11, op2024=10
+    # NOTE: Previous op0711=0x18..0x1f discriminators for vmulas were INCORRECT (estimated).
+    # The confirmed encoding has op0711=0x00 (rd=x0, standard RISC-V zero reg = no GPR dest).
+    # Only ONE vmulas encoding is confirmed; all other vmulas variants fall to catch-all.
+    :esp.vmulas.s8.xacc  is op2531=0x03 & op1214=0x2 & op0711=0x00 & op1519=0x0b & op2024=0x0a  { esp_vmulas_s8_xacc(); }
+    # All other vmulas/vsmulas: fall through to :esp.pie.arith catch-all below.
+    # The previous estimated op0711=0x18-0x1f patterns are removed because they produced
+    # false matches against different instructions (vmulas.s8.xacc has op0711=0x00, not 0x19).
 
     # --- Shift and rotate ---
     :esp.vsl.32   is op2531=0x20 & op1214=0x4  { esp_vsl_32(); }
@@ -449,74 +470,114 @@ with : op0001=0x3 & op0204=0x6 & op0506=0x2 {
 
 
 # ============================================================
-# Opcode 0x5F  (op0204=7, op0506=2): SIMD arithmetic
+# Opcode 0x5F  (op0204=7, op0506=2): SIMD arithmetic (xesppie legacy)
 # Field layout: op2531=funct7, op1214=funct3
 #
-# From objdump of test assemblies:
-#   esp.vadd.s8   q2,q0,q1  0x06a0065f: op2531=0x03, op1214=0x0, op0711=0x06_field
-#   esp.vadd.u8               0x06a0045f: op2531=0x03, op1214=0x0 (bit 9 clear)
-#   esp.vadd.s16              0x06a4065f: op2531=0x03 (bit10 set), op1214=0x0
-#   esp.vadd.u16              0x06a4045f
-#   esp.vadd.s32              0x06a4055f: op1214=0x0
-#   esp.vadd.u32              0x06a0055f
-#   esp.vsub.s8               0x06a006df: opcode byte 0xDF → [6:0]=1011111=0x5F, bit7=1
-#   esp.vsub.s16              0x06a406df
-#   esp.vsub.s32              0x06a405df
+# CONFIRMED encodings (test_rv_decode.cpp, 14.x/xesppie toolchain, q2,q0,q1):
+#   esp.vadd.u8  q2,q0,q1: 0x06a0045f  op2531=3, op1214=0, op0711=8,  op1519=0,  op2024=10
+#   esp.vadd.s8  q2,q0,q1: 0x06a0065f  op2531=3, op1214=0, op0711=12, op1519=0,  op2024=10
+#   esp.vadd.u16 q2,q0,q1: 0x06a4045f  op2531=3, op1214=0, op0711=8,  op1519=8,  op2024=10
+#   esp.vadd.s16 q2,q0,q1: 0x06a4065f  op2531=3, op1214=0, op0711=12, op1519=8,  op2024=10
+#   esp.vadd.u32 q2,q0,q1: 0x06a0055f  op2531=3, op1214=0, op0711=10, op1519=0,  op2024=10
+#   esp.vadd.s32 q2,q0,q1: 0x06a4055f  op2531=3, op1214=0, op0711=10, op1519=8,  op2024=10
+#   esp.vsub.s8  q2,q0,q1: 0x06a006df  op2531=3, op1214=0, op0711=13, op1519=0,  op2024=10
+#   esp.vsub.s16 q2,q0,q1: 0x06a406df  op2531=3, op1214=0, op0711=13, op1519=8,  op2024=10
+#   esp.vsub.s32 q2,q0,q1: 0x06a405df  op2531=3, op1214=0, op0711=11, op1519=8,  op2024=10
 #
-# The arithmetic instructions share opcode 0x5F, distinguished further by funct7+funct3
-# and internal type bits.  Since the encoding is complex, we use coarser grouping
-# by op3131 (load vs store) and op2531 clusters.
+# Encoding STRUCTURE (decoded from confirmed q2,q0,q1 cases, NOT confirmed for other Q combos):
+#   op0711 bit[1]=1: 32-bit element size (vs 0 for 8/16-bit)
+#   op0711 bit[2]=1: signed (vs 0 for unsigned) -- u32 is exception, op0711[2]=1 there too
+#   op0711 bit[0]=1: subtract (vs 0 for add)
+#   op1519 bit[3]=1: 16-bit element width (vs 0 for 8-bit); disambiguates s32 from u32 too
+#   op2024=10 (constant for vadd/vsub with these Q registers; encodes Q_DEST or Q_SRC)
 #
-# vmulas representative encodings:
-#   esp.vmulas.s8.qacc   q0,q1  0x06c5005f: op2531=0x03 (partial), variant
-#   esp.vmulas.s16.qacc         0x06c7005f
-#   esp.vmulas.u8.qacc          0x06c4005f
-#   esp.vmulas.u16.qacc         0x06c6005f
-#   esp.vmulas.s8.xacc          0x06c1005f
-#   esp.vmulas.s16.xacc         0x06c3005f
-#   esp.vmulas.u8.xacc          0x06c0005f
-#   esp.vmulas.u16.xacc         0x06c2005f
+# Q REGISTER ENCODING HYPOTHESIS (needs 2+ hardware-confirmed Q combinations to verify):
+#   q_dest  = op2022 = bits[22:20] (3-bit; =2 for q2 dest in all confirmed cases)
+#   q_src2  = qu1013 = bits[13:10] (4-bit; =1 for q1 src2 in all confirmed cases)
+#   q_src1  = bits[17:15] (lower 3 bits of op1519; =0 for q0 src1 in all confirmed cases)
+#   bits[19:18]: element width flag (see above)
+#   bits[24:23]: unknown flag (=1 for all confirmed vadd/vsub, =1 for vmulas)
+# NOTE: This hypothesis has NOT been tested with vadd q5,q3,q6 or similar.
+# Real SUBPIECE/PIECE pcode will be added once Q register encoding is confirmed.
 #
-# Use a simplified grouping: identify by op1214 (funct3) + upper bit clusters.
+# vmulas representative encodings (xesppie 0x5F, estimated sub-discriminators):
+#   esp.vmulas.u8.xacc  q0,q1: 0x06c0005f  op2024=12 (vs 10 for vadd)
+#   esp.vmulas.s8.xacc  q0,q1: 0x06c1005f
+#   esp.vmulas.u8.qacc  q0,q1: 0x06c4005f
+#   esp.vmulas.s8.qacc  q0,q1: 0x06c5005f
+# vmulas uses op2024=12, which distinguishes it from vadd (op2024=10).
 # ============================================================
 
 with : op0001=0x3 & op0204=0x7 & op0506=0x2 {
 
-    # --- SIMD integer add (vadd) ---
-    # All vadd: [31:28]=0000, [27:25]=110, [14:12]=0 (varies), internal type in [11:8]
-    # Simplified: match op2531=0x03 region (upper funct7 bits consistent for vadd)
-    # vadd/vsub: op0711 encodes destination Q register in a non-standard way.
-    # Only the 32/8-bit variants are enumerated here; 16-bit fall to catch-all.
-    # (op0711 is a 5-bit field, max value 31; 0x24-0x27 are out of range.)
-    :esp.vadd.u32  is op2531=0x03 & op1214=0x0 & op0711=0x00  { esp_vadd_u32(); }
-    :esp.vadd.u8   is op2531=0x03 & op1214=0x0 & op0711=0x04  { esp_vadd_u8(); }
-    :esp.vadd.s8   is op2531=0x03 & op1214=0x0 & op0711=0x06  { esp_vadd_s8(); }
-    :esp.vadd.s32  is op2531=0x03 & op1214=0x0 & op0711=0x14  { esp_vadd_s32(); }
+    # --- SIMD integer add (vadd) — xesppie legacy 0x5F encoding ---
+    #
+    # Confirmed encodings (from test_rv_decode.cpp assembled with 14.x/xesppie toolchain):
+    #   esp.vadd.u8  q2,q0,q1 = 0x06a0045f: op2531=3, op1214=0, op0711=8,  op1519=0,  op2024=10
+    #   esp.vadd.s8  q2,q0,q1 = 0x06a0065f: op2531=3, op1214=0, op0711=12, op1519=0,  op2024=10
+    #   esp.vadd.u16 q2,q0,q1 = 0x06a4045f: op2531=3, op1214=0, op0711=8,  op1519=8,  op2024=10
+    #   esp.vadd.s16 q2,q0,q1 = 0x06a4065f: op2531=3, op1214=0, op0711=12, op1519=8,  op2024=10
+    #   esp.vadd.u32 q2,q0,q1 = 0x06a0055f: op2531=3, op1214=0, op0711=10, op1519=0,  op2024=10
+    #   esp.vadd.s32 q2,q0,q1 = 0x06a4055f: op2531=3, op1214=0, op0711=10, op1519=8,  op2024=10
+    #   esp.vsub.s8  q2,q0,q1 = 0x06a006df: op2531=3, op1214=0, op0711=13, op1519=0,  op2024=10
+    #   esp.vsub.s16 q2,q0,q1 = 0x06a406df: op2531=3, op1214=0, op0711=13, op1519=8,  op2024=10
+    #   esp.vsub.s32 q2,q0,q1 = 0x06a405df: op2531=3, op1214=0, op0711=11, op1519=8,  op2024=10
+    #
+    # NOTE: All previous op0711 discriminators (0x00,0x04,0x06,0x14 for vadd and
+    # 0x01,0x05,0x07,0x15 for vsub) were INCORRECT ESTIMATES and did not match hardware.
+    # Actual hardware uses: unsigned/signed discriminated by op0711 bit[2] (bit[2]=0→u, 1→s)
+    # with 32-bit flagged by op0711 bit[1]=1. Width 8 vs 16 discriminated by op1519[3].
+    #
+    # Q register encoding hypothesis (NOT YET CONFIRMED for 2+ Q combinations):
+    # q_dest  = op2022 = bits[22:20] (3-bit, q0-q7; value 2 = q2 for these cases)
+    # q_src1  = bits[17:15] (lower 3 bits of op1519; value 0 = q0 for these cases)
+    # q_src2  = qu1013 = bits[13:10] (value 1 = q1 for these cases)
+    # No real SUBPIECE/PIECE pcode is added until Q register encoding is hardware-confirmed
+    # for 2+ different Q register combinations. Wrong real pcode corrupts Ghidra data flow.
+    # op1519 values below are confirmed only for q_src1=q0; other combinations fall to catch-all.
+    :esp.vadd.u8  is op2531=0x03 & op1214=0x0 & op0711=0x08 & op1519=0x00  { esp_vadd_u8(); }
+    :esp.vadd.s8  is op2531=0x03 & op1214=0x0 & op0711=0x0c & op1519=0x00  { esp_vadd_s8(); }
+    :esp.vadd.u16 is op2531=0x03 & op1214=0x0 & op0711=0x08 & op1519=0x08  { esp_vadd_u16(); }
+    :esp.vadd.s16 is op2531=0x03 & op1214=0x0 & op0711=0x0c & op1519=0x08  { esp_vadd_s16(); }
+    :esp.vadd.u32 is op2531=0x03 & op1214=0x0 & op0711=0x0a & op1519=0x00  { esp_vadd_u32(); }
+    :esp.vadd.s32 is op2531=0x03 & op1214=0x0 & op0711=0x0a & op1519=0x08  { esp_vadd_s32(); }
 
-    # --- SIMD integer subtract (vsub) ---
-    :esp.vsub.u32  is op2531=0x03 & op1214=0x0 & op0711=0x01  { esp_vsub_u32(); }
-    :esp.vsub.u8   is op2531=0x03 & op1214=0x0 & op0711=0x05  { esp_vsub_u8(); }
-    :esp.vsub.s8   is op2531=0x03 & op1214=0x0 & op0711=0x07  { esp_vsub_s8(); }
-    :esp.vsub.s32  is op2531=0x03 & op1214=0x0 & op0711=0x15  { esp_vsub_s32(); }
+    # --- SIMD integer subtract (vsub) — xesppie legacy 0x5F encoding ---
+    # op0711 bit[0]=1 indicates subtract (vs add where bit[0]=0).
+    # vsub.u8 and vsub.u16 encodings not yet confirmed; estimated op0711 values:
+    #   vsub.u8  estimated op0711=9 (=vadd.u8 op0711 8 + 1), op1519=0
+    #   vsub.u16 estimated op0711=9, op1519=8
+    :esp.vsub.s8  is op2531=0x03 & op1214=0x0 & op0711=0x0d & op1519=0x00  { esp_vsub_s8(); }
+    :esp.vsub.s16 is op2531=0x03 & op1214=0x0 & op0711=0x0d & op1519=0x08  { esp_vsub_s16(); }
+    :esp.vsub.s32 is op2531=0x03 & op1214=0x0 & op0711=0x0b & op1519=0x08  { esp_vsub_s32(); }
+    # vsub.u8/u16/u32: estimated patterns removed — fall to catch-all to avoid false matches.
 
     # --- Multiply-accumulate into QACC (vmulas.*.qacc) ---
-    # From test: 0x06c5005f (s8.qacc), 0x06c7005f (s16.qacc), etc.
-    # op2531 for these: 0x06c? → [31:25] = 0000011 = 0x03 with [24:20] = 01100=12?
-    # Simplify: key is op1214=0x0 and the rd-field cluster:
-    :esp.vmulas.u8.xacc  is op2531=0x03 & op1214=0x0 & op0711=0x18  { esp_vmulas_u8_xacc(); }
-    :esp.vmulas.s8.xacc  is op2531=0x03 & op1214=0x0 & op0711=0x19  { esp_vmulas_s8_xacc(); }
-    :esp.vmulas.u16.xacc is op2531=0x03 & op1214=0x0 & op0711=0x1a  { esp_vmulas_u16_xacc(); }
-    :esp.vmulas.s16.xacc is op2531=0x03 & op1214=0x0 & op0711=0x1b  { esp_vmulas_s16_xacc(); }
-    :esp.vmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x1c  { esp_vmulas_u8_qacc(); }
-    :esp.vmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x1d  { esp_vmulas_s8_qacc(); }
-    :esp.vmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x1e  { esp_vmulas_u16_qacc(); }
-    :esp.vmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x1f  { esp_vmulas_s16_qacc(); }
+    # vmulas representative encodings (from file header, xesppie 0x5F space):
+    #   esp.vmulas.u8.xacc  q0,q1: 0x06c0005f -> op2531=3, op2024=12, op1214=0, op0711=0
+    #   esp.vmulas.s8.xacc  q0,q1: 0x06c1005f -> op2531=3, op2024=12, op1214=0, op0711=0 (varies)
+    #   esp.vmulas.u8.qacc  q0,q1: 0x06c4005f -> op2531=3, op2024=12, op1214=0, op0711=0
+    #   esp.vmulas.s8.qacc  q0,q1: 0x06c5005f -> op2531=3, op2024=12, op1214=0, op0711=0
+    # Note: op2531 for vmulas in 0x5F = funct7 = 0x06c?>>25 & 0x7f = let me verify:
+    # 0x06c0005f >> 25 = 0x06c0005f / 0x2000000 = 3... same op2531=3 as vadd!
+    # These overlap the vadd/vsub op2531=3 space; they differ by op2024 (=12 for vmulas vs 10 for vadd).
+    # Previous op0711=0x18..0x1f discriminators were INCORRECT ESTIMATES.
+    # Use op2024 as the discriminator since vmulas has op2024=12, vadd has op2024=10.
+    :esp.vmulas.u8.xacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x00  { esp_vmulas_u8_xacc(); }
+    :esp.vmulas.s8.xacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x01  { esp_vmulas_s8_xacc(); }
+    :esp.vmulas.u16.xacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x02  { esp_vmulas_u16_xacc(); }
+    :esp.vmulas.s16.xacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x03  { esp_vmulas_s16_xacc(); }
+    :esp.vmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x04  { esp_vmulas_u8_qacc(); }
+    :esp.vmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x05  { esp_vmulas_s8_qacc(); }
+    :esp.vmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x06  { esp_vmulas_u16_qacc(); }
+    :esp.vmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x07  { esp_vmulas_s16_qacc(); }
 
     # --- Scalar multiply-accumulate into QACC (vsmulas) ---
-    :esp.vsmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x0c  { esp_vsmulas_u8_qacc(); }
-    :esp.vsmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op0711=0x0d  { esp_vsmulas_s8_qacc(); }
-    :esp.vsmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x0e  { esp_vsmulas_u16_qacc(); }
-    :esp.vsmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op0711=0x0f  { esp_vsmulas_s16_qacc(); }
+    # Estimated patterns based on vmulas sub-encoding structure:
+    :esp.vsmulas.u8.qacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x08  { esp_vsmulas_u8_qacc(); }
+    :esp.vsmulas.s8.qacc  is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x09  { esp_vsmulas_s8_qacc(); }
+    :esp.vsmulas.u16.qacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x0a  { esp_vsmulas_u16_qacc(); }
+    :esp.vsmulas.s16.qacc is op2531=0x03 & op1214=0x0 & op2024=0x0c & op1519=0x0b  { esp_vsmulas_s16_qacc(); }
 
     # --- XACC read-out / shift-right ---
     :esp.srs.u.xacc is op2531=0x42 & op1214=0x7   { esp_srs_u_xacc(); }
