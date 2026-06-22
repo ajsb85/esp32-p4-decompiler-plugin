@@ -7007,6 +7007,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "metric_a.*fpp_count.*0xFFu.*0x01u.*metric_b.*last_fpp|lucas_psp_metric_guard",
             "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|lucas_psp_distinct_check"
         ),
+        new PatternDef("stormer_numbers_lpf", "stormer_numbers_lpf", "medium",
+            "lpf.*=.*2u.*x.*>>=.*1u|stormer_largest_prime_factor_init",
+            "d.*\\*.*d.*<=.*x.*d.*\\+=.*2u.*x.*%.*d.*==.*0u|stormer_trial_loop",
+            "lpf.*=.*x.*x.*>.*1u|stormer_remaining_factor"
+        ),
+        new PatternDef("stormer_numbers_test", "stormer_numbers_test", "medium",
+            "lpf.*>.*2u.*\\*.*n.*is_stormer|stormer_condition_check",
+            "n.*\\*.*n.*\\+.*1u.*largest_prime_factor|stormer_val_compute",
+            "stormer_count.*last_stormer.*n.*<=.*200u|stormer_scan_loop"
+        ),
+        new PatternDef("stormer_numbers_pack", "stormer_numbers_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|stormer_result_combine",
+            "metric_b.*match7.*0xFFu.*metric_b.*==.*0u|stormer_match7_blend",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x11u|stormer_distinct_guard"
+        ),
+        new PatternDef("prime_constellation_sieve", "prime_constellation_sieve", "medium",
+            "composite\\[j\\].*=.*1u.*j.*<.*SIEVE_N.*j.*\\+=.*i|constellation_sieve_mark",
+            "composite\\[0\\].*=.*1u.*composite\\[1\\].*=.*1u|constellation_sieve_init",
+            "i.*\\*.*i.*<.*SIEVE_N.*!composite\\[i\\]|constellation_sieve_outer"
+        ),
+        new PatternDef("prime_constellation_count", "prime_constellation_count", "medium",
+            "cnt_twin.*ip.*p.*\\+.*2u.*cnt_trip.*ip.*p.*\\+.*6u|constellation_count_types",
+            "cnt_quad.*ip.*p.*\\+.*8u.*cnt_trip|constellation_quad_check",
+            "n_tests.*p.*<=.*1200u.*ip.*p|constellation_scan_range"
+        ),
+        new PatternDef("prime_constellation_pack", "prime_constellation_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|constellation_result_combine",
+            "metric_b.*cnt_trip.*<<.*4u.*cnt_quad.*0x0Fu|constellation_metric_encode",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x11u|constellation_distinct_guard"
+        ),
+        new PatternDef("sieve_sundaram_mark", "sieve_sundaram_mark", "medium",
+            "i.*\\+.*j.*\\+.*2u.*\\*.*i.*\\*.*j.*idx.*>.*HALF|sundaram_mark_composites",
+            "marked\\[idx\\].*=.*1u.*idx.*>.*HALF.*break|sundaram_inner_break",
+            "j.*=.*i.*j.*\\+\\+.*idx.*>.*HALF|sundaram_inner_loop"
+        ),
+        new PatternDef("sieve_sundaram_collect", "sieve_sundaram_collect", "medium",
+            "!marked\\[k\\].*odd_found.*prime_count.*p.*=.*2u.*\\*.*k.*\\+.*1u|sundaram_collect_primes",
+            "odd_found.*<=.*10u.*sum10.*\\+=.*p|sundaram_sum10_accum",
+            "prime_count.*==.*50u.*p50.*=.*p|sundaram_p50_capture"
+        ),
+        new PatternDef("sieve_sundaram_pack", "sieve_sundaram_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|sundaram_result_combine",
+            "metric_a.*sum10.*0xFFu.*metric_b.*p50.*0xFFu|sundaram_metric_encode",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|sundaram_distinct_guard"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
