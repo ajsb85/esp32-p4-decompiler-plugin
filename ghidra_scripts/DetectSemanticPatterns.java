@@ -6962,6 +6962,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "g_result.*0x00630332|pseudoperfect_result_constant",
             "count.*3u.*psum.*50u.*pseudoperfect_known_values"
         ),
+        new PatternDef("wieferich_primes_check", "wieferich_primes_check", "high",
+            "modpow32.*2u.*p.*-.*1u.*p2.*==.*1u|wieferich_fermat_test",
+            "p2.*p.*\\*.*p.*modpow32.*2u.*p.*1u.*p2|wieferich_square_modexp",
+            "is_wieferich.*is_prime.*mulmod32|wieferich_primality_chain"
+        ),
+        new PatternDef("wieferich_primes_count", "wieferich_primes_count", "medium",
+            "w_count\\+\\+.*last_wp.*n.*&.*0xFFu|wieferich_accumulate_count",
+            "n.*2u.*n.*<=.*3600u.*is_prime.*is_wieferich|wieferich_scan_range",
+            "w_count.*2u.*last_wp.*0xB7u|wieferich_known_values"
+        ),
+        new PatternDef("wieferich_primes_pack", "wieferich_primes_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b.*g_result|wieferich_result_combine",
+            "g_result.*0x.*FC02B7|wieferich_result_constant",
+            "w_count.*0xFFu.*last_wp.*n_tests.*0xFFu|wieferich_metric_pack"
+        ),
+        new PatternDef("fermat_pseudoprimes_check", "fermat_pseudoprimes_check", "high",
+            "modpow32.*2u.*n.*-.*1u.*n.*==.*1u.*is_prime_trial|fermat_psp_base2_test",
+            "is_fermat_psp.*!is_prime_trial.*n.*&.*1u|fermat_psp_composite_odd",
+            "mulmod32.*result.*base.*m.*b.*&.*1u|fermat_psp_mulmod_binary"
+        ),
+        new PatternDef("fermat_pseudoprimes_count", "fermat_pseudoprimes_count", "medium",
+            "fp_count\\+\\+.*last_psp.*n.*&.*0xFFu|fermat_psp_accumulate_count",
+            "n.*3u.*n.*<=.*3000u.*n.*\\+=.*2u.*is_fermat_psp|fermat_psp_scan_odd",
+            "fp_count.*12u.*last_psp.*0x41u|fermat_psp_known_values"
+        ),
+        new PatternDef("fermat_pseudoprimes_pack", "fermat_pseudoprimes_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|fermat_psp_result_combine",
+            "g_result.*0x.*EB0C41|fermat_psp_result_constant",
+            "fp_count.*0xFFu.*last_psp.*n_tests.*0xFFu|fermat_psp_metric_pack"
+        ),
+        new PatternDef("lucas_pseudoprimes_check", "lucas_pseudoprimes_check", "high",
+            "fib_mod.*k.*n.*==.*0u.*is_fib_pseudoprime|lucas_psp_fibonacci_test",
+            "jacobi5.*n.*%.*5u.*j.*==.*1.*k.*n.*-.*1u|lucas_psp_jacobi_branch",
+            "mulmod32.*a.*two_b_minus_a.*m.*fast_doubling|lucas_psp_fastdouble"
+        ),
+        new PatternDef("lucas_pseudoprimes_count", "lucas_pseudoprimes_count", "medium",
+            "fpp_count\\+\\+.*last_fpp.*n.*&.*0xFFu|lucas_psp_accumulate_count",
+            "n.*3u.*n.*<=.*4000u.*n.*\\+=.*2u.*is_fib_pseudoprime|lucas_psp_scan_odd",
+            "fpp_count.*last_fpp.*0xEFu|lucas_psp_known_values"
+        ),
+        new PatternDef("lucas_pseudoprimes_pack", "lucas_pseudoprimes_pack", "medium",
+            "nt_byte.*<<.*16u.*metric_a.*<<.*8u.*metric_b|lucas_psp_result_combine",
+            "metric_a.*fpp_count.*0xFFu.*0x01u.*metric_b.*last_fpp|lucas_psp_metric_guard",
+            "metric_a.*nt_byte.*metric_a.*\\^=.*0x10u|lucas_psp_distinct_check"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
