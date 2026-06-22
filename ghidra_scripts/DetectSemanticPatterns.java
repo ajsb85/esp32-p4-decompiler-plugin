@@ -6647,6 +6647,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "n_tests.*count.*0xFFu.*metric_a.*hoax_sum.*251u|hoax_pack_n_tests",
             "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|hoax_result_combine"
         ),
+        new PatternDef("prime_quadruplets_sieve", "prime_quadruplets_sieve", "high",
+            "is_prime.*p.*is_prime.*p.*2u.*is_prime.*p.*6u.*is_prime.*p.*8u|quadruplet_test",
+            "count\\+\\+.*quad_sum.*\\+=.*p.*%.*251u|quadruplet_accumulate",
+            "p.*5u.*p.*8u.*<=.*MAX_N|quadruplet_range_loop"
+        ),
+        new PatternDef("prime_quadruplets_check", "prime_quadruplets_check", "high",
+            "is_prime.*p.*&&.*is_prime.*p.*2.*&&.*is_prime.*p.*6.*&&.*is_prime.*p.*8|quadruplet_all_prime",
+            "quad_sum.*\\+=.*p.*%.*251u|quadruplet_sum_mod",
+            "run_prime_quadruplets.*g_result|quadruplet_result_store"
+        ),
+        new PatternDef("prime_quadruplets_pack", "prime_quadruplets_pack", "medium",
+            "quad_sum.*%.*251u.*quad_sum.*\\/.*251u.*7u.*%.*251u|quadruplet_metric_pack",
+            "n_tests.*count.*0xFFu.*metric_a.*quad_sum.*251u|quadruplet_pack_n_tests",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|quadruplet_result_combine"
+        ),
+        new PatternDef("interprime_numbers_find", "interprime_numbers_find", "high",
+            "next_prime.*n.*p.*n.*1u.*while.*p.*2u.*is_prime.*p|interprime_bracket_search",
+            "p.*q.*==.*2u.*n|interprime_average_check",
+            "p.*n.*1u.*while.*p.*>=.*2u.*is_prime.*p|interprime_prev_prime"
+        ),
+        new PatternDef("interprime_numbers_accum", "interprime_numbers_accum", "high",
+            "count\\+\\+.*ip_sum.*\\+=.*n.*%.*251u|interprime_accumulate",
+            "is_prime.*n.*continue.*next_prime.*n|interprime_composite_filter",
+            "run_interprime_numbers.*g_result|interprime_result_store"
+        ),
+        new PatternDef("interprime_numbers_pack", "interprime_numbers_pack", "medium",
+            "ip_sum.*%.*251u.*ip_sum.*\\/.*251u.*8u.*%.*251u|interprime_metric_pack",
+            "n_tests.*count.*0xFFu.*metric_a.*ip_sum.*251u|interprime_pack_n_tests",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|interprime_result_combine"
+        ),
+        new PatternDef("achilles_numbers_powerful", "achilles_numbers_powerful", "high",
+            "prime_exp.*m.*2u.*<.*2u.*return.*0u|achilles_powerful_check",
+            "is_powerful.*n.*&&.*is_perfect_power.*n|achilles_filter",
+            "prime_exp.*n.*p.*while.*n.*%.*p.*==.*0u|achilles_exp_count"
+        ),
+        new PatternDef("achilles_numbers_perfect_power", "achilles_numbers_perfect_power", "high",
+            "is_perfect_power.*n.*1u.*<<.*k.*<=.*n|achilles_power_kth_root",
+            "pw.*>.*n.*\\/.*r.*1u.*overflow.*1u|achilles_overflow_guard",
+            "count\\+\\+.*ach_sum.*\\+=.*n.*%.*251u|achilles_accumulate"
+        ),
+        new PatternDef("achilles_numbers_pack", "achilles_numbers_pack", "medium",
+            "ach_sum.*%.*251u.*ach_sum.*\\/.*251u.*6u.*%.*251u|achilles_metric_pack",
+            "n_tests.*count.*0xFFu.*metric_a.*ach_sum.*251u|achilles_pack_n_tests",
+            "n_tests.*<<.*16u.*metric_a.*<<.*8u.*metric_b|achilles_result_combine"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
