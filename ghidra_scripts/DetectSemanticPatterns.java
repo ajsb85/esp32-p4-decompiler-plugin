@@ -6421,6 +6421,51 @@ public class DetectSemanticPatterns extends GhidraScript {
             "15u.*<<.*16.*good_sum.*251u.*cnt_le50|good_primes_g_result",
             "cnt_le50.*p_mid.*50u.*count.*15u.*good_sum.*901|good_primes_count_pack"
         ),
+        new PatternDef("palindromic_primes_reverse", "palindromic_primes_reverse", "high",
+            "reversed.*\\*.*10u.*n.*%.*10u.*n.*\\/.*10u|palindrome_digit_extract",
+            "reversed.*==.*original.*is_palindrome|palindrome_equality_test",
+            "is_palindrome.*sieve.*palindromic_prime|palindrome_prime_filter"
+        ),
+        new PatternDef("palindromic_primes_collect", "palindromic_primes_collect", "high",
+            "pal_sum.*\\+=.*i.*cnt_lt200.*\\+\\+|palindromic_prime_accumulate",
+            "pal_sum.*%.*251u|palindromic_sum_mod251",
+            "12u.*<<.*16.*pal_sum.*251u.*cnt_lt200|palindromic_primes_g_result"
+        ),
+        new PatternDef("palindromic_primes_sieve", "palindromic_primes_sieve", "medium",
+            "sieve.*i.*==.*0u.*is_palindrome.*i.*count.*12u|palindromic_prime_sieve_loop",
+            "count.*<.*12u.*palindromic|palindromic_prime_limit12",
+            "cnt_lt200.*i.*200u.*pal_sum.*1449u|palindromic_primes_count_pack"
+        ),
+        new PatternDef("isolated_primes_twin_test", "isolated_primes_twin_test", "high",
+            "prev_twin.*is_prime_small.*i.*-.*2u.*next_twin.*is_prime_small.*i.*\\+.*2u|isolated_neighbour_check",
+            "prev_twin.*==.*0u.*next_twin.*==.*0u|isolated_both_zero",
+            "is_prime_small.*sieve.*SIEVE_LIMIT.*isolated|isolated_prime_sieve_lookup"
+        ),
+        new PatternDef("isolated_primes_collect", "isolated_primes_collect", "high",
+            "iso_sum.*\\+=.*i.*cnt_mod4.*\\+\\+|isolated_prime_accumulate",
+            "iso_sum.*%.*251u|isolated_sum_mod251",
+            "10u.*<<.*16.*iso_sum.*251u.*cnt_mod4|isolated_primes_g_result"
+        ),
+        new PatternDef("isolated_primes_mod4", "isolated_primes_mod4", "medium",
+            "i.*%.*4u.*==.*1u.*cnt_mod4|isolated_prime_mod4_test",
+            "count.*<.*10u.*isolated|isolated_prime_limit10",
+            "cnt_mod4.*4u.*iso_sum.*577u.*count.*10u|isolated_primes_count_pack"
+        ),
+        new PatternDef("weak_primes_mean_test", "weak_primes_mean_test", "high",
+            "p_prev.*p_next.*>.*2u.*p_mid|weak_prime_arithmetic_mean",
+            "p_prev.*primes.*i.*p_mid.*primes.*i.*p_next.*primes.*i|weak_prime_triple_walk",
+            "build_sieve.*weak_primes|weak_primes_sieve_init"
+        ),
+        new PatternDef("weak_primes_collect", "weak_primes_collect", "high",
+            "weak_sum.*\\+=.*p_mid.*cnt_mod6.*\\+\\+|weak_prime_accumulate",
+            "weak_sum.*%.*251u|weak_sum_mod251",
+            "15u.*<<.*16.*weak_sum.*251u.*cnt_mod6|weak_primes_g_result"
+        ),
+        new PatternDef("weak_primes_mod6", "weak_primes_mod6", "medium",
+            "p_mid.*%.*6u.*==.*1u.*cnt_mod6|weak_prime_mod6_test",
+            "count.*<.*15u.*weak.*prime|weak_prime_limit15",
+            "cnt_mod6.*9u.*weak_sum.*817u.*count.*15u|weak_primes_count_pack"
+        ),
     };
 
     // ── main ──────────────────────────────────────────────────────────────────
