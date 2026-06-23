@@ -10,30 +10,35 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
-// Sprint 26 — Two-pass FreeRTOS handle type promotion.
+// Sprint 26 — Fixed-point iterative FreeRTOS handle type promotion.
 //
-// Pass 1 (Discovery): decompiles every function that calls a known FreeRTOS
-//   API, traces the relevant argument or return Varnode backward/forward to
-//   find the backing HighVariable, and records a (HighVariable, DataType)
-//   promotion candidate.
+// Rounds run until convergence (no new promotions found), capped at MAX_ROUNDS.
 //
-// Pass 2 (Commit): for each candidate, opens a program-database transaction
-//   and calls HighFunctionDBUtil.updateDBVariable() to permanently write
-//   the promoted type.  After this script runs, ExportDecompiledC.java re-
-//   decompiles from scratch and inherits the richer types, producing output
-//   like "tcb->uxPriority = 5;" instead of "*(uint *)(local_c + 0xc) = 5;".
+// Round 1 (seed): decompiles every function that calls a known FreeRTOS API
+//   (API_TABLE), traces the relevant argument/return Varnode to the backing
+//   HighSymbol, records (HighSymbol, DataType) candidates, then commits.
 //
-// Dirty-flag optimization: functions with no qualifying call sites are never
-//   re-decompiled in the export phase — zero performance overhead.
+// Rounds 2-N (propagation): after each commit, any promoted HighParam (formal
+//   parameter) creates a new dynamic table entry for the callee function.
+//   Similarly, if a promoted return-value Varnode flows directly into a RETURN
+//   op, the callee itself is seeded as a return-value propagation source.
+//   The next round decompiles callers of those callees and promotes their
+//   variables one hop further up the call graph.
 //
-// Covered handle families:
-//   TaskHandle_t         — vTaskDelete, vTaskPrioritySet, xTaskNotify, ...
-//   QueueHandle_t        — xQueueCreate (return), xQueueSend, xQueueReceive, ...
-//   SemaphoreHandle_t    — xSemaphoreCreate* (return), xSemaphoreTake/Give, ...
-//   TimerHandle_t        — xTimerCreate (return), xTimerStart/Stop/Delete, ...
-//   EventGroupHandle_t   — xEventGroupCreate (return), xEventGroupSetBits, ...
-//   StreamBufferHandle_t — xStreamBufferCreate (return), Send/Receive
-//   MessageBufferHandle_t— xMessageBufferCreate (return), Send/Receive
+// This handles wrapper functions:
+//   void delete_my_task(TaskHandle_t h) { vTaskDelete(h); }
+//   // Round 1: h in delete_my_task → TaskHandle_t
+//   // Round 2: callers of delete_my_task → their arg[0] → TaskHandle_t
+//
+// And factory wrappers:
+//   TaskHandle_t create_sensor_task() { return xTaskCreate(...); }
+//   // Round 1: local in create_sensor_task ← xTaskCreate return → TaskHandle_t
+//   //          Varnode flows into RETURN → add return-propagation for create_sensor_task
+//   // Round 2: callers of create_sensor_task → their lvalue → TaskHandle_t
+//
+// After all rounds, ExportDecompiledC.java re-decompiles from scratch and
+// inherits the richer types, producing "tcb->uxPriority = 5;" instead of
+// "*(uint *)(local_c + 0xc) = 5;".
 //
 // @category ESP32-P4
 // @menupath Analysis.ESP32-P4.Apply Type Promotion
@@ -50,12 +55,17 @@ import java.util.*;
 
 public class ApplyTypePromotion extends GhidraScript {
 
-    // API call-site table.
+    private static final int MAX_ROUNDS = 8;
+
+    // API call-site seed table.
     // Columns: { functionName, argIdx, typeName }
     //   argIdx == "-1"  → promote the RETURN value (CALL output Varnode)
     //   argIdx >= "0"   → promote the logical argument at that 0-based index
-    //                     (maps to CALL pcode input[argIdx+1], offset by 1
-    //                      because input[0] is always the call-target address)
+    //                     (maps to CALL pcode input[argIdx+1]; input[0] = call target)
+    //
+    // Dynamic entries added during propagation use the prefix "addr:" followed
+    // by the entry-point offset in hex, e.g. "addr:400A1234", so they can be
+    // looked up by address even if the function has no stable export name.
     private static final String[][] API_TABLE = {
         // ── TaskHandle_t — return-value promotions ──
         {"xTaskGetCurrentTaskHandle",     "-1", "TaskHandle_t"},
@@ -172,139 +182,210 @@ public class ApplyTypePromotion extends GhidraScript {
         }
         println("Types resolved: " + typeCache.keySet());
 
-        // ── Phase 1: discovery pass ──────────────────────────────────────────
-        // Decompile each function that calls a known FreeRTOS API and collect
-        // (HighVariable, DataType) promotion candidates.
-        // Key: stable identity = entryPoint hex + ":" + variable name.
-        // We group by Function so we can commit in one transaction per function.
-        Map<Function, List<Promotion>> pendingByFn = new LinkedHashMap<>();
-        // Track already-seen (fn, varName, typeName) triples to avoid duplicates
-        // from multiple call sites of the same API within the same function.
-        Set<String> seen = new HashSet<>();
+        // ── Fixed-point loop ──────────────────────────────────────────────────
+        //
+        // dynamicTable: starts as API_TABLE, grows each round with propagation
+        //   entries discovered from promoted HighParam / return-flowing Varnodes.
+        //
+        // seenKeys:  (callerAddr:varName:typeName) — persists across rounds so
+        //   we never re-decompile a function just to skip its already-committed
+        //   variables.  shouldSkip() is still checked per-candidate for safety.
+        //
+        // extKeys:   prevents adding the same propagation edge twice across rounds.
+        List<String[]> dynamicTable = new ArrayList<>(Arrays.asList(API_TABLE));
+        Set<String>    seenKeys     = new HashSet<>();
+        Set<String>    extKeys      = new HashSet<>();
+        int totalCommitted = 0, totalSkipped = 0, round = 0;
 
         DecompInterface decomp = new DecompInterface();
         decomp.setOptions(new DecompileOptions());
         decomp.toggleSyntaxTree(true);
         decomp.openProgram(currentProgram);
 
-        SymbolTable  symTable = currentProgram.getSymbolTable();
-        ReferenceManager refMgr = currentProgram.getReferenceManager();
-        int discovered = 0;
+        SymbolTable     symTable = currentProgram.getSymbolTable();
+        ReferenceManager refMgr  = currentProgram.getReferenceManager();
+        AddressSpace    space    = currentProgram.getAddressFactory().getDefaultAddressSpace();
 
         try {
-            for (String[] row : API_TABLE) {
-                String   apiName  = row[0];
-                int      argIdx   = Integer.parseInt(row[1]);
-                String   typeName = row[2];
-                DataType newType  = typeCache.get(typeName);
-                if (newType == null) continue;
+            while (round++ < MAX_ROUNDS) {
 
-                // Look up the API function in the symbol table.
-                SymbolIterator syms = symTable.getSymbols(apiName);
-                if (!syms.hasNext()) continue;
-                Address apiAddr = syms.next().getAddress();
+                // ── Discovery ────────────────────────────────────────────────
+                Map<Function, List<Promotion>> pendingByFn = new LinkedHashMap<>();
+                List<String[]> nextRows = new ArrayList<>();
+                int discovered = 0;
 
-                for (Reference ref : refMgr.getReferencesTo(apiAddr)) {
-                    monitor.checkCancelled();
-                    Address  callSite = ref.getFromAddress();
-                    Function caller   = currentProgram.getListing()
-                                            .getFunctionContaining(callSite);
-                    if (caller == null) continue;
+                for (String[] row : dynamicTable) {
+                    String   apiName  = row[0];
+                    int      argIdx   = Integer.parseInt(row[1]);
+                    String   typeName = row[2];
+                    DataType newType  = typeCache.get(typeName);
+                    if (newType == null) continue;
 
-                    DecompileResults res = decomp.decompileFunction(caller, 30, monitor);
-                    if (res == null || !res.decompileCompleted()) continue;
-                    HighFunction hf = res.getHighFunction();
-                    if (hf == null) continue;
+                    // Resolve the callee address.
+                    Address apiAddr;
+                    if (apiName.startsWith("addr:")) {
+                        try {
+                            apiAddr = space.getAddress(
+                                Long.parseUnsignedLong(apiName.substring(5), 16));
+                        } catch (NumberFormatException e) { continue; }
+                    } else {
+                        SymbolIterator syms = symTable.getSymbols(apiName);
+                        if (!syms.hasNext()) continue;
+                        apiAddr = syms.next().getAddress();
+                    }
 
-                    // Find the CALL (or CALLIND) PcodeOp at the call-site address.
-                    Iterator<PcodeOpAST> ops = hf.getPcodeOps(callSite);
-                    while (ops.hasNext()) {
-                        PcodeOpAST op = ops.next();
-                        if (op.getOpcode() != PcodeOp.CALL
-                                && op.getOpcode() != PcodeOp.CALLIND) continue;
+                    for (Reference ref : refMgr.getReferencesTo(apiAddr)) {
+                        monitor.checkCancelled();
+                        Address  callSite = ref.getFromAddress();
+                        Function caller   = currentProgram.getListing()
+                                                .getFunctionContaining(callSite);
+                        if (caller == null) continue;
 
-                        // Resolve the target Varnode.
-                        Varnode targetVn;
-                        if (argIdx < 0) {
-                            // Return value: the CALL output Varnode.
-                            targetVn = op.getOutput();
-                        } else {
-                            // Argument: input[argIdx+1] (input[0] = call target).
-                            int inputIdx = argIdx + 1;
-                            if (op.getNumInputs() <= inputIdx) continue;
-                            // Walk backward through COPY/CAST chains to find
-                            // the root local variable Varnode.
-                            targetVn = walkBack(op.getInput(inputIdx), 6);
+                        DecompileResults res = decomp.decompileFunction(caller, 30, monitor);
+                        if (res == null || !res.decompileCompleted()) continue;
+                        HighFunction hf = res.getHighFunction();
+                        if (hf == null) continue;
+
+                        Iterator<PcodeOpAST> ops = hf.getPcodeOps(callSite);
+                        while (ops.hasNext()) {
+                            PcodeOpAST op = ops.next();
+                            if (op.getOpcode() != PcodeOp.CALL
+                                    && op.getOpcode() != PcodeOp.CALLIND) continue;
+
+                            Varnode targetVn;
+                            if (argIdx < 0) {
+                                targetVn = op.getOutput();
+                            } else {
+                                int inputIdx = argIdx + 1;
+                                if (op.getNumInputs() <= inputIdx) continue;
+                                targetVn = walkBack(op.getInput(inputIdx), 6);
+                            }
+                            if (targetVn == null) continue;
+
+                            HighVariable hv = targetVn.getHigh();
+                            if (hv == null) continue;
+                            HighSymbol hvSym = hv.getSymbol();
+                            if (hvSym == null) continue;
+                            if (shouldSkip(hvSym.getDataType(), newType)) continue;
+
+                            String dedupeKey = caller.getEntryPoint().toString()
+                                + ":" + hvSym.getName() + ":" + typeName;
+                            if (!seenKeys.add(dedupeKey)) continue;
+
+                            boolean isParam = (hv instanceof HighParam);
+                            pendingByFn.computeIfAbsent(caller, k -> new ArrayList<>())
+                                .add(new Promotion(hvSym, newType, apiName, argIdx, isParam));
+                            discovered++;
+
+                            // ── Propagation edge: promoted parameter ──────────
+                            // If the promoted variable is a formal parameter of
+                            // `caller`, then callers of `caller` who pass a value
+                            // at that parameter slot can be promoted in the next round.
+                            if (isParam) {
+                                int slot = ((HighParam) hv).getSlot();
+                                String extKey = "param:"
+                                    + caller.getEntryPoint().getOffset()
+                                    + ":" + slot + ":" + typeName;
+                                if (extKeys.add(extKey)) {
+                                    nextRows.add(new String[]{
+                                        "addr:" + Long.toHexString(
+                                            caller.getEntryPoint().getOffset()),
+                                        String.valueOf(slot),
+                                        typeName
+                                    });
+                                }
+                            }
+
+                            // ── Propagation edge: return-flowing Varnode ──────
+                            // If the promoted Varnode (e.g. the result of xQueueCreate)
+                            // flows directly into a RETURN pcode op, `caller` itself
+                            // acts as a factory and its callers should get the return
+                            // value promoted.
+                            if (argIdx < 0 && targetVn != null) {
+                                Iterator<PcodeOp> uses = targetVn.getDescendants();
+                                while (uses.hasNext()) {
+                                    PcodeOp use = uses.next();
+                                    if (use.getOpcode() == PcodeOp.RETURN) {
+                                        String extKey = "ret:"
+                                            + caller.getEntryPoint().getOffset()
+                                            + ":-1:" + typeName;
+                                        if (extKeys.add(extKey)) {
+                                            nextRows.add(new String[]{
+                                                "addr:" + Long.toHexString(
+                                                    caller.getEntryPoint().getOffset()),
+                                                "-1",
+                                                typeName
+                                            });
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
                         }
-                        if (targetVn == null) continue;
-
-                        HighVariable hv = targetVn.getHigh();
-                        if (hv == null) continue;
-
-                        // HighOther/SSA temporaries have no backing DB symbol.
-                        HighSymbol hvSym = hv.getSymbol();
-                        if (hvSym == null) continue;
-
-                        // Skip if already well-typed.
-                        if (shouldSkip(hvSym.getDataType(), newType)) continue;
-
-                        // Deduplicate across multiple call sites of same API.
-                        String dedupeKey = caller.getEntryPoint().toString()
-                            + ":" + hvSym.getName() + ":" + typeName;
-                        if (!seen.add(dedupeKey)) continue;
-
-                        pendingByFn.computeIfAbsent(caller, k -> new ArrayList<>())
-                            .add(new Promotion(hvSym, newType, apiName, argIdx));
-                        discovered++;
                     }
                 }
+
+                println("Round " + round + ": " + discovered + " candidate(s) in "
+                    + pendingByFn.size() + " function(s), "
+                    + nextRows.size() + " new propagation edge(s)");
+
+                if (pendingByFn.isEmpty()) {
+                    println("  → fixed point reached.");
+                    break;
+                }
+
+                // ── Commit ───────────────────────────────────────────────────
+                int roundCommitted = 0, roundSkipped = 0;
+                for (Map.Entry<Function, List<Promotion>> entry : pendingByFn.entrySet()) {
+                    Function        fn    = entry.getKey();
+                    List<Promotion> plist = entry.getValue();
+
+                    int txId = currentProgram.startTransaction(
+                        "ApplyTypePromotion[" + fn.getName() + "]");
+                    int fnCommitted = 0;
+                    try {
+                        for (Promotion p : plist) {
+                            try {
+                                HighFunctionDBUtil.updateDBVariable(
+                                    p.sym, p.sym.getName(), p.newType, SourceType.ANALYSIS);
+                                println("  [R" + round + "] +" + fn.getName()
+                                    + "." + p.sym.getName()
+                                    + " → " + p.newType.getName()
+                                    + (p.isParam ? " (param)" : "")
+                                    + "  via " + p.apiName
+                                    + (p.argIdx < 0 ? " return" : " arg[" + p.argIdx + "]"));
+                                fnCommitted++;
+                                roundCommitted++;
+                            } catch (Exception ex) {
+                                println("  [skip] " + fn.getName()
+                                    + "." + p.sym.getName() + ": " + ex.getMessage());
+                                roundSkipped++;
+                            }
+                        }
+                    } finally {
+                        currentProgram.endTransaction(txId, fnCommitted > 0);
+                    }
+                }
+                totalCommitted += roundCommitted;
+                totalSkipped   += roundSkipped;
+                println("  committed=" + roundCommitted + " skipped=" + roundSkipped);
+
+                if (roundCommitted == 0) {
+                    println("  → no successful commits this round — stopping.");
+                    break;
+                }
+
+                // Extend dynamic table for the next round.
+                dynamicTable.addAll(nextRows);
             }
         } finally {
             decomp.closeProgram();
         }
 
-        println("Discovery: " + discovered + " candidate(s) in "
-            + pendingByFn.size() + " function(s)");
-
-        // ── Phase 2: commit to program database ───────────────────────────────
-        // One transaction per function — if any commit in the function fails
-        // the whole function transaction rolls back (safe: no partial state).
-        int totalCommitted = 0;
-        int totalSkipped   = 0;
-
-        for (Map.Entry<Function, List<Promotion>> entry : pendingByFn.entrySet()) {
-            Function       fn    = entry.getKey();
-            List<Promotion> plist = entry.getValue();
-
-            int txId = currentProgram.startTransaction(
-                "ApplyTypePromotion[" + fn.getName() + "]");
-            int fnCommitted = 0;
-            try {
-                for (Promotion p : plist) {
-                    try {
-                        HighFunctionDBUtil.updateDBVariable(
-                            p.sym, p.sym.getName(), p.newType, SourceType.ANALYSIS);
-                        println("  +" + fn.getName() + "." + p.sym.getName()
-                            + " → " + p.newType.getName()
-                            + "  (via " + p.apiName
-                            + (p.argIdx < 0 ? " return" : " arg[" + p.argIdx + "]") + ")");
-                        fnCommitted++;
-                        totalCommitted++;
-                    } catch (Exception ex) {
-                        println("  [skip] " + fn.getName() + "." + p.sym.getName()
-                            + ": " + ex.getMessage());
-                        totalSkipped++;
-                    }
-                }
-            } finally {
-                currentProgram.endTransaction(txId, fnCommitted > 0);
-            }
-        }
-
         println(String.format(
-            "ApplyTypePromotion done: %d committed, %d skipped — "
+            "ApplyTypePromotion done: %d committed, %d skipped over %d round(s) — "
             + "ExportDecompiledC will re-decompile with promoted types.",
-            totalCommitted, totalSkipped));
+            totalCommitted, totalSkipped, round));
     }
 
     // Walk backward through COPY/CAST/INT_ZEXT/INT_SEXT/PTRSUB/PTRADD chains
@@ -337,9 +418,7 @@ public class ApplyTypePromotion extends GhidraScript {
     private boolean shouldSkip(DataType existing, DataType target) {
         if (existing == null) return false;
         String name = existing.getName();
-        // Already exactly the target
         if (name.equals(target.getName())) return true;
-        // Ghidra "I don't know" types — always promote
         if (name.startsWith("undefined")) return false;
         if (name.equals("void") || name.equals("uint") || name.equals("ulong")
                 || name.equals("ushort") || name.equals("uchar")
@@ -347,25 +426,24 @@ public class ApplyTypePromotion extends GhidraScript {
                 || name.equals("byte") || name.equals("word") || name.equals("dword")) return false;
         if (existing instanceof PointerDataType) {
             DataType inner = ((PointerDataType) existing).getDataType();
-            // void* → always promote; typed pointer → keep
             return inner != null && !(inner instanceof VoidDataType);
         }
-        // Has a specific struct/typedef/enum type — don't override
         return true;
     }
 
-    // Holds one pending promotion discovered in Phase 1.
     private static class Promotion {
         final HighSymbol sym;
         final DataType   newType;
         final String     apiName;
         final int        argIdx;
+        final boolean    isParam;
 
-        Promotion(HighSymbol sym, DataType dt, String api, int arg) {
+        Promotion(HighSymbol sym, DataType dt, String api, int arg, boolean isParam) {
             this.sym     = sym;
             this.newType = dt;
             this.apiName = api;
             this.argIdx  = arg;
+            this.isParam = isParam;
         }
     }
 }
