@@ -36,8 +36,6 @@ typedef union pthread_mutexattr_t pthread_mutexattr_t;
 typedef struct QueueDefinition QueueDefinition;
 typedef struct timespec timespec;
 typedef struct stat stat;
-typedef struct StaticQueue_t StaticQueue_t;
-typedef struct StaticTask_t StaticTask_t;
 typedef struct tskTaskControlBlock tskTaskControlBlock;
 typedef struct timeval timeval;
 
@@ -211,17 +209,7 @@ struct stat {
     unsigned long long __unused5;
 };
 
-struct StaticQueue_t {
-    unsigned char ucDummy[82];
-};
-
-struct StaticTask_t {
-    unsigned char ucDummy[92];
-};
-
-typedef void * StreamBufferHandle_t;
-
-typedef void * TaskHandle_t;
+typedef QueueDefinition StaticQueue_t;
 
 struct tskTaskControlBlock {
     void *pxTopOfStack;
@@ -237,6 +225,12 @@ struct tskTaskControlBlock {
     unsigned int uxBasePriority;
     unsigned int uxMutexesHeld;
 };
+
+typedef tskTaskControlBlock StaticTask_t;
+
+typedef void * StreamBufferHandle_t;
+
+typedef void * TaskHandle_t;
 
 typedef tskTaskControlBlock TCB_t;
 

@@ -27351,9 +27351,7 @@ typedef struct xSTATIC_QUEUE {
 
 typedef xSTATIC_QUEUE StaticQueue_t;
 
-typedef struct StaticQueue_t {
-    byte ucDummy[82];
-} StaticQueue_t;
+typedef QueueDefinition StaticQueue_t;
 
 typedef struct xSTATIC_RINGBUFFER {
     size_t xDummy1[2];
@@ -27387,9 +27385,22 @@ typedef struct xSTATIC_TCB {
 
 typedef xSTATIC_TCB StaticTask_t;
 
-typedef struct StaticTask_t {
-    byte ucDummy[92];
-} StaticTask_t;
+typedef struct tskTaskControlBlock {
+    void *pxTopOfStack;
+    ListItem_t xStateListItem;
+    ListItem_t xEventListItem;
+    dword uxPriority;
+    void *pxStack;
+    char pcTaskName[16];
+    dword xCoreID;
+    void *pxEndOfStack;
+    dword uxTCBNumber;
+    dword uxTaskNumber;
+    dword uxBasePriority;
+    dword uxMutexesHeld;
+} tskTaskControlBlock;
+
+typedef tskTaskControlBlock StaticTask_t;
 
 typedef struct statvfs {
     ulong f_bsize;
@@ -27650,21 +27661,6 @@ typedef struct tskTaskControlBlock {
 typedef tskTaskControlBlock tskTCB;
 
 typedef tskTCB TCB_t;
-
-typedef struct tskTaskControlBlock {
-    void *pxTopOfStack;
-    ListItem_t xStateListItem;
-    ListItem_t xEventListItem;
-    dword uxPriority;
-    void *pxStack;
-    char pcTaskName[16];
-    dword xCoreID;
-    void *pxEndOfStack;
-    dword uxTCBNumber;
-    dword uxTaskNumber;
-    dword uxBasePriority;
-    dword uxMutexesHeld;
-} tskTaskControlBlock;
 
 typedef tskTaskControlBlock TCB_t;
 

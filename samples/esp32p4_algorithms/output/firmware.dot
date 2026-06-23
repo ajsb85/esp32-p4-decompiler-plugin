@@ -778,9 +778,9 @@ digraph firmware {
   n1685 [label="vPortTaskPinToCore" fillcolor="#90ee90" cluster=748];
   n1735 [label="multi_heap_get_info_tlsf" fillcolor="#90ee90" cluster=749];
 
+  n688 -> n55;
   n688 -> n476;
   n688 -> n68;
-  n688 -> n55;
   n693 -> n249;
   n693 -> n70;
   n1009 -> n658;
@@ -797,7 +797,7 @@ digraph firmware {
   n1081 -> n1080;
   n1083 -> n1082;
   n1088 -> n1025;
-  n1089 -> n450;
   n1089 -> n449;
+  n1089 -> n450;
   n1184 -> n1009;
 }
