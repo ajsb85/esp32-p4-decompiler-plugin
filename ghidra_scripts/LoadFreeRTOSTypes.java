@@ -151,19 +151,15 @@ public class LoadFreeRTOSTypes extends GhidraScript {
             }
 
             // ── 5. StaticTask_t ─────────────────────────────────────────────
-            // Used when configSUPPORT_STATIC_ALLOCATION=1.  The application
-            // supplies storage of exactly sizeof(StaticTask_t) bytes; the
-            // kernel casts it to TCB_t internally.  We model it as an opaque
-            // byte array of the same size as tskTaskControlBlock so the
-            // decompiler shows the correct allocation size.
-            int tcbSize = tcbDT.getLength();
-            StructureDataType staticTask = new StructureDataType(FREERTOS_CAT, "StaticTask_t", 0, dtm);
-            staticTask.add(new ArrayDataType(new ByteDataType(), tcbSize, 1),
-                           tcbSize, "ucDummy",
-                           "Opaque storage; kernel casts to tskTaskControlBlock internally");
+            // FreeRTOS guarantees sizeof(StaticTask_t) == sizeof(TCB_t) via
+            // a compile-time assert.  Model as a direct typedef alias so the
+            // decompiler formats field accesses (e.g. st->pcTaskName) instead
+            // of raw offset arithmetic on the dummy-byte array.
+            TypedefDataType staticTask = new TypedefDataType(
+                FREERTOS_CAT, "StaticTask_t", tcbDT, dtm);
             dtm.addDataType(staticTask, DataTypeConflictHandler.REPLACE_HANDLER);
             typeCount++;
-            println("  Created: StaticTask_t  (" + tcbSize + " bytes, opaque TCB storage)");
+            println("  Created: StaticTask_t  (typedef → tskTaskControlBlock, " + tcbDT.getLength() + " bytes)");
 
             // ── 6. Queue_t / QueueDefinition ────────────────────────────────
             // Minimal model covering the fields most useful for decompiler output.
@@ -196,14 +192,13 @@ public class LoadFreeRTOSTypes extends GhidraScript {
             println("  Created: QueueDefinition  (" + queueDT.getLength() + " bytes)");
 
             // ── 7. StaticQueue_t ────────────────────────────────────────────
-            int queueSize = queueDT.getLength();
-            StructureDataType staticQueue = new StructureDataType(FREERTOS_CAT, "StaticQueue_t", 0, dtm);
-            staticQueue.add(new ArrayDataType(new ByteDataType(), queueSize, 1),
-                            queueSize, "ucDummy",
-                            "Opaque storage; kernel casts to QueueDefinition internally");
+            // Same reasoning as StaticTask_t: typedef alias gives the decompiler
+            // full field visibility for xQueueCreateStatic callers.
+            TypedefDataType staticQueue = new TypedefDataType(
+                FREERTOS_CAT, "StaticQueue_t", queueDT, dtm);
             dtm.addDataType(staticQueue, DataTypeConflictHandler.REPLACE_HANDLER);
             typeCount++;
-            println("  Created: StaticQueue_t  (" + queueSize + " bytes, opaque Queue storage)");
+            println("  Created: StaticQueue_t  (typedef → QueueDefinition, " + queueDT.getLength() + " bytes)");
 
             // ── 8. Apply TCB pointer array to pxCurrentTCBs symbol ──────────
             applyCurrentTCBsType(dtm, tcbDT);

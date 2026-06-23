@@ -3811,6 +3811,74 @@ public class DetectSemanticPatterns extends GhidraScript {
             "cp_strip_min|strip_inner_loop|closest_pair_dy_break|O7_strip"
         ),
 
+        // ── Sprint 206: Karatsuba multiplication ─────────────────────────────
+        new PatternDef("karatsuba_split", "karatsuba_half_word_split_mask", "high",
+            "mask.*=.*1.*<<.*half.*-.*1|x0.*=.*x.*&.*mask.*x1.*=.*x.*>>.*half",
+            "x0.*&.*mask|karatsuba.*split|karatsuba_half|half_word_split"
+        ),
+        new PatternDef("karatsuba_cross_term", "karatsuba_z1_minus_z0_minus_z2_cross_correction", "high",
+            "z1.*=.*z1.*-.*z0.*-.*z2|z1.*-=.*z2.*z1.*-=.*z0|cross.*term.*correction.*karatsuba",
+            "z1.*-.*z0.*-.*z2|karatsuba_cross|z1_correction|karatsuba_three_way"
+        ),
+        new PatternDef("karatsuba_combine", "karatsuba_combine_z0_z1_z2_with_base_shift", "high",
+            "z0.*\\+.*z1.*\\*.*base.*\\+.*z2.*\\*.*base.*\\*.*base|result.*=.*z0.*z1.*shift.*z2.*shift2",
+            "karatsuba_combine|karatsuba_result|z0_z1_z2_combine|karatsuba_shift_add"
+        ),
+        new PatternDef("karatsuba_recurse", "karatsuba_three_recursive_sub_calls", "medium",
+            "karatsuba.*x0.*y0|karatsuba.*x1.*y1|karatsuba.*x0.*\\+.*x1.*y0.*\\+.*y1",
+            "karatsuba_recurse|three_sub_mul|karatsuba_call"
+        ),
+
+        // ── Sprint 206: HLD (Heavy-Light Decomposition) path query ───────────
+        new PatternDef("hld_chain_head_ascent", "hld_chain_head_mismatch_ascent_loop", "high",
+            "while.*hld_head.*u.*!=.*hld_head.*v|while.*head.*u.*!=.*head.*v.*chain.*ascent",
+            "hld_head.*!=|chain.*ascent.*loop|hld_chain_ascent|head_mismatch_loop"
+        ),
+        new PatternDef("hld_deep_chain_first", "hld_swap_to_process_deeper_chain_first", "high",
+            "if.*depth.*head.*u.*<.*depth.*head.*v.*swap.*u.*v|deeper_chain_first.*hld",
+            "hld_depth_swap|hld_deeper_chain|depth.*head.*swap|hld_chain_swap"
+        ),
+        new PatternDef("hld_heavy_child_select", "hld_dfs_heavy_child_max_subtree_size", "high",
+            "heavy.*v.*=.*u.*max_sz.*=.*sz.*u|if.*sz.*u.*>.*max_sz.*heavy.*v.*=.*u",
+            "hld_heavy|heavy_child_max_sz|hld_dfs_sz|heavy.*child.*select"
+        ),
+        new PatternDef("hld_fenwick_chain_range", "hld_fenwick_pos_linearised_range_query", "high",
+            "fenwick_range.*pos.*head.*u.*pos.*u|ans.*\\+=.*fenwick.*pos.*head.*pos.*u",
+            "hld_fenwick|hld_pos.*head|hld_range_query|fenwick.*hld_chain"
+        ),
+
+        // ── Sprint 206: Ford-Fulkerson max-flow ──────────────────────────────
+        new PatternDef("ff_residual_update", "ford_fulkerson_residual_forward_backward_update", "high",
+            "res.*u.*v.*-=.*flow.*res.*v.*u.*\\+=.*flow|residual.*u.*v.*-=.*f.*residual.*v.*u.*\\+=.*f",
+            "ff_res.*-=|ff_residual_update|res.*v.*u.*\\+=|ford_fulkerson_residual"
+        ),
+        new PatternDef("ff_dfs_path", "ford_fulkerson_dfs_augmenting_path_search", "high",
+            "if.*!ff_vis.*v.*&&.*ff_res.*u.*v.*>.*0|if.*!visited.*v.*res.*u.*v.*>.*0.*dfs",
+            "ff_dfs|ford_fulkerson_dfs|ff_vis.*res.*>.*0|augmenting_path_dfs"
+        ),
+        new PatternDef("ff_outer_loop", "ford_fulkerson_outer_loop_total_flow_accumulate", "high",
+            "do.*vis.*=.*0.*dfs.*src.*sink.*total.*\\+=|while.*dfs.*s.*t.*>.*0.*total.*flow",
+            "ff_maxflow|ford_fulkerson_outer|total.*\\+=.*f.*while|ff_loop_flow"
+        ),
+
+        // ── Sprint 206: DC3 suffix array ─────────────────────────────────────
+        new PatternDef("dc3_sample_mod3", "dc3_suffix_array_sample_position_mod3_ne_0", "high",
+            "if.*i.*%.*3.*!=.*0.*s12|for.*i.*<.*n.*i.*%.*3.*!=.*0.*s12.*n12.*\\+\\+",
+            "dc3_sample|s12.*n12|i.*%.*3.*!=.*0|dc3_two_thirds_sample"
+        ),
+        new PatternDef("dc3_rank12_interleave", "dc3_rank12_interleaved_mod1_mod2_rank_array", "high",
+            "rank12.*p.*%.*3.*==.*1.*\\?.*p.*\\/.*3.*:.*p.*\\/.*3.*\\+.*n12|rank12.*mod1.*mod2.*interleave",
+            "rank12.*p.*%.*3|rank12_interleave|dc3_rank.*mod1.*mod2|dc3_rank12"
+        ),
+        new PatternDef("dc3_radix3", "dc3_radix_sort_on_three_character_triple", "high",
+            "isort3.*s.*sa.*n12.*K.*2.*isort3.*s.*sa.*n12.*K.*1.*isort3.*s.*sa.*n12.*K.*0",
+            "dc3_radix_triple|isort3.*off.*2.*1.*0|three_radix_pass|dc3_sort_triple"
+        ),
+        new PatternDef("dc3_merge_rank_cmp", "dc3_merge_rank12_comparison_by_mod_class", "high",
+            "p.*%.*3.*==.*1.*rp.*=.*rank12.*p.*\\/.*3.*rq.*=.*rank12.*q.*\\/.*3.*\\+",
+            "dc3_merge.*rank12|dc3_mod_class_merge|rank12.*p.*\\/.*3.*q.*\\/.*3|dc3_merge"
+        ),
+
         // ── Longest Increasing Subsequence — patience sort (O(n log n)) ──────
         new PatternDef("lis_patience_tails", "lis_patience_tails_binary_search", "high",
             "tails.*\\[.*pos.*\\].*=.*arr.*\\[.*i.*\\]|tails.*\\[.*pos.*\\].*=.*val",
