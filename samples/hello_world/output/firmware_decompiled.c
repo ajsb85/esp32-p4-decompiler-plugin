@@ -26,8 +26,6 @@
 typedef struct ListItem_t ListItem_t;
 typedef struct List_t List_t;
 typedef struct QueueDefinition QueueDefinition;
-typedef struct StaticQueue_t StaticQueue_t;
-typedef struct StaticTask_t StaticTask_t;
 typedef struct tskTaskControlBlock tskTaskControlBlock;
 
 typedef void * EventGroupHandle_t;
@@ -65,17 +63,7 @@ typedef void * QueueHandle_t;
 
 typedef void * SemaphoreHandle_t;
 
-struct StaticQueue_t {
-    unsigned char ucDummy[82];
-};
-
-struct StaticTask_t {
-    unsigned char ucDummy[92];
-};
-
-typedef void * StreamBufferHandle_t;
-
-typedef void * TaskHandle_t;
+typedef QueueDefinition StaticQueue_t;
 
 struct tskTaskControlBlock {
     void *pxTopOfStack;
@@ -91,6 +79,12 @@ struct tskTaskControlBlock {
     unsigned int uxBasePriority;
     unsigned int uxMutexesHeld;
 };
+
+typedef tskTaskControlBlock StaticTask_t;
+
+typedef void * StreamBufferHandle_t;
+
+typedef void * TaskHandle_t;
 
 typedef tskTaskControlBlock TCB_t;
 
