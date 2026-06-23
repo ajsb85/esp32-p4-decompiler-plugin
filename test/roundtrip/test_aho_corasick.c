@@ -1,140 +1,113 @@
 /* SPDX-License-Identifier: Apache-2.0
- * ESP32-P4 decompiler plugin — Aho-Corasick Multi-Pattern Search fixture.
+ * ESP32-P4 decompiler plugin — Aho-Corasick multi-pattern string matching.
  *
- * Aho-Corasick automaton:
- *   Phase 1 — Build trie from dictionary.
- *   Phase 2 — BFS to compute failure links and merged output sets.
- *   Phase 3 — Scan text via automaton (single pass, O(n + m)).
+ * Aho-Corasick builds a finite automaton from a set of patterns, then
+ * scans a text in O(n + m + z) where z is the number of matches.
  *
  * Distinctive decompiler idioms:
- *   1. Trie insert: `ac_goto[cur][c] = ac_new_node(); cur = ...`
- *   2. BFS fail-link build: `fail[v] = ac_goto[fail[u]][c]`
- *   3. Output merge: `output[v] |= output[fail[v]]`
- *   4. Goto completion: `ac_goto[u][c] = ac_goto[fail[u]][c]` for missing
- *   5. Search: `cur = ac_goto[cur][c]` + popcount on output bitmask
+ *   1. BFS queue during failure link construction (not DFS)
+ *   2. fail[child] = goto[fail[parent]][c] — failure link propagation
+ *   3. output[v] |= output[fail[v]] — output link chaining
+ *   4. state = goto_fn[state][c] during text scan
+ *   5. popcount(output[state]) per char — count patterns per state via bitmask
  *
- * Dictionary: {"he"=bit0, "she"=bit1, "his"=bit2, "hers"=bit3}
- * Text: "ushers" (length 6)
+ * Patterns: {"he","she","his","hers"}  Text: "ushers"
+ * Trie states: 10 (root + 9 trie nodes for 4 patterns)
+ * Matches:  "she"@2 + "he"@2 (via fail[she]=he) + "hers"@5 = 3 total
  *
- * Matches:
- *   "she" at position 1 (she⊆ushers[1..3])
- *   "he"  at position 2 (he⊆ushers[2..3])
- *   "hers" at position 2 (hers⊆ushers[2..5])
- * Total match_count = 3
- *
- * n_patterns = 4
- * text_len   = 6
- * match_count= 3
- *
- * g_result = (n_patterns << 16) | (text_len << 8) | match_count = 0x00040603
+ * g_result = (n_states << 16) | (matches << 8) | 0
+ *          = (10 << 16) | (3 << 8) | 0
+ *          = 0x0A0300 ✓
  */
 #include <stdint.h>
 
 volatile uint32_t g_result;
 
-#define AC_MAXNODES 20
-#define AC_ALPHA    26
+#define AC_ALPHA  26
+#define AC_MAXS   16
 
-static int ac_goto[AC_MAXNODES][AC_ALPHA];
-static int ac_fail[AC_MAXNODES];
-static int ac_output[AC_MAXNODES];  /* bitmask: bit k set if pattern k ends here */
-static int ac_size;
-static int ac_queue[AC_MAXNODES];
+static int  ac_goto[AC_MAXS][AC_ALPHA];
+static int  ac_fail[AC_MAXS];
+static int  ac_out[AC_MAXS];   /* bitmask: bit k set if pattern k ends here */
+static int  ac_sz;
 
-/* ── Trie node allocator ──────────────────────────────────────────────────── */
+/* Tiny BFS queue */
+static int  ac_q[AC_MAXS];
 
-static int ac_new_node(void)
-{
-    int id = ac_size++;
-    for (int c = 0; c < AC_ALPHA; c++) ac_goto[id][c] = -1;
-    ac_fail[id]   = 0;
-    ac_output[id] = 0;
+static int ac_new(void) {
+    int id = ac_sz++;
+    ac_fail[id] = 0;
+    ac_out[id]  = 0;
+    for (int i = 0; i < AC_ALPHA; i++) ac_goto[id][i] = -1;
     return id;
 }
 
-/* ── Trie insertion ───────────────────────────────────────────────────────── */
-
-static void ac_insert(const char *pat, int pat_id)
-{
+static void ac_insert(const char *pat, int mask) {
     int cur = 0;
     for (int i = 0; pat[i]; i++) {
         int c = pat[i] - 'a';
         if (ac_goto[cur][c] == -1)
-            ac_goto[cur][c] = ac_new_node();
+            ac_goto[cur][c] = ac_new();
         cur = ac_goto[cur][c];
     }
-    ac_output[cur] |= (1 << pat_id);
+    ac_out[cur] |= mask;
 }
 
-/* ── BFS: build failure links + complete goto function ───────────────────── */
-
-static void ac_build(void)
-{
+static void ac_build(void) {
+    /* Fill missing root transitions with 0 (root loops) */
     int head = 0, tail = 0;
-
-    /* Initialise root: missing chars loop back to root */
     for (int c = 0; c < AC_ALPHA; c++) {
         if (ac_goto[0][c] == -1) {
             ac_goto[0][c] = 0;
         } else {
             ac_fail[ac_goto[0][c]] = 0;
-            ac_queue[tail++] = ac_goto[0][c];
+            ac_q[tail++] = ac_goto[0][c];
         }
     }
-
     while (head < tail) {
-        int u = ac_queue[head++];
+        int u = ac_q[head++];
         for (int c = 0; c < AC_ALPHA; c++) {
             int v = ac_goto[u][c];
             if (v == -1) {
-                /* Complete goto: redirect missing transition via fail */
                 ac_goto[u][c] = ac_goto[ac_fail[u]][c];
             } else {
-                ac_fail[v]   = ac_goto[ac_fail[u]][c];
-                ac_output[v] |= ac_output[ac_fail[v]];
-                ac_queue[tail++] = v;
+                ac_fail[v] = ac_goto[ac_fail[u]][c];
+                ac_out[v] |= ac_out[ac_fail[v]];
+                ac_q[tail++] = v;
             }
         }
     }
 }
 
-/* ── Text search ──────────────────────────────────────────────────────────── */
-
-static int ac_search(const char *text)
-{
-    int count = 0, cur = 0;
+static int ac_search(const char *text) {
+    int state = 0, matches = 0;
     for (int i = 0; text[i]; i++) {
-        cur = ac_goto[cur][text[i] - 'a'];
-        int mask = ac_output[cur];
-        while (mask) { count++; mask &= mask - 1; }  /* popcount of matches */
+        state = ac_goto[state][text[i] - 'a'];
+        /* popcount: count individual pattern matches via output bitmask */
+        int out = ac_out[state];
+        while (out) { matches += out & 1; out >>= 1; }
     }
-    return count;
+    return matches;
 }
-
-/* ── Test entry point ─────────────────────────────────────────────────────── */
 
 void test_aho_corasick(void)
 {
-    ac_size = 0;
-    ac_new_node();  /* root = node 0 */
+    ac_sz = 0;
+    ac_new();  /* state 0 = root */
 
-    /* Insert dictionary: he, she, his, hers */
-    static const char pat0[] = "he";
-    static const char pat1[] = "she";
-    static const char pat2[] = "his";
-    static const char pat3[] = "hers";
-    ac_insert(pat0, 0);
-    ac_insert(pat1, 1);
-    ac_insert(pat2, 2);
-    ac_insert(pat3, 3);
+    /* patterns: "he"=1, "she"=2, "his"=4, "hers"=8 */
+    ac_insert("he",   1);
+    ac_insert("she",  2);
+    ac_insert("his",  4);
+    ac_insert("hers", 8);
 
     ac_build();
 
-    static const char text[] = "ushers";
-    int matches = ac_search(text);   /* 3: "she", "he", "hers" */
+    int n_states = ac_sz;          /* 10 */
+    int matches  = ac_search("ushers");  /* 3: she@2, he@2 (via fail link), hers@5 */
 
-    /* n_patterns=4, text_len=6, matches=3 */
-    g_result = (4u << 16) | (6u << 8) | (uint32_t)matches;
+    g_result = ((uint32_t)n_states << 16)
+             | ((uint32_t)matches  <<  8);
 }
 
 __attribute__((noreturn)) void _start(void)

@@ -3879,6 +3879,70 @@ public class DetectSemanticPatterns extends GhidraScript {
             "dc3_merge.*rank12|dc3_mod_class_merge|rank12.*p.*\\/.*3.*q.*\\/.*3|dc3_merge"
         ),
 
+        // ── Sprint 207: Ukkonen suffix tree ──────────────────────────────────
+        new PatternDef("ukkonen_active_point", "ukkonen_active_node_edge_length_triple", "high",
+            "active_node.*active_edge.*active_length|active_point.*triple.*ukkonen",
+            "active_node|active_edge|active_length|ukkonen_active"
+        ),
+        new PatternDef("ukkonen_remainder", "ukkonen_remainder_counter_extension_loop", "high",
+            "remainder\\+\\+.*while.*remainder.*>.*0|remainder.*>.*0.*active_node.*active_edge",
+            "remainder.*>.*0|ukkonen_remainder|suffix_tree_remainder|online_suffix"
+        ),
+        new PatternDef("ukkonen_suffix_link", "ukkonen_suffix_link_rule2_new_internal_node", "high",
+            "need_link.*=.*split|if.*need_link.*!=.*-1.*uk_nodes.*need_link.*\\.link.*=",
+            "suffix_link.*split|ukkonen_rule2|need_link.*split|ukkonen_suffix_link"
+        ),
+        new PatternDef("ukkonen_rule3_stop", "ukkonen_rule3_character_already_on_edge_break", "high",
+            "uk_text.*nxt.*start.*\\+.*active_length.*==.*c.*active_length\\+\\+.*break",
+            "rule3.*already.*in.*tree.*break|ukkonen_rule3|active_length\\+\\+.*break|ukkonen_stop"
+        ),
+
+        // ── Sprint 207: Suffix Automaton (SAM) ───────────────────────────────
+        new PatternDef("sam_extend_suffix_chain", "sam_extend_suffix_link_chain_walk", "high",
+            "for.*p.*=.*sam_last.*p.*!=.*-1.*&&.*sam.*p.*\\.next.*c.*==.*-1.*p.*=.*sam.*p.*\\.link",
+            "p.*sam_last.*link.*p.*sam_extend|sam.*suffix.*chain.*walk|sam_extend.*last.*link"
+        ),
+        new PatternDef("sam_clone_state", "sam_clone_state_when_link_len_mismatch", "high",
+            "clone.*=.*sam_new.*sam.*p.*\\.len.*\\+.*1|sam.*q.*\\.len.*!=.*sam.*p.*\\.len.*\\+.*1.*clone",
+            "sam_clone|clone.*sam_new|sam.*len.*mismatch.*clone|sam_split_state"
+        ),
+        new PatternDef("sam_last_updated", "sam_last_pointer_updated_each_extend_call", "medium",
+            "sam_last.*=.*cur|last.*=.*sam_extend|sam_last.*=.*sam_extend",
+            "sam_last.*cur|sam_last_extend|suffix_automaton_last|sam_online"
+        ),
+
+        // ── Sprint 207: Aho-Corasick multi-pattern matching ───────────────────
+        new PatternDef("ac_bfs_failure_build", "aho_corasick_bfs_failure_link_construction", "high",
+            "queue.*BFS.*fail.*child.*=.*goto.*fail.*parent.*c|ac_fail.*v.*=.*ac_goto.*ac_fail.*u.*c",
+            "ac_fail.*goto.*fail|bfs.*failure.*link|aho_corasick_build|fail.*child.*goto"
+        ),
+        new PatternDef("ac_output_chain", "aho_corasick_output_failure_link_chain", "high",
+            "ac_out.*v.*\\|=.*ac_out.*ac_fail.*v|output.*v.*|=.*output.*fail.*v",
+            "ac_out.*\\|=.*fail|output_chain.*fail|aho_corasick_output|ac_out_fail"
+        ),
+        new PatternDef("ac_text_scan", "aho_corasick_text_scan_goto_transition", "high",
+            "state.*=.*ac_goto.*state.*text.*i.*-.*'a'|state.*goto.*state.*c.*scan",
+            "ac_goto.*state|aho_corasick_scan|state.*=.*goto.*state.*c|ac_text_scan"
+        ),
+
+        // ── Sprint 207: Link-Cut Tree (splay-based dynamic trees) ─────────────
+        new PatternDef("lct_is_root_check", "lct_is_root_test_via_parent_child_mismatch", "high",
+            "lct_is_root.*v.*par.*v.*!=.*0.*ch.*0.*!=.*v.*&&.*ch.*1.*!=.*v",
+            "lct_is_root|is_root.*ch.*0.*ch.*1|lct_root_check|par.*ch.*0.*ch.*1"
+        ),
+        new PatternDef("lct_splay_zig_zig", "lct_splay_zig_zig_same_direction_double_rotate", "high",
+            "if.*dp.*==.*dv.*lct_rotate.*p.*lct_rotate.*v|zig_zig.*dp.*==.*dv.*rotate.*parent.*first",
+            "dp.*==.*dv.*rotate.*p|lct_zig_zig|zig_zig.*lct|same_direction.*splay"
+        ),
+        new PatternDef("lct_access_preferred_path", "lct_access_create_preferred_path_to_root", "high",
+            "for.*u.*=.*v.*u.*lct_splay.*u.*lct.*u.*\\.ch.*1.*=.*last.*lct_push_up.*u.*last.*=.*u",
+            "lct_access.*last|access.*preferred.*path|lct.*ch.*1.*=.*last.*push_up|lct_access"
+        ),
+        new PatternDef("lct_cut_detach_left", "lct_cut_access_then_detach_left_child", "high",
+            "lct_access.*v.*lct.*v.*\\.ch.*0.*!=.*0.*lct.*lct.*v.*\\.ch.*0.*\\.par.*=.*0.*lct.*v.*\\.ch.*0.*=.*0",
+            "lct_cut.*ch.*0|cut.*detach.*left|lct.*ch.*0.*=.*0.*par.*=.*0|lct_cut"
+        ),
+
         // ── Longest Increasing Subsequence — patience sort (O(n log n)) ──────
         new PatternDef("lis_patience_tails", "lis_patience_tails_binary_search", "high",
             "tails.*\\[.*pos.*\\].*=.*arr.*\\[.*i.*\\]|tails.*\\[.*pos.*\\].*=.*val",

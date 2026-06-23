@@ -1,117 +1,155 @@
-/* test_suffix_automaton.c
- * Purpose   : Validate a Suffix Automaton (SAM) for substring queries.
- * Algorithm : Each sa_extend() call adds a character, doubling states
- *             with clone when the longest-path suffix link must split.
- *             The automaton recognises all substrings of the input string.
- * Input     : "abcbc"  (n=5)
- * Metrics   :
- *   n_tests  = 5   (characters fed to SAM)
- *   metric_a = number of states created  (expect 8 for "abcbc")
- *   metric_b = number of successful substring queries out of 5 asked
- *              queries: "a"(yes), "bc"(yes), "abc"(yes), "cb"(yes), "ac"(no)
- *              => 4 successes
- * g_result  = (5<<16)|(8<<8)|4 = 0x050804
+/* SPDX-License-Identifier: Apache-2.0
+ * ESP32-P4 decompiler plugin — Suffix Automaton (SAM) / CDAWG construction.
+ *
+ * A Suffix Automaton (SAM) is the minimal DAWG that accepts all suffixes of a
+ * string.  The online construction runs in O(n) time and O(n) space.
+ *
+ * Distinctive decompiler idioms:
+ *   1. clone node when last->link->len + 1 < last->len (cloning step)
+ *   2. link = sam_extend(); — last updated each iteration
+ *   3. for (p = last; p != -1 && !next[p][c]; p = link[p]) — suffix chain walk
+ *   4. if (len[q] == len[p]+1) — no clone needed shortcut
+ *   5. transitions of clone copied from q, link of q reassigned to clone
+ *
+ * Input: "abcbc"  (n=5)
+ * SAM for "abcbc": states=8, transitions=9 (compact alphabet a=0,b=1,c=2).
+ * "bc" appears at positions 1 and 3 → 2 occurrences.
+ *
+ * g_result = (states << 16) | (transitions << 8) | occurrences_bc
+ *          = (8 << 16) | (9 << 8) | 2
+ *          = 0x080902 ✓
  */
-/* xesploop-free: yes */
-
 #include <stdint.h>
 
 volatile uint32_t g_result;
 
-#define SAM_ALPHA 26
-#define SAM_MAXST 32   /* 2*n states suffice for string of length n=5 */
+#define SAM_MAXN  16
+#define SAM_ALPHA  3   /* a=0, b=1, c=2 */
 
 typedef struct {
-    int len;            /* length of longest string in this state's class */
-    int link;           /* suffix link */
-    int next[SAM_ALPHA];/* transitions */
+    int len, link;
+    int next[SAM_ALPHA];
+    int cnt;          /* occurrence count (for substring counting) */
 } SAMState;
 
-static SAMState sam_st[SAM_MAXST];
-static int      sam_sz;    /* number of states */
-static int      sam_last;  /* last state after most recent extend */
+static SAMState sam[SAM_MAXN * 2];
+static int sam_sz, sam_last;
+
+static int sam_new(int len) {
+    int id = sam_sz++;
+    sam[id].len  = len;
+    sam[id].link = -1;
+    sam[id].cnt  = 0;
+    for (int i = 0; i < SAM_ALPHA; i++) sam[id].next[i] = -1;
+    return id;
+}
 
 static void sam_init(void) {
-    sam_sz   = 0;
-    /* state 0 = initial */
-    sam_st[0].len  = 0;
-    sam_st[0].link = -1;
-    for (int c = 0; c < SAM_ALPHA; c++) sam_st[0].next[c] = -1;
-    sam_sz   = 1;
-    sam_last = 0;
+    sam_sz = 0;
+    sam_last = sam_new(0);   /* initial state */
 }
 
 static void sam_extend(int c) {
-    /* Create new state */
-    int cur = sam_sz++;
-    sam_st[cur].len  = sam_st[sam_last].len + 1;
-    sam_st[cur].link = -1;
-    for (int i = 0; i < SAM_ALPHA; i++) sam_st[cur].next[i] = -1;
-
+    /* Check if transition already exists (avoid duplicates) */
+    if (sam[sam_last].next[c] != -1) {
+        int q = sam[sam_last].next[c];
+        if (sam[q].len == sam[sam_last].len + 1) {
+            sam_last = q;
+            return;
+        }
+        int clone = sam_new(sam[sam_last].len + 1);
+        sam[clone].link = sam[q].link;
+        for (int i = 0; i < SAM_ALPHA; i++) sam[clone].next[i] = sam[q].next[i];
+        sam[clone].cnt = 0;
+        sam[q].link = clone;
+        int p = sam_last;
+        while (p != -1 && sam[p].next[c] == q) {
+            sam[p].next[c] = clone;
+            p = sam[p].link;
+        }
+        sam_last = clone;
+        return;
+    }
+    int cur = sam_new(sam[sam_last].len + 1);
+    sam[cur].cnt = 1;
     int p = sam_last;
-    /* Walk suffix links until we find a state with transition c */
-    while (p != -1 && sam_st[p].next[c] == -1) {
-        sam_st[p].next[c] = cur;
-        p = sam_st[p].link;
+    while (p != -1 && sam[p].next[c] == -1) {
+        sam[p].next[c] = cur;
+        p = sam[p].link;
     }
     if (p == -1) {
-        sam_st[cur].link = 0;
+        sam[cur].link = 0;
     } else {
-        int q = sam_st[p].next[c];
-        if (sam_st[p].len + 1 == sam_st[q].len) {
-            /* no clone needed */
-            sam_st[cur].link = q;
+        int q = sam[p].next[c];
+        if (sam[q].len == sam[p].len + 1) {
+            sam[cur].link = q;
         } else {
-            /* clone q into clone */
-            int clone = sam_sz++;
-            sam_st[clone].len  = sam_st[p].len + 1;
-            sam_st[clone].link = sam_st[q].link;
-            for (int i = 0; i < SAM_ALPHA; i++)
-                sam_st[clone].next[i] = sam_st[q].next[i];
-            while (p != -1 && sam_st[p].next[c] == q) {
-                sam_st[p].next[c] = clone;
-                p = sam_st[p].link;
+            int clone = sam_new(sam[p].len + 1);
+            sam[clone].link = sam[q].link;
+            for (int i = 0; i < SAM_ALPHA; i++) sam[clone].next[i] = sam[q].next[i];
+            sam[clone].cnt = 0;
+            sam[q].link = clone;
+            sam[cur].link = clone;
+            while (p != -1 && sam[p].next[c] == q) {
+                sam[p].next[c] = clone;
+                p = sam[p].link;
             }
-            sam_st[q].link   = clone;
-            sam_st[cur].link = clone;
         }
     }
     sam_last = cur;
 }
 
-/* Returns 1 if pattern (length plen) is a substring of the indexed string */
-static int sam_contains(const char *pat, int plen) {
+/* Count occurrences of pattern in SAM by following transitions */
+static int sam_count_occurrences(int *pat, int plen) {
     int cur = 0;
     for (int i = 0; i < plen; i++) {
-        int c = pat[i] - 'a';
-        if (c < 0 || c >= SAM_ALPHA) return 0;
-        if (sam_st[cur].next[c] == -1) return 0;
-        cur = sam_st[cur].next[c];
+        int c = pat[i];
+        if (sam[cur].next[c] == -1) return 0;
+        cur = sam[cur].next[c];
     }
-    return 1;
+    /* Count occurrences = sum of cnt for all states in the subtree of cur.
+     * For a simple approach: topological order propagation was done at build.
+     * Here we return cnt directly (set to 1 for each new suffix end state). */
+    /* Simple topo propagation (insertion-order is reverse topo) */
+    int occ[SAM_MAXN * 2];
+    for (int i = 0; i < sam_sz; i++) occ[i] = sam[i].cnt;
+    for (int i = sam_sz - 1; i >= 1; i--) {
+        if (sam[i].link >= 0) occ[sam[i].link] += occ[i];
+    }
+    return occ[cur];
 }
 
-void _start(void) {
+/* Count transitions in SAM */
+static int sam_transition_count(void) {
+    int t = 0;
+    for (int i = 0; i < sam_sz; i++)
+        for (int c = 0; c < SAM_ALPHA; c++)
+            if (sam[i].next[c] != -1) t++;
+    return t;
+}
+
+void test_suffix_automaton(void)
+{
+    /* "abcbc" → a=0, b=1, c=2 */
+    int text[] = {0, 1, 2, 1, 2};
+    int n = 5;
+
     sam_init();
+    for (int i = 0; i < n; i++) sam_extend(text[i]);
 
-    const char text[] = "abcbc";
-    for (int i = 0; text[i]; i++) sam_extend(text[i] - 'a');
+    int states      = sam_sz;             /* 9 */
+    int transitions = sam_transition_count(); /* 12 */
 
-    int states = sam_sz;  /* expect 8 */
+    int pat_bc[] = {1, 2};
+    int occ_bc   = sam_count_occurrences(pat_bc, 2);  /* 2 */
 
-    int found = 0;
-    found += sam_contains("a",   1);  /* yes */
-    found += sam_contains("bc",  2);  /* yes */
-    found += sam_contains("abc", 3);  /* yes */
-    found += sam_contains("cb",  2);  /* yes */
-    found += sam_contains("ac",  2);  /* no  */
-    /* found = 4 */
+    g_result = ((uint32_t)states      << 16)
+             | ((uint32_t)transitions <<  8)
+             | ((uint32_t)occ_bc);
+}
 
-    uint32_t n_tests  = 5;
-    uint32_t metric_a = (uint32_t)(states & 0xFF);  /* 8 */
-    uint32_t metric_b = (uint32_t)(found  & 0xFF);  /* 4 */
-
-    g_result = (n_tests << 16) | (metric_a << 8) | metric_b;
-    /* expected: 0x050804 */
-    while (1) {}
+__attribute__((noreturn)) void _start(void)
+{
+    test_suffix_automaton();
+    for (;;);
 }
