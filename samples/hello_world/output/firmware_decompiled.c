@@ -34,8 +34,8 @@ typedef void * EventGroupHandle_t;
 
 struct ListItem_t {
     unsigned int xItemValue;
-    void *pxNext;
-    void *pxPrevious;
+    ListItem_t *pxNext;
+    ListItem_t *pxPrevious;
     void *pvOwner;
     void *pvContainer;
 };

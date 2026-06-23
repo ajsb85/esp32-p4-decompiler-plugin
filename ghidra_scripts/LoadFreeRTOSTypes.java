@@ -56,18 +56,18 @@ public class LoadFreeRTOSTypes extends GhidraScript {
 
             // ── 1. ListItem_t ────────────────────────────────────────────────
             // rv32 ilp32f: pointers are 4 bytes.  Typical ESP-IDF layout:
-            //   0x00  xItemValue    uint32  tick count or priority
-            //   0x04  pxNext        void*   next item
-            //   0x08  pxPrevious    void*   previous item
-            //   0x0C  pvOwner       void*   task/queue that owns this item
-            //   0x10  pvContainer   void*   list this item is placed in
+            //   0x00  xItemValue    uint32        tick count or priority
+            //   0x04  pxNext        ListItem_t*   self-referential linked list next
+            //   0x08  pxPrevious    ListItem_t*   self-referential linked list prev
+            //   0x0C  pvOwner       void*         task/queue that owns this item
+            //   0x10  pvContainer   void*         list this item is placed in
             // Total: 20 bytes (configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES=0)
             StructureDataType listItem = new StructureDataType(FREERTOS_CAT, "ListItem_t", 0, dtm);
-            listItem.add(new DWordDataType(),          4, "xItemValue",   "Tick count or priority value");
-            listItem.add(new PointerDataType(dtm),     4, "pxNext",       "Pointer to next ListItem_t in list");
-            listItem.add(new PointerDataType(dtm),     4, "pxPrevious",   "Pointer to previous ListItem_t in list");
-            listItem.add(new PointerDataType(dtm),     4, "pvOwner",      "Task or queue that contains this list item");
-            listItem.add(new PointerDataType(dtm),     4, "pvContainer",  "List this item is currently placed in");
+            listItem.add(new DWordDataType(),                4, "xItemValue",   "Tick count or priority value");
+            listItem.add(new PointerDataType(listItem, dtm), 4, "pxNext",       "Next ListItem_t in list (self-referential)");
+            listItem.add(new PointerDataType(listItem, dtm), 4, "pxPrevious",   "Previous ListItem_t in list (self-referential)");
+            listItem.add(new PointerDataType(dtm),           4, "pvOwner",      "Task or queue that contains this list item");
+            listItem.add(new PointerDataType(dtm),           4, "pvContainer",  "List this item is currently placed in");
             DataType listItemDT = dtm.addDataType(listItem, DataTypeConflictHandler.REPLACE_HANDLER);
             typeCount++;
             println("  Created: ListItem_t  (" + listItemDT.getLength() + " bytes)");
