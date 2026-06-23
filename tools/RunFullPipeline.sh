@@ -28,7 +28,8 @@
 # ── Pipeline phases ───────────────────────────────────────────────────────────
 #   Phase 1 — Import + configure analyzers   (AnalyzeESP32P4Headless.py)
 #   Phase 2 — Symbol enrichment              (FIDB → ROM symbols → SVD)
-#   Phase 3 — Type enrichment                (FreeRTOS types → task extraction)
+#   Phase 3 — Type enrichment                (FreeRTOS types → task extraction
+#                                             → ApplyTypePromotion two-pass)
 #   Phase 4 — Pattern detection              (DetectSemanticPatterns.java)
 #   Phase 5 — Apply semantic hints           (ApplySemanticHints.java)
 #   Phase 6 — Export                         (header → globals → C → call graph)
@@ -178,6 +179,10 @@ POST_SCRIPTS+=(-postScript "LoadESP32P4SVD.java")
 # FreeRTOS types must be loaded before task extraction (ExtractFreeRTOSTasks relies on them).
 POST_SCRIPTS+=(-postScript "LoadFreeRTOSTypes.java")
 POST_SCRIPTS+=(-postScript "ExtractFreeRTOSTasks.java")
+# Sprint 26: two-pass type promotion.
+# Must run AFTER LoadFreeRTOSTypes (needs types in DTM) and BEFORE Export
+# (ExportDecompiledC re-decompiles and inherits the committed types).
+POST_SCRIPTS+=(-postScript "ApplyTypePromotion.java")
 
 # Phase 4 — Pattern detection
 # Must run after all enrichment so decompiled bodies already carry IDF/ROM names

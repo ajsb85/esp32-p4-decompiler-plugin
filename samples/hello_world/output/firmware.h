@@ -2625,8 +2625,8 @@ typedef struct LEDC_t {
 
 typedef struct ListItem_t {
     dword xItemValue;
-    void *pxNext;
-    void *pxPrevious;
+    ListItem_t *pxNext;
+    ListItem_t *pxPrevious;
     void *pvOwner;
     void *pvContainer;
 } ListItem_t;
