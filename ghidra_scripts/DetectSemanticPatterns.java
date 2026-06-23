@@ -112,7 +112,11 @@ import java.util.stream.*;
 
 public class DetectSemanticPatterns extends GhidraScript {
 
-    private static final int DECOMPILE_TIMEOUT_SECS = 30;
+    private static final int DECOMPILE_TIMEOUT_SECS = 10;
+    // Max ms to wait for decompiler.stopProcess() before abandoning the subprocess.
+    // On PIE SIMD / HWLP pcode errors the decompiler C process can deadlock; a
+    // timed stop prevents the script from hanging indefinitely.
+    private static final long STOP_TIMEOUT_MS = 5_000;
 
     // ── Pattern definitions ───────────────────────────────────────────────────
     // Each entry: {id, suggested_prefix, confidence, evidence_patterns[]}
@@ -7136,13 +7140,54 @@ public class DetectSemanticPatterns extends GhidraScript {
                 // Skip ROM / external (no body to analyze).
                 if (fn.isExternal()) continue;
 
+                // Only scan functions that Ghidra hasn't already named via DWARF,
+                // FIDB, ROM symbols, or user edits.  Named functions don't benefit
+                // from pattern detection, and scanning all functions in a large
+                // debug-info ELF (e.g. 4 MB+ IDF firmware) causes OOM.
+                String fnName = fn.getName();
+                boolean isUnresolved = fnName.startsWith("FUN_")
+                                    || fnName.startsWith("thunk_FUN_");
+                if (!isUnresolved) { unmatched++; continue; }
+
+                // Skip functions whose entry point is not in an executable
+                // memory block — overlapping RW/RE ELF segments can leave some
+                // function records pointing into non-executable blocks, which
+                // hangs the external decompiler subprocess indefinitely.
+                ghidra.program.model.mem.MemoryBlock mb =
+                        currentProgram.getMemory().getBlock(fn.getEntryPoint());
+                if (mb == null || !mb.isExecute()) { unmatched++; continue; }
+
                 DecompileResults res =
                         decompiler.decompileFunction(fn, DECOMPILE_TIMEOUT_SECS, monitor);
-                if (res == null || !res.decompileCompleted()) { unmatched++; continue; }
+                if (res == null || !res.decompileCompleted()) {
+                    // The external decompiler subprocess may be stuck (e.g. on
+                    // PIE SIMD / HWLP pcode errors). Use a timed stop so a
+                    // deadlocked subprocess never blocks the whole scan.
+                    decompiler = safeRestartDecompiler(decompiler);
+                    unmatched++;
+                    continue;
+                }
+                // A pcode error (e.g. unresolved PIE SIMD constructor) means the
+                // decompiler returned partial/garbage text.  Skip pattern matching
+                // on such results: the garbage can trigger catastrophic regex
+                // backtracking that pegs the JVM CPU for hours.
+                String decompErr = res.getErrorMessage();
+                if (decompErr != null && !decompErr.isEmpty()) {
+                    unmatched++;
+                    continue;
+                }
+
                 DecompiledFunction df = res.getDecompiledFunction();
                 if (df == null) { unmatched++; continue; }
 
                 String body = df.getC();
+                if (body == null || body.isEmpty()) { unmatched++; continue; }
+                // Hard cap: regex patterns are not designed for multi-MB texts.
+                // Functions producing >64 KB of decompiled C are pathological
+                // (typically inlined blobs or decompiler confusion) and should
+                // be skipped rather than risking exponential backtracking.
+                if (body.length() > 65536) { unmatched++; continue; }
+
                 PatternMatch pm = applyPatterns(body, fn.getName());
                 if (pm != null) {
                     results.add(new FunctionResult(fn, pm));
@@ -7179,6 +7224,35 @@ public class DetectSemanticPatterns extends GhidraScript {
                    r.fn.getEntryPoint(),
                    r.match.suggestedName,
                    r.match.patternId)));
+    }
+
+    // ── decompiler lifecycle ──────────────────────────────────────────────────
+
+    /**
+     * Stop the current decompiler subprocess with a hard timeout, then return a
+     * fresh DecompInterface connected to the current program.
+     *
+     * Ghidra's DecompInterface.stopProcess() calls Process.waitFor() with no
+     * timeout. When the decompiler C process deadlocks (e.g. after a PIE SIMD
+     * or HWLP pcode error), stopProcess() blocks forever. Running it on a daemon
+     * thread lets us abandon a stuck subprocess after STOP_TIMEOUT_MS and start
+     * a clean replacement without hanging the whole script.
+     */
+    private DecompInterface safeRestartDecompiler(DecompInterface old) {
+        Thread stopper = new Thread(() -> {
+            try { old.stopProcess(); } catch (Exception ignored) {}
+        });
+        stopper.setDaemon(true);
+        stopper.start();
+        try { stopper.join(STOP_TIMEOUT_MS); } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        // Whether stopProcess completed or timed out, start fresh.
+        DecompInterface fresh = new DecompInterface();
+        fresh.setOptions(new DecompileOptions());
+        fresh.toggleCCode(true);
+        fresh.openProgram(currentProgram);
+        return fresh;
     }
 
     // ── pattern matching ──────────────────────────────────────────────────────

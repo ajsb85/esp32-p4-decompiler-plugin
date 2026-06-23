@@ -124,15 +124,24 @@ public class LoadESP32P4SVD extends GhidraScript {
             // 1. Memory block
             // ------------------------------------------------------------------
             MemoryBlock block = mem.getBlock(periBase);
+            // Skip any peripheral whose base address falls inside an existing
+            // executable block (IRAM/ROM code) — applying a struct there would
+            // corrupt disassembly and hang the decompiler indefinitely.
+            if (block != null && block.isExecute()) {
+                continue;
+            }
             if (block == null) {
                 try {
                     block = mem.createUninitializedBlock(periName, periBase, periSize, false);
                     block.setVolatile(true);
                     block.setWrite(true);
                     block.setRead(true);
+                    block.setExecute(false);
                     block.setComment(periDesc != null ? periDesc.trim() : periName);
                 } catch (Exception e) {
                     block = mem.getBlock(periBase);
+                    // Re-check after exception: skip if it turned out executable
+                    if (block != null && block.isExecute()) continue;
                 }
             }
 

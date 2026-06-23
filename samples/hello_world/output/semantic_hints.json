@@ -1,0 +1,6 @@
+{
+  "program": "hello_esp32p4.elf",
+  "language": "RISCV:LE:32:ESP32-P4",
+  "functions": [
+  ]
+}

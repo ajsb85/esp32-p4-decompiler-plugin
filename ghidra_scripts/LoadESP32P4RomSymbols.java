@@ -20,7 +20,13 @@
 // calls via direct ROM addresses. The ROM ELF is at:
 //   ~/.espressif/tools/esp-rom-elfs/20241011/esp32p4_rev0_rom.elf
 //
-// Usage: Run this script via Script Manager while viewing an ESP32-P4 firmware.
+// Usage:
+//   GUI:     Script Manager → ESP32-P4 → Load ROM Symbols  (file chooser appears)
+//   Headless: -postScript LoadESP32P4RomSymbols.java /path/to/esp32p4_rev0_rom.elf
+//
+// When no argument is given the default path is tried automatically:
+//   ~/.espressif/tools/esp-rom-elfs/20241011/esp32p4_rev0_rom.elf
+//
 // @category ESP32-P4
 // @menupath Analysis.ESP32-P4.Load ROM Symbols
 
@@ -44,25 +50,31 @@ public class LoadESP32P4RomSymbols extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-        File romElf = askFile("Select ESP32-P4 ROM ELF", "Load");
-        if (romElf == null) {
+        File romElf = null;
+
+        // 1. Script argument (headless: -postScript LoadESP32P4RomSymbols.java <path>)
+        String[] scriptArgs = getScriptArgs();
+        if (scriptArgs != null && scriptArgs.length > 0 && !scriptArgs[0].isEmpty()) {
+            romElf = new File(scriptArgs[0]);
+        }
+
+        // 2. Auto-detect default installation path (works headless without a dialog)
+        if (romElf == null || !romElf.exists()) {
             File def = new File(DEFAULT_ROM_ELF);
             if (def.exists()) {
-                int ans = askInt("Use default?",
-                    "Default ROM ELF found at:\n" + DEFAULT_ROM_ELF +
-                    "\n\nEnter 1 to use it, 0 to cancel:");
-                if (ans == 1) {
-                    romElf = def;
-                }
-            }
-            if (romElf == null) {
-                printerr("No ROM ELF selected. Aborting.");
-                return;
+                romElf = def;
+                println("Auto-detected ROM ELF: " + romElf.getAbsolutePath());
             }
         }
 
-        if (!romElf.exists()) {
-            printerr("ROM ELF not found: " + romElf);
+        // 3. GUI file chooser (interactive only; returns null in headless mode)
+        if (romElf == null || !romElf.exists()) {
+            romElf = askFile("Select ESP32-P4 ROM ELF", "Load");
+        }
+
+        if (romElf == null || !romElf.exists()) {
+            printerr("ROM ELF not found. Skipping ROM symbol loading.");
+            printerr("Install esp-rom-elfs or pass the path as a script argument.");
             return;
         }
 
