@@ -125,12 +125,12 @@ public class DetectSemanticPatterns extends GhidraScript {
     private static final PatternDef[] PATTERNS = {
 
         new PatternDef("crc_poly", "crc32_step", "high",
-            "0x04[Cc]11[Dd][Bb]7",          // CRC-32 polynomial
-            "\\^\\s*0x04[Cc]11"             // XOR with it
+            "0x0?4[Cc]11[Dd][Bb]7",          // CRC-32 poly (Ghidra drops leading 0 → 0x4c11db7)
+            "\\^.*0x0?4[Cc]11"               // XOR with it
         ),
         new PatternDef("crc_poly_alt", "crc_step", "high",
             "0x[Ee][Dd][Bb]88320",           // CRC-32C reversed polynomial
-            "\\^\\s*0x[Ee][Dd][Bb]"
+            "\\^.*0x[Ee][Dd][Bb]"
         ),
         new PatternDef("crc_loop", "crc_byte_step", "medium",
             "for\\s*\\(.*[iI]\\s*[<>]=?\\s*8",    // exactly 8 iterations
@@ -2141,19 +2141,19 @@ public class DetectSemanticPatterns extends GhidraScript {
 
         // ── Aho-Corasick multi-pattern search ───────────────────────────────
         new PatternDef("ac_trie_insert", "aho_corasick_trie_insert", "high",
-            "ac_goto.*cur.*c.*==.*-1.*ac_new_node|goto.*\\[cur\\]\\[c\\].*=.*new_node",
-            "for.*pat.*i.*c.*=.*pat.*i.*-.*a.*goto.*cur.*c.*ac_insert",
-            "ac_insert|trie_insert|aho_corasick_build"
+            "ac_goto.*==.*-1|ac_goto.*-1",          // goto[cur][c]==-1: missing trie edge
+            "ac_goto.*=.*ac_sz|ac_sz\\+\\+",        // ac_goto[cur][c] = new state id
+            "ac_insert|ac_out.*\\|="                 // insert function or output bitmask
         ),
         new PatternDef("ac_fail_link_bfs", "aho_corasick_failure_link_bfs", "high",
-            "fail.*v.*=.*ac_goto.*fail.*u.*c|ac_fail.*v.*=.*goto.*fail.*u.*c",
-            "output.*v.*\\|=.*output.*fail.*v|ac_output.*merge.*fail.link",
-            "ac_fail|failure_link|ac_bfs_build"
+            "ac_fail.*=.*ac_goto.*ac_fail|ac_goto.*ac_fail",  // fail[v]=goto[fail[u]][c]
+            "ac_out.*\\|=.*ac_out|ac_out.*ac_fail",  // out[v] |= out[fail[v]]
+            "ac_fail|ac_q"                           // global fail array or BFS queue
         ),
         new PatternDef("ac_goto_complete", "aho_corasick_goto_completion", "medium",
-            "ac_goto.*u.*c.*=.*ac_goto.*fail.*u.*c|goto.*u.*c.*=.*goto.*fail.*u.*c.*missing",
-            "if.*v.*==.*-1.*goto.*u.*c.*=.*goto.*fail|ac_redirect_missing",
-            "ac_goto_fill|ac_goto_complete|aho_corasick_search"
+            "ac_goto.*==.*-1",                      // missing transition check
+            "ac_goto.*=.*ac_goto.*ac_fail",          // redirect: goto[u][c]=goto[fail[u]][c]
+            "ac_fail"                               // fail links used in completion step
         ),
         /* ── Z-function (Z-algorithm) ─────────────────────────────────────── */
         new PatternDef("z_window_advance", "z_function_window_extension", "high",
@@ -2802,35 +2802,35 @@ public class DetectSemanticPatterns extends GhidraScript {
             "return.*1.*splay.*find.*success|splay.*find.*return.*found|splay.*find.*miss"
         ),
         new PatternDef("sam_extend", "suffix_automaton_extend_state_clone", "high",
-            "cur.*=.*sam_sz\\+\\+|sam.*new.*state.*extend|sam.*extend.*len.*last.*\\+.*1",
-            "while.*p.*!=.*-1.*next.*c.*==.*-1|sam.*suffix.*link.*walk|sam.*extend.*suffix.*link",
-            "clone.*=.*sam_sz\\+\\+|sam.*clone.*state.*split|sam.*link.*q.*=.*clone"
+            "sam_sz\\+\\+|sam_new\\(",              // new state allocated
+            "sam.*\\.link|sam.*link",               // suffix link field
+            "sam.*\\.next|sam.*next.*-1"            // transition table with -1 sentinel
         ),
         new PatternDef("sam_suffix_link", "suffix_automaton_suffix_link_update", "high",
-            "sam_st.*link.*=.*0|sam.*link.*initial.*state|sam.*suffix.*link.*root",
-            "sam_st.*q.*len.*\\+.*1.*==.*sam_st.*q.*len|sam.*no.*clone.*needed|sam.*link.*q.*direct",
-            "sam_st.*p.*next.*c.*=.*clone|sam.*redirect.*transitions.*clone|sam.*clone.*next.*copy"
+            "sam.*\\.len",                          // len field: len[q]==len[p]+1 check
+            "sam.*\\.link\\s*=",                    // link reassignment (clone step)
+            "sam_sz\\+\\+|sam_new\\("              // state creation
         ),
         new PatternDef("sam_contains", "suffix_automaton_substring_membership_query", "medium",
-            "cur.*=.*0.*sam.*contains|sam.*traverse.*pattern|sam.*query.*substring",
-            "next.*c.*==.*-1.*return.*0|sam.*missing.*transition.*reject|sam.*contains.*walk",
-            "cur.*=.*next.*c|sam.*follow.*transition|sam.*accept.*substring.*return.*1"
+            "sam.*\\.next.*==.*-1|sam.*next.*-1",   // missing transition → reject
+            "sam_last|sam_sz",                      // global SAM state
+            "return\\s+0|return\\s+1"               // membership result
         ),
         // ── Sprint 122: link_cut_tree ─────────────────────────────────────────
         new PatternDef("lct_access", "link_cut_tree_access_preferred_path", "high",
-            "lct_access|lct.*preferred.*path|access.*splay.*path.*root",
-            "lct_is_root|lct.*path.*parent.*pointer|while.*par.*!=.*-1.*splay",
-            "lct.*ch.*1.*=.*last|lct.*cut.*preferred.*child|lct.*attach.*last.*node"
+            "lct_access",                           // function name preserved
+            "lct_is_root|lct_splay",               // called from within lct_access
+            "lct.*\\.ch|lct_push_up"               // child/push_up field ops
         ),
         new PatternDef("lct_splay_rotate", "link_cut_tree_splay_rotate_operation", "high",
-            "lct_splay|lct_rotate|lct.*zig.*zig.*zig.*zag",
-            "lct_push_all|lct.*push.*lazy.*flags.*root.*down|lct.*push_rev.*ancestor",
-            "lct.*ch.*k.*1.*=.*w|lct.*rotate.*y.*z|lct.*splay.*amortise"
+            "lct_splay",                            // function name preserved
+            "lct_rotate",                           // rotate called from splay
+            "lct_is_root"                           // is_root check in splay while loop
         ),
         new PatternDef("lct_link_cut", "link_cut_tree_link_cut_connectivity", "high",
-            "lct_link|lct_cut|lct.*make_root.*link.*cut",
-            "lct_make_root|lct.*re.*root.*represented.*tree|lct.*rev.*=.*1",
-            "lct_connected|lct_find_root|lct.*find.*root.*same.*tree"
+            "lct_link|lct_cut",                     // function names preserved
+            "lct_access",                           // both link and cut call lct_access
+            "lct.*\\.par\\s*=|lct.*par.*="         // parent pointer manipulation
         ),
         // ── Sprint 122: palindrome_tree ───────────────────────────────────────
         new PatternDef("pt_init_roots", "palindrome_tree_imaginary_root_init", "high",
@@ -3736,23 +3736,6 @@ public class DetectSemanticPatterns extends GhidraScript {
             "ob_w|knuth_bst_weight|optimal_bst_freq_sum|bst_dp_weight"
         ),
 
-        // ── Ukkonen Suffix Tree ───────────────────────────────────────────────
-        new PatternDef("ukkonen_active_point", "ukkonen_suffix_tree_active_point_update", "high",
-            "active_len.*>=.*edge_len.*active_edge.*=.*char_idx.*active_len.*-=.*el.*active_node.*=.*nxt",
-            "al.*>=.*el.*ae.*=.*char_idx.*s.*i.*-.*al.*\\+.*el.*al.*-=.*el.*an.*=.*nxt|walk_down_active_point",
-            "ukon_active|active_point|ukkonen_walk_down|suffix_tree_active_len"
-        ),
-        new PatternDef("ukkonen_split_edge", "ukkonen_suffix_tree_split_internal_node", "high",
-            "spl.*=.*new_node.*start.*start.*\\+.*al.*ch.*ae.*=.*spl.*ch.*char_idx.*s.*i.*=.*new_node.*i.*INF",
-            "nd.*nxt.*start.*\\+=.*al.*nd.*spl.*ch.*char_idx.*s.*nd.*nxt.*start.*=.*nxt|ukkonen_split",
-            "ukon_split|split_edge|ukkonen_internal|suffix_tree_rule2"
-        ),
-        new PatternDef("ukkonen_suffix_link", "ukkonen_suffix_tree_suffix_link_chain", "high",
-            "last_new.*!=.*-1.*nd.*last_new.*link.*=.*spl|last_new.*link.*=.*active_node.*last_new.*=.*-1",
-            "ukon_last_new.*=.*spl.*rem--.*an.*==.*0.*al.*>.*0.*al--.*ae.*=.*char_idx|ukkonen_suffix_link_resolve",
-            "ukon_last_new|last_new_link|ukkonen_link|suffix_link_chain"
-        ),
-
         // ── Jacobi Symbol ─────────────────────────────────────────────────────
         new PatternDef("jacobi_strip_twos", "jacobi_symbol_factor_of_two_extraction", "high",
             "while.*a.*&.*1.*==.*0.*a.*>>=.*1.*r.*=.*n.*&.*7.*r.*==.*3.*r.*==.*5.*result.*=.*-result",
@@ -3812,135 +3795,178 @@ public class DetectSemanticPatterns extends GhidraScript {
         ),
 
         // ── Sprint 206: Karatsuba multiplication ─────────────────────────────
+        // Function name 'karatsuba' is in ELF symbol table → survives decompilation.
+        // Local variables (x0, y0, z0, z1, z2, mask, half) are renamed to iVarN/uVarN;
+        // we match on the recursive call pattern and bit-shift idioms instead.
+        new PatternDef("karatsuba_recurse", "karatsuba_three_recursive_sub_calls", "high",
+            "karatsuba\\(",                         // recursive self-call visible in body
+            "karatsuba\\(.*karatsuba\\(",            // at least two calls (DOTALL spans lines)
+            "<<|>>"                                  // half-word bit-shift for split/combine
+        ),
         new PatternDef("karatsuba_split", "karatsuba_half_word_split_mask", "high",
-            "mask.*=.*1.*<<.*half.*-.*1|x0.*=.*x.*&.*mask.*x1.*=.*x.*>>.*half",
-            "x0.*&.*mask|karatsuba.*split|karatsuba_half|half_word_split"
+            "karatsuba\\(",                         // inside karatsuba body
+            "1\\s*<<|>>.*1|>>\\s*\\d",              // mask = (1<<half)-1 or x >> half
+            "&\\s*\\(\\s*\\w|\\w\\s*&\\s*\\("       // x & (mask) — AND with mask expression
         ),
         new PatternDef("karatsuba_cross_term", "karatsuba_z1_minus_z0_minus_z2_cross_correction", "high",
-            "z1.*=.*z1.*-.*z0.*-.*z2|z1.*-=.*z2.*z1.*-=.*z0|cross.*term.*correction.*karatsuba",
-            "z1.*-.*z0.*-.*z2|karatsuba_cross|z1_correction|karatsuba_three_way"
-        ),
-        new PatternDef("karatsuba_combine", "karatsuba_combine_z0_z1_z2_with_base_shift", "high",
-            "z0.*\\+.*z1.*\\*.*base.*\\+.*z2.*\\*.*base.*\\*.*base|result.*=.*z0.*z1.*shift.*z2.*shift2",
-            "karatsuba_combine|karatsuba_result|z0_z1_z2_combine|karatsuba_shift_add"
-        ),
-        new PatternDef("karatsuba_recurse", "karatsuba_three_recursive_sub_calls", "medium",
-            "karatsuba.*x0.*y0|karatsuba.*x1.*y1|karatsuba.*x0.*\\+.*x1.*y0.*\\+.*y1",
-            "karatsuba_recurse|three_sub_mul|karatsuba_call"
+            "karatsuba\\(",                         // inside karatsuba body
+            "\\w+\\s*-\\s*\\w+\\s*-\\s*\\w+",       // var - var - var  (z1 - z0 - z2)
+            "karatsuba\\(.*karatsuba\\("             // two recursive calls present
         ),
 
         // ── Sprint 206: HLD (Heavy-Light Decomposition) path query ───────────
+        // Global arrays hld_head, hld_pos, hld_depth, hld_heavy, hld_fenwick survive.
+        // Local node indices (u, v) are renamed → match on global names without them.
         new PatternDef("hld_chain_head_ascent", "hld_chain_head_mismatch_ascent_loop", "high",
-            "while.*hld_head.*u.*!=.*hld_head.*v|while.*head.*u.*!=.*head.*v.*chain.*ascent",
-            "hld_head.*!=|chain.*ascent.*loop|hld_chain_ascent|head_mismatch_loop"
+            "hld_head",                             // global array preserved in symbol table
+            "while.*hld_head.*!=.*hld_head",        // while(head[u]!=head[v]): u,v renamed
+            "hld_pos|fenwick|hld_path_sum"          // other HLD globals or function
         ),
         new PatternDef("hld_deep_chain_first", "hld_swap_to_process_deeper_chain_first", "high",
-            "if.*depth.*head.*u.*<.*depth.*head.*v.*swap.*u.*v|deeper_chain_first.*hld",
-            "hld_depth_swap|hld_deeper_chain|depth.*head.*swap|hld_chain_swap"
+            "hld_depth.*hld_head|hld_depth.*<.*hld_depth", // depth comparison of chain heads
+            "hld_head",
+            "swap|hld_pos"                          // swap nodes or update position
         ),
         new PatternDef("hld_heavy_child_select", "hld_dfs_heavy_child_max_subtree_size", "high",
-            "heavy.*v.*=.*u.*max_sz.*=.*sz.*u|if.*sz.*u.*>.*max_sz.*heavy.*v.*=.*u",
-            "hld_heavy|heavy_child_max_sz|hld_dfs_sz|heavy.*child.*select"
+            "hld_heavy",                            // global heavy-child array preserved
+            "hld_sz.*>|>.*hld_sz|hld_heavy\\s*=",  // size comparison / heavy[v]=u
+            "hld_parent|hld_depth|hld_dfs_sz"       // other HLD globals
         ),
         new PatternDef("hld_fenwick_chain_range", "hld_fenwick_pos_linearised_range_query", "high",
-            "fenwick_range.*pos.*head.*u.*pos.*u|ans.*\\+=.*fenwick.*pos.*head.*pos.*u",
-            "hld_fenwick|hld_pos.*head|hld_range_query|fenwick.*hld_chain"
+            "fenwick_range",                        // function name preserved
+            "hld_pos.*hld_head|hld_head.*hld_pos",  // pos[u]..pos[head[u]]: u renamed
+            "hld_pos"                               // HLD linearised-position array
         ),
 
         // ── Sprint 206: Ford-Fulkerson max-flow ──────────────────────────────
+        // Global arrays ff_res, ff_vis survive. Function ff_dfs survives.
+        // Local node indices (u, v, pushed, flow) are renamed to iVarN.
         new PatternDef("ff_residual_update", "ford_fulkerson_residual_forward_backward_update", "high",
-            "res.*u.*v.*-=.*flow.*res.*v.*u.*\\+=.*flow|residual.*u.*v.*-=.*f.*residual.*v.*u.*\\+=.*f",
-            "ff_res.*-=|ff_residual_update|res.*v.*u.*\\+=|ford_fulkerson_residual"
+            "ff_res",                               // global residual matrix preserved
+            "ff_res.*-=",                           // res[u][v] -= flow (backward edge)
+            "ff_res.*\\+="                          // res[v][u] += flow (forward edge)
         ),
         new PatternDef("ff_dfs_path", "ford_fulkerson_dfs_augmenting_path_search", "high",
-            "if.*!ff_vis.*v.*&&.*ff_res.*u.*v.*>.*0|if.*!visited.*v.*res.*u.*v.*>.*0.*dfs",
-            "ff_dfs|ford_fulkerson_dfs|ff_vis.*res.*>.*0|augmenting_path_dfs"
+            "ff_vis",                               // global visited array preserved
+            "ff_res.*>.*0|ff_res.*>=.*0",           // residual capacity check
+            "ff_dfs"                                // dfs function name preserved
         ),
         new PatternDef("ff_outer_loop", "ford_fulkerson_outer_loop_total_flow_accumulate", "high",
-            "do.*vis.*=.*0.*dfs.*src.*sink.*total.*\\+=|while.*dfs.*s.*t.*>.*0.*total.*flow",
-            "ff_maxflow|ford_fulkerson_outer|total.*\\+=.*f.*while|ff_loop_flow"
+            "ff_vis",
+            "ff_dfs",                               // ff_dfs called in outer while loop
+            "\\+=.*ff_dfs|ff_dfs.*\\+=|ff_maxflow"  // flow accumulation
         ),
 
         // ── Sprint 206: DC3 suffix array ─────────────────────────────────────
+        // Function 'isort3' name preserved. Local vars s12/rank12/n12 renamed.
+        // Structural: i%3!=0 and /3 arithmetic are distinctive enough.
         new PatternDef("dc3_sample_mod3", "dc3_suffix_array_sample_position_mod3_ne_0", "high",
-            "if.*i.*%.*3.*!=.*0.*s12|for.*i.*<.*n.*i.*%.*3.*!=.*0.*s12.*n12.*\\+\\+",
-            "dc3_sample|s12.*n12|i.*%.*3.*!=.*0|dc3_two_thirds_sample"
-        ),
-        new PatternDef("dc3_rank12_interleave", "dc3_rank12_interleaved_mod1_mod2_rank_array", "high",
-            "rank12.*p.*%.*3.*==.*1.*\\?.*p.*\\/.*3.*:.*p.*\\/.*3.*\\+.*n12|rank12.*mod1.*mod2.*interleave",
-            "rank12.*p.*%.*3|rank12_interleave|dc3_rank.*mod1.*mod2|dc3_rank12"
+            "%\\s*3\\s*!=\\s*0",                    // i % 3 != 0 — structural, survives
+            "isort3|dc3|suffix_array"               // function name or context hint
         ),
         new PatternDef("dc3_radix3", "dc3_radix_sort_on_three_character_triple", "high",
-            "isort3.*s.*sa.*n12.*K.*2.*isort3.*s.*sa.*n12.*K.*1.*isort3.*s.*sa.*n12.*K.*0",
-            "dc3_radix_triple|isort3.*off.*2.*1.*0|three_radix_pass|dc3_sort_triple"
+            "isort3\\(",                            // radix sort helper function name
+            "isort3\\(.*isort3\\(",                 // called ≥2 times (three-pass sort)
+            "%\\s*3"                                // mod-3 context
+        ),
+        new PatternDef("dc3_rank12_interleave", "dc3_rank12_interleaved_mod1_mod2_rank_array", "high",
+            "%\\s*3\\s*==\\s*1",                    // p % 3 == 1 condition
+            "/\\s*3",                               // division by 3 (n12=n*2/3 etc.)
+            "isort3|%\\s*3\\s*!=\\s*0"             // context: isort3 or mod-3 sample
         ),
         new PatternDef("dc3_merge_rank_cmp", "dc3_merge_rank12_comparison_by_mod_class", "high",
-            "p.*%.*3.*==.*1.*rp.*=.*rank12.*p.*\\/.*3.*rq.*=.*rank12.*q.*\\/.*3.*\\+",
-            "dc3_merge.*rank12|dc3_mod_class_merge|rank12.*p.*\\/.*3.*q.*\\/.*3|dc3_merge"
+            "%\\s*3\\s*==",                         // mod-class equality in merge step
+            "/\\s*3",                               // n/3 boundary computation
+            "isort3|suffix_array|dc3"              // function name or context
         ),
 
         // ── Sprint 207: Ukkonen suffix tree ──────────────────────────────────
+        // Global arrays uk_nodes (UKNode struct), uk_text, uk_n preserved.
+        // Struct fields (.start, .end, .link, .ch[]) appear in decompiled field accesses.
+        // Local vars (active_node, active_edge, active_length, remainder) are renamed.
         new PatternDef("ukkonen_active_point", "ukkonen_active_node_edge_length_triple", "high",
-            "active_node.*active_edge.*active_length|active_point.*triple.*ukkonen",
-            "active_node|active_edge|active_length|ukkonen_active"
+            "uk_nodes",                             // global UKNode array preserved
+            "uk_nodes.*\\.start|uk_nodes.*start",   // edge-start field access
+            "uk_nodes.*\\.link|uk_nodes.*link"      // suffix-link field access
         ),
         new PatternDef("ukkonen_remainder", "ukkonen_remainder_counter_extension_loop", "high",
-            "remainder\\+\\+.*while.*remainder.*>.*0|remainder.*>.*0.*active_node.*active_edge",
-            "remainder.*>.*0|ukkonen_remainder|suffix_tree_remainder|online_suffix"
+            "uk_nodes",
+            "uk_text|uk_n",                         // global input text array
+            "uk_new_node\\(|uk_node_cnt\\+\\+"      // new node creation
         ),
         new PatternDef("ukkonen_suffix_link", "ukkonen_suffix_link_rule2_new_internal_node", "high",
-            "need_link.*=.*split|if.*need_link.*!=.*-1.*uk_nodes.*need_link.*\\.link.*=",
-            "suffix_link.*split|ukkonen_rule2|need_link.*split|ukkonen_suffix_link"
+            "uk_nodes.*\\.link|uk_nodes.*link",     // suffix-link assignment
+            "uk_new_node\\(",                       // new internal node created
+            "uk_nodes.*\\.start"                    // edge-start field (split edge)
         ),
         new PatternDef("ukkonen_rule3_stop", "ukkonen_rule3_character_already_on_edge_break", "high",
-            "uk_text.*nxt.*start.*\\+.*active_length.*==.*c.*active_length\\+\\+.*break",
-            "rule3.*already.*in.*tree.*break|ukkonen_rule3|active_length\\+\\+.*break|ukkonen_stop"
+            "uk_text",                              // global text array
+            "uk_nodes.*\\.start",                   // edge-start used in character compare
+            "break"                                 // rule 3: stop extensions
         ),
 
         // ── Sprint 207: Suffix Automaton (SAM) ───────────────────────────────
+        // Globals sam[] (SAMState struct), sam_sz, sam_last preserved.
+        // Struct fields (.len, .link, .next[], .cnt) appear in field accesses.
+        // Local p, q, cur, clone, c are renamed to iVarN.
         new PatternDef("sam_extend_suffix_chain", "sam_extend_suffix_link_chain_walk", "high",
-            "for.*p.*=.*sam_last.*p.*!=.*-1.*&&.*sam.*p.*\\.next.*c.*==.*-1.*p.*=.*sam.*p.*\\.link",
-            "p.*sam_last.*link.*p.*sam_extend|sam.*suffix.*chain.*walk|sam_extend.*last.*link"
+            "sam_last",                             // global variable preserved
+            "sam.*\\.link|sam.*link",               // suffix-link field traversal
+            "sam.*\\.next|sam.*next.*-1"            // transition table with -1 sentinel
         ),
         new PatternDef("sam_clone_state", "sam_clone_state_when_link_len_mismatch", "high",
-            "clone.*=.*sam_new.*sam.*p.*\\.len.*\\+.*1|sam.*q.*\\.len.*!=.*sam.*p.*\\.len.*\\+.*1.*clone",
-            "sam_clone|clone.*sam_new|sam.*len.*mismatch.*clone|sam_split_state"
+            "sam_sz",                               // global state counter
+            "sam.*\\.len",                          // len field: len[q] == len[p]+1 check
+            "sam.*\\.link\\s*=|sam.*\\.next.*=.*sam" // clone: copy link / redirect next
         ),
         new PatternDef("sam_last_updated", "sam_last_pointer_updated_each_extend_call", "medium",
-            "sam_last.*=.*cur|last.*=.*sam_extend|sam_last.*=.*sam_extend",
-            "sam_last.*cur|sam_last_extend|suffix_automaton_last|sam_online"
+            "sam_last",
+            "sam_last\\s*=|=\\s*sam_last",          // sam_last = cur or cur = sam_last
+            "sam_sz\\+\\+|sam_new\\("               // new state allocated
         ),
 
         // ── Sprint 207: Aho-Corasick multi-pattern matching ───────────────────
+        // Globals ac_goto[][], ac_fail[], ac_out[], ac_sz, ac_q[] all preserved.
+        // Local u, v, c, head, tail are renamed to iVarN.
         new PatternDef("ac_bfs_failure_build", "aho_corasick_bfs_failure_link_construction", "high",
-            "queue.*BFS.*fail.*child.*=.*goto.*fail.*parent.*c|ac_fail.*v.*=.*ac_goto.*ac_fail.*u.*c",
-            "ac_fail.*goto.*fail|bfs.*failure.*link|aho_corasick_build|fail.*child.*goto"
+            "ac_fail",                              // global fail array preserved
+            "ac_fail.*=.*ac_goto.*ac_fail|ac_goto.*ac_fail", // fail[v]=goto[fail[u]][c]
+            "ac_out.*\\|=.*ac_out|ac_out.*ac_fail"  // output chaining: out[v]|=out[fail[v]]
         ),
         new PatternDef("ac_output_chain", "aho_corasick_output_failure_link_chain", "high",
-            "ac_out.*v.*\\|=.*ac_out.*ac_fail.*v|output.*v.*|=.*output.*fail.*v",
-            "ac_out.*\\|=.*fail|output_chain.*fail|aho_corasick_output|ac_out_fail"
+            "ac_out.*\\|=",                         // output bitmask OR-merge
+            "ac_fail",                              // fail link used in output chaining
+            "ac_out.*ac_fail|ac_fail.*ac_out"       // ac_out[v] |= ac_out[ac_fail[v]]
         ),
         new PatternDef("ac_text_scan", "aho_corasick_text_scan_goto_transition", "high",
-            "state.*=.*ac_goto.*state.*text.*i.*-.*'a'|state.*goto.*state.*c.*scan",
-            "ac_goto.*state|aho_corasick_scan|state.*=.*goto.*state.*c|ac_text_scan"
+            "ac_goto",                              // global goto table preserved
+            "ac_goto.*ac_goto|ac_goto.*\\w+.*ac_goto", // state = goto[state][c]
+            "ac_out"                                // output checked during text scan
         ),
 
         // ── Sprint 207: Link-Cut Tree (splay-based dynamic trees) ─────────────
+        // Global lct[] (LCTNode struct with .ch[], .par, .val, .sum, .rev) preserved.
+        // Function names lct_is_root, lct_rotate, lct_splay, lct_access, lct_push_up preserved.
+        // Local d, g, dp, dv, last are renamed to iVarN.
         new PatternDef("lct_is_root_check", "lct_is_root_test_via_parent_child_mismatch", "high",
-            "lct_is_root.*v.*par.*v.*!=.*0.*ch.*0.*!=.*v.*&&.*ch.*1.*!=.*v",
-            "lct_is_root|is_root.*ch.*0.*ch.*1|lct_root_check|par.*ch.*0.*ch.*1"
+            "lct_is_root",                          // function name preserved
+            "lct.*\\.par|lct.*\\.ch",               // struct field access
+            "lct_rotate|lct_splay"                  // called from splay which tests is_root
         ),
         new PatternDef("lct_splay_zig_zig", "lct_splay_zig_zig_same_direction_double_rotate", "high",
-            "if.*dp.*==.*dv.*lct_rotate.*p.*lct_rotate.*v|zig_zig.*dp.*==.*dv.*rotate.*parent.*first",
-            "dp.*==.*dv.*rotate.*p|lct_zig_zig|zig_zig.*lct|same_direction.*splay"
+            "lct_rotate",                           // function name preserved
+            "lct_rotate.*lct_rotate",               // zig-zig: two rotates (DOTALL spans lines)
+            "lct_is_root"                           // root test in splay while loop
         ),
         new PatternDef("lct_access_preferred_path", "lct_access_create_preferred_path_to_root", "high",
-            "for.*u.*=.*v.*u.*lct_splay.*u.*lct.*u.*\\.ch.*1.*=.*last.*lct_push_up.*u.*last.*=.*u",
-            "lct_access.*last|access.*preferred.*path|lct.*ch.*1.*=.*last.*push_up|lct_access"
+            "lct_splay",                            // splay called inside lct_access
+            "lct.*\\.ch\\[1\\]\\s*=|lct.*\\.ch.*1.*=", // lct[u].ch[1] = last (preferred child)
+            "lct_push_up"                           // push_up called after each splay
         ),
         new PatternDef("lct_cut_detach_left", "lct_cut_access_then_detach_left_child", "high",
-            "lct_access.*v.*lct.*v.*\\.ch.*0.*!=.*0.*lct.*lct.*v.*\\.ch.*0.*\\.par.*=.*0.*lct.*v.*\\.ch.*0.*=.*0",
-            "lct_cut.*ch.*0|cut.*detach.*left|lct.*ch.*0.*=.*0.*par.*=.*0|lct_cut"
+            "lct_access",                           // lct_access called at start of lct_cut
+            "lct.*\\.ch\\[0\\]\\s*=\\s*0|lct.*\\.ch.*0\\s*=\\s*0",  // ch[0]=0 (detach left)
+            "lct.*\\.par\\s*=\\s*0|\\.par\\s*=\\s*0"  // par=0 (disconnect parent pointer)
         ),
 
         // ── Longest Increasing Subsequence — patience sort (O(n log n)) ──────
