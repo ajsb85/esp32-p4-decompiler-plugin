@@ -80,6 +80,14 @@
 //    declarations at the top of the output, enabling round-trip compilation
 //    without manually adding headers for g_result, HWLP_ARR, etc.
 //
+//  Sprint 25: Inline struct/enum/union/typedef definitions.
+//    Walks the DataTypeManager to collect composite types that are either
+//    referenced in any decompiled body or belong to always-emit categories
+//    (/FreeRTOS/).  Dependencies are resolved transitively; types are emitted
+//    in topological order (dependencies first) with forward declarations to
+//    break pointer cycles.  Makes firmware_decompiled.c self-contained —
+//    no -include firmware.h required for round-trip recompilation.
+//
 // ── Headless usage ───────────────────────────────────────────────────────────
 //   analyzeHeadless /project Prog \
 //     -postScript ExportDecompiledC.java /out/firmware.c
@@ -315,6 +323,7 @@ public class ExportDecompiledC extends GhidraScript {
         int ssaFallbacks    = 0;
         int astFallbacks    = 0;
         int romSkipped      = 0;
+        int typesEmitted    = 0;
         String prevRegion   = null;   // for section-header tracking
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(outFile))) {
@@ -336,6 +345,7 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" *   Sprint 11 — string constants extracted from DAT_ references");
             pw.println(" *   P5        — ClangAST bare-return fallback (getCCodeMarkup walk)");
             pw.println(" *   Sprint 24 — extern declarations for referenced global symbols");
+            pw.println(" *   Sprint 25 — inline struct/enum/union/typedef definitions");
             pw.println(" * Compile with:");
             pw.println(" *   riscv32-esp-elf-gcc -march=rv32imafc_zicsr_zifencei \\");
             pw.println(" *     -mabi=ilp32f -O0 -include ghidra_types.h -c "
@@ -343,6 +353,9 @@ public class ExportDecompiledC extends GhidraScript {
             pw.println(" */");
             pw.println("#include \"ghidra_types.h\"");
             pw.println();
+
+            // ── Sprint 25: inline type definitions ───────────────────────────
+            typesEmitted = emitTypeDefinitions(pw, rawByAddr.values());
 
             // ── Sprint 24: extern global declarations ─────────────────────────
             if (!externDecls.isEmpty()) {
@@ -535,11 +548,12 @@ public class ExportDecompiledC extends GhidraScript {
 
         println(String.format(
             "Export: %d written, %d ROM externs, %d failed | "
-            + "gp_stripped=%d promoted=%d bare_fixed=%d (vn=%d ssa=%d ast=%d) strings=%d -> %s",
+            + "gp_stripped=%d promoted=%d bare_fixed=%d (vn=%d ssa=%d ast=%d) "
+            + "strings=%d types=%d -> %s",
             exported, romSkipped, failed,
             gpStripped, promoted, bareReturnFixed,
             vnSliceFixes, ssaFallbacks, astFallbacks,
-            stringDecls.size(),
+            stringDecls.size(), typesEmitted,
             outFile.getAbsolutePath()));
 
         if (failed > 0)
@@ -960,6 +974,229 @@ public class ExportDecompiledC extends GhidraScript {
             }
         }
         return result;
+    }
+
+    // ── Sprint 25: inline struct/enum/union/typedef emission ─────────────────
+
+    /**
+     * Emit composite type definitions (struct/union/enum/typedef) into pw.
+     * Only emits types that are either referenced in rawBodies or belong to
+     * always-include categories (/FreeRTOS/).  Dependencies are included
+     * transitively.  Types are emitted in topological order with forward
+     * declarations to break pointer cycles.
+     * Returns the count of type definitions emitted.
+     */
+    private int emitTypeDefinitions(PrintWriter pw, Collection<String> rawBodies) {
+        DataTypeManager dtm = currentProgram.getDataTypeManager();
+
+        // Collect all identifier tokens referenced in decompiled output
+        Set<String> referenced = new HashSet<>();
+        for (String body : rawBodies) {
+            if (body == null) continue;
+            Matcher m = IDENT_TOKEN.matcher(body);
+            while (m.find()) referenced.add(m.group(1));
+        }
+
+        // Gather candidate types from DTM
+        Map<String, DataType> candidates = new LinkedHashMap<>();
+        Iterator<DataType> allDT = dtm.getAllDataTypes();
+        while (allDT.hasNext()) {
+            DataType dt = allDT.next();
+            String cat = dt.getCategoryPath().toString();
+            if (cat.startsWith("/BuiltIn") || cat.startsWith("/ghidra")
+                    || cat.startsWith("/DWARF") || cat.startsWith("/stdtypes")) continue;
+            if (!(dt instanceof Structure) && !(dt instanceof Union)
+                    && !(dt instanceof EnumDataType) && !(dt instanceof TypeDef)) continue;
+            boolean alwaysInclude = cat.startsWith("/FreeRTOS");
+            if (alwaysInclude || referenced.contains(dt.getName()))
+                candidates.putIfAbsent(dt.getName(), dt);
+        }
+
+        // Transitively pull in dependencies
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (DataType dt : new ArrayList<>(candidates.values())) {
+                for (DataType dep : dt25Deps(dt)) {
+                    if (dep == null) continue;
+                    String depCat = dep.getCategoryPath().toString();
+                    if (depCat.startsWith("/BuiltIn") || depCat.startsWith("/ghidra")
+                            || depCat.startsWith("/DWARF") || depCat.startsWith("/stdtypes")) continue;
+                    if (!candidates.containsKey(dep.getName())) {
+                        candidates.put(dep.getName(), dep);
+                        grew = true;
+                    }
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) return 0;
+
+        List<DataType> sorted = dt25TopoSort(new ArrayList<>(candidates.values()));
+
+        pw.println("/* ─── Type definitions (Sprint 25: struct/enum/union from DataTypeManager) ─── */");
+
+        // Forward declarations for all struct/union types to handle pointer cycles
+        boolean anyFwd = false;
+        for (DataType dt : sorted) {
+            if (dt instanceof Structure) {
+                pw.println("typedef struct " + dt.getName() + " " + dt.getName() + ";");
+                anyFwd = true;
+            } else if (dt instanceof Union) {
+                pw.println("typedef union " + dt.getName() + " " + dt.getName() + ";");
+                anyFwd = true;
+            }
+        }
+        if (anyFwd) pw.println();
+
+        // Full definitions in dependency order
+        int count = 0;
+        for (DataType dt : sorted) {
+            String def = dt25EmitOne(dt);
+            if (def != null) { pw.println(def); pw.println(); count++; }
+        }
+        return count;
+    }
+
+    /** Collect direct non-primitive dependencies of a composite type. */
+    private List<DataType> dt25Deps(DataType dt) {
+        List<DataType> deps = new ArrayList<>();
+        if (dt instanceof Structure) {
+            for (DataTypeComponent c : ((Structure) dt).getDefinedComponents())
+                dt25AddDep(c.getDataType(), deps);
+        } else if (dt instanceof Union) {
+            for (DataTypeComponent c : ((Union) dt).getComponents())
+                dt25AddDep(c.getDataType(), deps);
+        } else if (dt instanceof TypeDef) {
+            dt25AddDep(((TypeDef) dt).getBaseDataType(), deps);
+        }
+        return deps;
+    }
+
+    private void dt25AddDep(DataType dt, List<DataType> deps) {
+        DataType inner = dt25StripWrappers(dt);
+        if (inner instanceof Structure || inner instanceof Union
+                || inner instanceof EnumDataType || inner instanceof TypeDef)
+            deps.add(inner);
+    }
+
+    private DataType dt25StripWrappers(DataType dt) {
+        int limit = 16;
+        while (dt instanceof Array && limit-- > 0)   dt = ((Array) dt).getDataType();
+        while (dt instanceof Pointer && limit-- > 0) {
+            DataType inner = ((Pointer) dt).getDataType();
+            if (inner == null) return null;
+            dt = inner;
+        }
+        return dt;
+    }
+
+    private List<DataType> dt25TopoSort(List<DataType> types) {
+        Map<String, DataType> byName = new LinkedHashMap<>();
+        for (DataType dt : types) byName.put(dt.getName(), dt);
+        List<DataType> result   = new ArrayList<>();
+        Set<String>    visited  = new HashSet<>();
+        Set<String>    inStack  = new HashSet<>();
+        for (DataType dt : types) dt25TopoVisit(dt, byName, visited, inStack, result);
+        return result;
+    }
+
+    private void dt25TopoVisit(DataType dt, Map<String, DataType> byName,
+            Set<String> visited, Set<String> inStack, List<DataType> result) {
+        String name = dt.getName();
+        if (visited.contains(name) || inStack.contains(name)) return;
+        inStack.add(name);
+        for (DataType dep : dt25Deps(dt)) {
+            if (dep == null) continue;
+            DataType known = byName.get(dep.getName());
+            if (known != null) dt25TopoVisit(known, byName, visited, inStack, result);
+        }
+        inStack.remove(name);
+        visited.add(name);
+        result.add(dt);
+    }
+
+    private String dt25EmitOne(DataType dt) {
+        if (dt instanceof EnumDataType) return dt25EmitEnum((EnumDataType) dt);
+        if (dt instanceof Structure)    return dt25EmitStruct((Structure) dt);
+        if (dt instanceof Union)        return dt25EmitUnion((Union) dt);
+        if (dt instanceof TypeDef) {
+            DataType base = ((TypeDef) dt).getBaseDataType();
+            return "typedef " + dt25TypeName(base) + " " + dt.getName() + ";";
+        }
+        return null;
+    }
+
+    private String dt25EmitEnum(EnumDataType e) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("typedef enum {\n");
+        String[] names = e.getNames();
+        for (int i = 0; i < names.length; i++) {
+            sb.append("    ").append(names[i]).append(" = ").append(e.getValue(names[i]));
+            if (i < names.length - 1) sb.append(",");
+            sb.append("\n");
+        }
+        sb.append("} ").append(e.getName()).append(";");
+        return sb.toString();
+    }
+
+    private String dt25EmitStruct(Structure s) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("struct ").append(s.getName()).append(" {\n");
+        for (DataTypeComponent c : s.getDefinedComponents()) {
+            String fn = c.getFieldName();
+            if (fn == null || fn.isEmpty())
+                fn = "field_" + String.format("%02x", c.getOffset());
+            sb.append("    ").append(dt25TypeDecl(c.getDataType(), fn)).append(";\n");
+        }
+        sb.append("};");
+        return sb.toString();
+    }
+
+    private String dt25EmitUnion(Union u) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("union ").append(u.getName()).append(" {\n");
+        for (DataTypeComponent c : u.getComponents()) {
+            String fn = c.getFieldName();
+            if (fn == null || fn.isEmpty())
+                fn = "field_" + String.format("%02x", c.getOffset());
+            sb.append("    ").append(dt25TypeDecl(c.getDataType(), fn)).append(";\n");
+        }
+        sb.append("};");
+        return sb.toString();
+    }
+
+    private String dt25TypeDecl(DataType dt, String fieldName) {
+        if (dt instanceof Array) {
+            Array arr = (Array) dt;
+            return dt25TypeDecl(arr.getDataType(), fieldName + "[" + arr.getNumElements() + "]");
+        }
+        if (dt instanceof Pointer) {
+            DataType inner = ((Pointer) dt).getDataType();
+            return dt25TypeName(inner) + " *" + fieldName;
+        }
+        return dt25TypeName(dt) + " " + fieldName;
+    }
+
+    private String dt25TypeName(DataType dt) {
+        if (dt == null) return "void";
+        String name = dt.getName();
+        switch (name) {
+            case "undefined": case "undefined1": case "byte":  return "unsigned char";
+            case "undefined2": case "word":                    return "unsigned short";
+            case "undefined4": case "dword": case "uint":      return "unsigned int";
+            case "undefined8": case "qword": case "ulong":     return "unsigned long long";
+            case "ushort":                                      return "unsigned short";
+            case "uchar":                                       return "unsigned char";
+            case "bool":                                        return "unsigned char";
+            case "int":    case "long":                         return "int";
+            case "short":                                       return "short";
+            case "char":                                        return "char";
+            case "float":                                       return "float";
+            case "double":                                      return "double";
+            case "void":                                        return "void";
+            default: return name;
+        }
     }
 
     private String buildTypedSig(Function fn) {

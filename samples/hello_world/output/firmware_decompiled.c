@@ -15,11 +15,86 @@
  *   Sprint 11 — string constants extracted from DAT_ references
  *   P5        — ClangAST bare-return fallback (getCCodeMarkup walk)
  *   Sprint 24 — extern declarations for referenced global symbols
+ *   Sprint 25 — inline struct/enum/union/typedef definitions
  * Compile with:
  *   riscv32-esp-elf-gcc -march=rv32imafc_zicsr_zifencei \
  *     -mabi=ilp32f -O0 -include ghidra_types.h -c firmware_decompiled.c
  */
 #include "ghidra_types.h"
+
+/* ─── Type definitions (Sprint 25: struct/enum/union from DataTypeManager) ─── */
+typedef struct ListItem_t ListItem_t;
+typedef struct List_t List_t;
+typedef struct QueueDefinition QueueDefinition;
+typedef struct StaticQueue_t StaticQueue_t;
+typedef struct StaticTask_t StaticTask_t;
+typedef struct tskTaskControlBlock tskTaskControlBlock;
+
+typedef void * EventGroupHandle_t;
+
+struct ListItem_t {
+    unsigned int xItemValue;
+    void *pxNext;
+    void *pxPrevious;
+    void *pvOwner;
+    void *pvContainer;
+};
+
+struct List_t {
+    unsigned int uxNumberOfItems;
+    ListItem_t *pxIndex;
+    ListItem_t xListEnd;
+};
+
+typedef void * MessageBufferHandle_t;
+
+struct QueueDefinition {
+    unsigned char *pcHead;
+    unsigned char *pcWriteTo;
+    unsigned char *pcReadFrom_or_semCount;
+    List_t xTasksWaitingToSend;
+    List_t xTasksWaitingToReceive;
+    unsigned int uxMessagesWaiting;
+    unsigned int uxLength;
+    unsigned int uxItemSize;
+    unsigned char cRxLock;
+    unsigned char cTxLock;
+};
+
+typedef void * QueueHandle_t;
+
+typedef void * SemaphoreHandle_t;
+
+struct StaticQueue_t {
+    unsigned char ucDummy[82];
+};
+
+struct StaticTask_t {
+    unsigned char ucDummy[92];
+};
+
+typedef void * StreamBufferHandle_t;
+
+typedef void * TaskHandle_t;
+
+struct tskTaskControlBlock {
+    void *pxTopOfStack;
+    ListItem_t xStateListItem;
+    ListItem_t xEventListItem;
+    unsigned int uxPriority;
+    void *pxStack;
+    char pcTaskName[16];
+    unsigned int xCoreID;
+    void *pxEndOfStack;
+    unsigned int uxTCBNumber;
+    unsigned int uxTaskNumber;
+    unsigned int uxBasePriority;
+    unsigned int uxMutexesHeld;
+};
+
+typedef tskTaskControlBlock TCB_t;
+
+typedef void * TimerHandle_t;
 
 /* ─── Global variables referenced in decompiled bodies ─── */
 extern volatile unsigned int g_result;
